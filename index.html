@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoria de Pessoal - Folha de Pagamento</title>
+    
+    <!-- === IMPORTAÇÕES DE FONTES E ÍCONES === -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- === BIBLIOTECAS CDN (PROCESSAMENTO LOCAL, GRÁFICOS E ANIMAÇÃO) === -->
+    <!-- SweetAlert2 (Notificações e Modais) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- GSAP (Microinterações e Transições da SPA) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Chart.js (Visualização de Dados) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse (Parsing de arquivos CSV/TXT em memória local) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS (Leitura local e conversão de arquivos Excel .xlsx) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- === ARQUIVO DE ESTILOS PERSONALIZADO === -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-layout">
+        
+        <!-- === [Navegação Principal] BARRA LATERAL / APPMENU MÓVEL === -->
+        <aside class="sidebar" aria-label="Menu de Navegação Principal">
+            <div class="sidebar__logo">
+                <div class="sidebar__icon-box">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <span class="sidebar__brand-name">Auditoria Interna</span>
+            </div>
+
+            <nav class="sidebar__menu" aria-label="Menu SPA">
+                <div class="sidebar__menu-item sidebar__menu-item--active" id="tab-dashboard" role="button" tabindex="0" aria-label="Carregar nova folha de pagamento">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span class="sidebar__menu-label">Carregar Folha</span>
+                </div>
+                <div class="sidebar__menu-item" id="tab-auditoria" role="button" tabindex="0" aria-label="Acessar painel de auditoria ativa">
+                    <i class="fa-solid fa-table-list"></i>
+                    <span class="sidebar__menu-label">Relatório de Desvios</span>
+                </div>
+                <div class="sidebar__menu-item" id="tab-criterios" role="button" tabindex="0" aria-label="Acessar manual de critérios de avaliação">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <span class="sidebar__menu-label">Critérios de Avaliação</span>
+                </div>
+            </nav>
+
+            <div class="sidebar__footer">
+                <div class="sidebar__toggle-theme" id="theme-toggle-btn" role="button" tabindex="0" aria-label="Alternar esquema de cores escuro e claro">
+                    <i class="fa-solid fa-moon"></i>
+                    <span class="sidebar__menu-label">Modo Escuro</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- === [Layout do Conteúdo] ENVOLTÓRIO PRINCIPAL === -->
+        <div class="content-wrapper">
+            
+            <!-- === [Cabeçalho] CABEÇALHO DINÂMICO DA SPA === -->
+            <header class="main-header">
+                <div class="main-header__identity">
+                    <!-- Logotipo e Textos Institucionais Ativos na Inicialização -->
+                    <div class="main-header__meta-box" id="header-brand-box">
+                        <h1 class="main-header__institution">Secretaria de Auditoria de Pessoal</h1>
+                        <p class="main-header__sub-institution">Sandbox Local Analítica — Seguro e Isento de Conexão Externa</p>
+                    </div>
+                    <!-- Cabeçalho de Navegação Ativa Pós-Importação -->
+                    <div class="main-header__active-box" id="header-active-box" style="display: none;">
+                        <span class="main-header__badge">Diagnóstico Ativo</span>
+                        <h2 class="main-header__active-title" id="active-flow-title">Processamento de Lançamentos de Maio/2026</h2>
+                    </div>
+                </div>
+
+                <div class="main-header__actions">
+                    <button class="btn btn--secondary" id="btn-reset-process" style="display: none;" aria-label="Mudar de folha e reiniciar o processo">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span class="btn__text">Mudar Folha</span>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-profile__avatar">
+                            <i class="fa-solid fa-user-lock"></i>
+                        </div>
+                        <div class="user-profile__info">
+                            <span class="user-profile__name">Auditor Interno</span>
+                            <span class="user-profile__role">Sandbox offline</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- === [Área de Visualização] CONTEÚDO PRINCIPAL === -->
+            <main class="main-area" id="main-scroll-area">
+                
+                <!-- ==================== TELA 1: INGESTÃO DE DADOS (UPLOAD IMEDIATO) ==================== -->
+                <section class="spa-view spa-view--active" id="view-dashboard" aria-labelledby="view-dashboard-title">
+                    <div class="upload-container">
+                        <div class="section-title-box">
+                            <h2 class="section-title" id="view-dashboard-title">Carregar Folha Salarial do Mês</h2>
+                            <p class="section-subtitle">Arraste ou selecione o arquivo gerado pelo sistema de folha de pagamento (.xlsx, .txt ou .csv)</p>
+                        </div>
+                        
+                        <div class="dropzone" id="file-dropzone" tabindex="0" role="button" aria-label="Área de upload de arquivos. Arraste ou selecione o arquivo de folha de pagamento">
+                            <input type="file" id="file-input-raw" class="dropzone__input" accept=".xlsx,.xls,.csv,.txt">
+                            <div class="dropzone__icon">
+                                <i class="fa-solid fa-file-arrow-up"></i>
+                            </div>
+                            <h4 class="dropzone__title">Arraste o arquivo de folha de pagamento aqui</h4>
+                            <p class="dropzone__limits">Suporta planilhas Excel (XLSX) e textos tabulados de até 50MB</p>
+                            <button class="btn btn--primary dropzone__btn" tabindex="-1">Selecionar Arquivo</button>
+                        </div>
+
+                        <!-- Painel de Pré-visualização pós Ingestão em Memória -->
+                        <div class="upload-preview" id="upload-preview-panel" style="display: none;">
+                            <div class="upload-preview__header">
+                                <h4 class="upload-preview__title"><i class="fa-solid fa-circle-check"></i> Dados Estruturados em Memória do Navegador</h4>
+                            </div>
+                            <div class="upload-preview__meta-grid">
+                                <div class="preview-meta-card">
+                                    <span class="preview-meta-card__label">Servidores do Escopo Detectados (Ativos)</span>
+                                    <strong class="preview-meta-card__value" id="preview-server-count">0</strong>
+                                </div>
+                                <div class="preview-meta-card">
+                                    <span class="preview-meta-card__label">Lançamentos Individuais Mapeados</span>
+                                    <strong class="preview-meta-card__value" id="preview-row-count">0</strong>
+                                </div>
+                            </div>
+                            <div class="upload-preview__footer-actions">
+                                <button class="btn btn--primary" id="btn-trigger-direct-audit">
+                                    <i class="fa-solid fa-calculator"></i> Executar Diagnóstico de Desvios
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== TELA 2: AUDITORIA AUTOMATIZADA (PAINEL DE DESVIOS) ==================== -->
+                <section class="spa-view" id="view-auditoria" aria-labelledby="view-auditoria-title">
+                    <div class="view-header">
+                        <div class="view-header__title-box">
+                            <h3 class="view-header__title" id="view-auditoria-title">Resultados do Diagnóstico de Pessoal</h3>
+                            <p class="view-header__subtitle">Este painel cruza o Vencimento Básico (1001), GAJ (2001), GAS (2002) e o Adicional de Qualificação (462001) pagos contra a legislação e as Tabelas Remuneratórias do TSE para mapear inconsistências cadastrais ou de enquadramento.</p>
+                            <br>
+                        </div>
+                    </div>
+
+                    <!-- === SEÇÃO DE RESUMO DO TOPO (KPIs + Gráfico de Conformidade Integrados) === -->
+                    <div class="summary-layout">
+                        <!-- Coluna da Esquerda: KPIs Compactados e Empilhados -->
+                        <div class="summary-layout__kpis">
+                            <div class="kpi-card">
+                                <span class="kpi-card__label">Servidores Ativos Analisados</span>
+                                <strong class="kpi-card__value" id="kpi-total-audited">0</strong>
+                                <div class="kpi-card__footer">
+                                    <span class="kpi-card__badge kpi-card__badge--neutral">Escopo de Ativos</span>
+                                </div>
+                            </div>
+                            <div class="kpi-card">
+                                <span class="kpi-card__label">Valores Corretos / Não Analisados</span>
+                                <strong class="kpi-card__value kpi-card__value--success" id="kpi-conforming">0</strong>
+                                <div class="kpi-card__footer">
+                                    <span class="kpi-card__badge kpi-card__badge--success" id="kpi-conforming-pct">0% da folha ativa</span>
+                                </div>
+                            </div>
+                            <div class="kpi-card">
+                                <span class="kpi-card__label">Valores Divergentes (Suspeita de Erro)</span>
+                                <strong class="kpi-card__value kpi-card__value--error" id="kpi-discrepancies">0</strong>
+                                <div class="kpi-card__footer">
+                                    <span class="kpi-card__badge kpi-card__badge--error" id="kpi-discrepancies-pct">0% desvios cadastrais</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Coluna da Direita: Gráfico de Conformidade -->
+                        <div class="card card--paddings summary-layout__chart">
+                            <h4 class="card-title">Distribuição de Status de Conformidade</h4>
+                            <div class="chart-container">
+                                <canvas id="compliance-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Divergências Identificadas -->
+                    <div class="card">
+                        <div class="table-header">
+                            <h4 class="table-header__title">Relatório de Inconsistências Identificadas</h4>
+                            <div class="table-header__actions">
+                                <button class="btn btn--secondary btn--compact" id="btn-filter-all-audited">
+                                    Mostrar Tudo
+                                </button>
+                                <button class="btn btn--secondary btn--compact btn--active" id="btn-filter-only-errors">
+                                    Apenas Inconsistências
+                                </button>
+                                <button class="btn btn--primary btn--compact" id="btn-export-final-xlsx" style="margin-left: 8px;">
+                                    <i class="fa-solid fa-file-excel"></i> Exportar Relatório para RH (.xlsx)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-scroll-container">
+                            <table class="data-table" id="audit-results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Identificação Única</th>
+                                        <th>Cargo Folha</th>
+                                        <th>Classe / Padrão</th>
+                                        <th>Vencimento Pago</th>
+                                        <th>GAJ Paga</th>
+                                        <th>GAS Paga</th>
+                                        <th>AQ Pago</th>
+                                        <th>Inconsistência Detalhada</th>
+                                        <th>Desvio Financeiro</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="9" class="td-placeholder">
+                                            Aguardando processamento de dados para gerar relatório...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Contêiner de Paginação Dinâmica (Injetada via JS) -->
+                        <div id="table-pagination-controls"></div>
+                    </div>
+                </section>
+
+                <!-- ==================== TELA 3: CRITÉRIOS DE AUDITORIA (SEM BLOQUEIO) ==================== -->
+                <section class="spa-view" id="view-criterios" aria-labelledby="view-criterios-title">
+                    <div class="view-header">
+                        <div class="view-header__title-box">
+                            <h3 class="view-header__title" id="view-criterios-title">Critérios de Avaliação e Regras de Negócio</h3>
+                            <br>
+                            <p class="view-header__subtitle">Esta página descreve a fundamentação jurídica, as fórmulas de cálculo e as premissas de auditoria que governam a análise em lote das folhas de pagamento mensais.</p>
+                            <br>
+                        </div>
+                    </div>
+
+                    <!-- Cartão 1: Enquadramento Geral e Rubricas de Base -->
+                    <div class="card card--paddings">
+                        <h4 class="card-title">
+                            <i class="fa-solid fa-money-bill-wave" style="color: var(--primary); margin-right: 8px;"></i>
+                            1. Rubricas de Base (Vencimento e GAJ)
+                        </h4>
+                        
+                        <ul class="parameter-list">
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Vencimento Básico (Rubrica 1001)</span>
+                                    <p class="parameter-item__desc">Serve como a âncora contratual do servidor. O sistema busca o casamento exato deste valor pago contra os limites das Classes A, B ou C e Padrões 1 a 13 da Tabela Oficial de Janeiro de 2026 para os cargos de Analista e Técnico Judiciário.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Gratificação de Atividade Judiciária - GAJ (Rubrica 2001)</span>
+                                    <p class="parameter-item__desc">Obrigatória e devida a todos os servidores ativos da carreira. É calculada aplicando-se estritamente o percentual compulsório de <strong>140% sobre o Vencimento Básico</strong> correspondente ao padrão enquadrado (Artigo 13 da Lei nº 11.416/2006).</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                        </ul>
+
+                        <!-- Prateleira Normativa do Cartão 1 -->
+                        <div class="normative-shelf">
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Tabelas de Apoio</span>
+                            <div class="normative-shelf__list">
+                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/arquivos/2026/tse-anexo-iii-tabela-remuneratoria-transparencia-tse/@@display-file/file/ANEXO-III-RES-102-CNJ-VIGENCIA-01-07-2026.pdf" target="_blank" class="normative-shelf__link" aria-label="Abrir Tabela Remuneratória de Cargos Efetivos da Justiça Eleitoral">
+                                    <i class="fa-solid fa-file-pdf"></i> Tabela Efetivos TSE (Vigência 01/07/2026)
+                                </a>
+                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" class="normative-shelf__link" aria-label="Acessar Lei 11416 de 2006 no Planalto">
+                                    <i class="fa-solid fa-scale-balanced"></i> Lei nº 11.416/2006 (Planalto)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cartão 2: Adicional de Qualificação (AQ) - Modelo VR 2026 -->
+                    <div class="card card--paddings">
+                        <h4 class="card-title">
+                            <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 8px;"></i>
+                            2. Adicional de Qualificação (AQ) - Regras de Acúmulo
+                        </h4>
+                        
+                        <p class="section-subtitle" style="margin-bottom: 16px;">O AQ deixou de ser calculado sobre o Vencimento Básico e passou a ser fixado em múltiplos do **Valor de Referência (VR) nacional unificado de R$ 714,40**, obedecendo às seguintes regras estritas de concessão:</p>
+                        
+                        <ul class="parameter-list">
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Regra de Absorção e Exclusão Mútua (Mestrado/Doutorado)</span>
+                                    <p class="parameter-item__desc">O título de Doutor (5,0 VR = R$ 3.572,00) ou Mestre (3,5 VR = R$ 2.500,40) absorve automaticamente qualquer adicional de nível inferior (Especialização, Segunda Graduação ou Certificação). Eles <strong>não se acumulam sob nenhuma hipótese</strong>, exceto com as Ações de Capacitação (Artigo 15, § 1º-B).</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Teto de Acúmulo de Títulos Menores (Especialização/Graduação/Certificação)</span>
+                                    <p class="parameter-item__desc">A soma de Especializações (1,0 VR cada), Segunda Graduação (1,0 VR) e Certificações Profissionais (0,5 VR cada) é **estritamente limitada ao teto máximo de 2,0 VR (R$ 1.428,80)** para servidores sem Mestrado ou Doutorado (Artigo 15, § 1º-C).</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Ações de Capacitação/Treinamento (Rubrica 23001)</span>
+                                    <p class="parameter-item__desc">Devido à razão de 0,2 VR (R$ 142,88) para cada conjunto de ações que some 120 horas. É cumulativo com qualquer outro título (Artigo 15, § 1º-D) e limitado ao **teto de 3 conjuntos (0,6 VR = R$ 428,64)** (Artigo 15, V).</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                        </ul>
+
+                        <!-- Prateleira Normativa do Cartão 2 -->
+                        <div class="normative-shelf">
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Portarias de Apoio</span>
+                            <div class="normative-shelf__list">
+                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15292.htm" target="_blank" class="normative-shelf__link" aria-label="Abrir Lei 15292 de 2025 no Planalto">
+                                    <i class="fa-solid fa-scale-balanced"></i> Lei nº 15.292/2025
+                                </a>
+                                <a href="https://www.tse.jus.br/legislacao/compilada/prtc/2026/portaria-conjunta-no-1-de-8-de-janeiro-de-2026" target="_blank" class="normative-shelf__link" aria-label="Abrir Portaria Conjunta número 1 de 2026 no TSE">
+                                    <i class="fa-solid fa-bookmark"></i> Portaria Conjunta nº 1/2026
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cartão 3: Gratificação de Segurança (GAS) -->
+                    <div class="card card--paddings">
+                        <h4 class="card-title">
+                            <i class="fa-solid fa-shield-halved" style="color: var(--primary); margin-right: 8px;"></i>
+                            3. Gratificação de Atividade de Segurança (GAS)
+                        </h4>
+                        
+                        <ul class="parameter-list">
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Adicional de Risco (Rubrica 2002)</span>
+                                    <p class="parameter-item__desc">Devida exclusivamente a Técnicos e Analistas Judiciários na especialidade de Polícia Judicial (atividades de segurança ativa). Corresponde a **35% sobre o Vencimento Básico** esperado do padrão do servidor (Artigo 17 da Lei nº 11.416/2006).</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Regra de Exclusão da Reciclagem de GAS para Horas de AQ</span>
+                                    <p class="parameter-item__desc">As horas correspondentes à reciclagem anual obrigatória para manutenção da GAS não podem ser computadas como ações de treinamento para concessão do Adicional de Qualificação (Artigo 8º, § 2º, IV da Resolução TSE nº 23.380/2012).</p>
+                                </div>
+                                <span class="badge badge--neutral">Não Verificado</span>
+                            </li>
+                        </ul>
+
+                        <!-- Prateleira Normativa do Cartão 3 -->
+                        <div class="normative-shelf">
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Resoluções de Apoio</span>
+                            <div class="normative-shelf__list">
+                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" class="normative-shelf__link" aria-label="Acessar Lei 11416 de 2006 no Planalto">
+                                    <i class="fa-solid fa-scale-balanced"></i> Lei nº 11.416/2006 (Art. 17)
+                                </a>
+                                <a href="https://www.tse.jus.br/legislacao/compilada/res/2012/resolucao-no-23-380-de-8-de-maio-de-2012" target="_blank" class="normative-shelf__link" aria-label="Abrir Resolução TSE 23380 de 2012">
+                                    <i class="fa-solid fa-bookmark"></i> Resolução TSE nº 23.380/2012
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cartão 4: Regras Cadastrais e Profilaxia de Falsos Positivos -->
+                    <div class="card card--paddings">
+                        <h4 class="card-title">
+                            <i class="fa-solid fa-user-check" style="color: var(--primary); margin-right: 8px;"></i>
+                            4. Consistência Cadastral e Filtros de Ingestão
+                        </h4>
+                        
+                        <ul class="parameter-list">
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Atribuição de FC ou CJ (Coerência de Designação)</span>
+                                    <p class="parameter-item__desc">Verifica se o nível de "Atribuição" (1, 2 ou 3) cadastrado condiz com a Sigla da função designada (ex: FC 6 exige Atribuição = 1; FC 4/3/1 exigem Atribuição = 3; cargos CJ não admitem Atribuição = 3), disparando avisos de erro de digitação do sistema.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Filtro Seletivo de Folha Normal (Não Suplementar ou Retroativa) - Folha de Pagamento Mensal</span>
+                                    <p class="parameter-item__desc">Registros de acertos suplementares ou retroativos com `Tipo Competência !== 0` ainda não estão sob análise. Por isso, esses registros são descartados automaticamente na leitura da planilha a partir da aplicação de um filtro.</p>
+                                </div>
+                                <span class="badge badge--success">Filtro Aplicado</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Validade Quadrienal de AQ (Capacitações e Certificações)</span>
+                                    <p class="parameter-item__desc">Os adicionais correspondentes a Certificações Profissionais (0,5 VR) e Ações de Capacitação (múltiplos de 0,2 VR) possuem prazo de validade de exatamente 4 anos (48 meses) da conclusão (Portaria Conjunta nº 1/2026). Não há dados suficientes nas planilhas de origem para a verificação automatizada desses adicionais.</p>
+                                </div>
+                                <span class="badge badge--neutral">Não Verificado</span>
+                            </li>
+                        </ul>
+
+                        <!-- Prateleira Normativa do Cartão 4 -->
+                        <div class="normative-shelf">
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Tabelas de Apoio</span>
+                            <div class="normative-shelf__list">
+                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/cargos-em-comissao-e-funcoes-de-confianca" target="_blank" class="normative-shelf__link" aria-label="Abrir Tabela de Cargos em Comissão e Funções de Confiança do TSE">
+                                    <i class="fa-solid fa-globe"></i> Cargos em Comissão e Funções (TSE)
+                                </a>
+                                <a href="https://www.tse.jus.br/legislacao/compilada/prtc/2026/portaria-conjunta-no-1-de-8-de-janeiro-de-2026" target="_blank" class="normative-shelf__link" aria-label="Abrir Portaria Conjunta número 1 de 2026 no TSE">
+                                    <i class="fa-solid fa-bookmark"></i> Portaria Conjunta nº 1/2026
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+
+            <!-- === [Rodapé] RODAPÉ INSTITUCIONAL === -->
+            <footer class="app-footer">
+                <span class="app-footer__text">© 2026 Secretaria de Auditoria de Pessoal</span>
+                <span class="app-footer__badge"><i class="fa-solid fa-lock"></i> Zero-Knowledge (Nenhum dado trafega fora de sua máquina)</span>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- === ARQUIVO DE LÓGICA DO FRONTEND === -->
+    <script src="script.js"></script>
+</body>
+</html>
