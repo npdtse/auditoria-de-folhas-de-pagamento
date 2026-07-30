@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pré-Auditoria Automatizada de Folhas de Pagamento — TSE</title>
+    
+    <!-- === IMPORTAÇÃO DE FONTES E ÍCONES DO DESIGN SYSTEM DO APP === -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- === CDNs DE ANIMAÇÃO E UTILIÁRIOS === -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- === CONFIGURAÇÃO DO TAILWIND ALINHADA AO DESIGN SYSTEM === -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Source Sans 3', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            faded: '#E6F0FA',
+                            light: '#4D9FFF',
+                            primary: '#0073E6',
+                            dark: '#005BB5',
+                        },
+                        surface: {
+                            light: '#FFFFFF',
+                            dark: '#1E293B',
+                            bg: '#F0F4F8',
+                            bg2: '#E1EAF2',
+                            border: '#CDE0F5'
+                        },
+                        text: {
+                            main: '#1A2733',
+                            muted: '#4A5B6E',
+                            sub: '#7D8FA3'
+                        },
+                        semantic: {
+                            success: '#10B981',
+                            error: '#E11D48'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- === ESTILOS NATIVOS === -->
+    <style>
+        :root {
+            --bg: #F0F4F8;
+            --surface: #FFFFFF;
+            --primary: #0073E6;
+            --text: #1A2733;
+            --border: #CDE0F5;
+            --font-main: 'Source Sans 3', sans-serif;
+            --font-display: 'Poppins', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        .font-display-heading {
+            font-family: var(--font-display);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F0F4F8;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #CDE0F5;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0073E6;
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden antialiased">
+
+    <!-- === [Navegação] CABEÇALHO DA APRESENTAÇÃO === -->
+    <header class="fixed top-0 left-0 w-full bg-white/95 backdrop-blur-md border-b border-surface-border z-50 h-20 flex items-center justify-between px-6 md:px-12 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 bg-brand-faded text-brand-primary rounded-xl flex items-center justify-center text-xl shadow-inner">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+                <span class="font-display-heading font-bold text-xl tracking-tight text-text-main block leading-tight">Pré-Auditoria de Pessoal</span>
+                <span class="text-xs font-semibold text-text-sub uppercase tracking-wider">Tribunal Superior Eleitoral — SAU</span>
+            </div>
+        </div>
+        <nav class="hidden md:flex items-center gap-8">
+            <a href="#proposta" class="text-base font-bold text-text-muted hover:text-brand-primary transition-all">Proposta</a>
+            <a href="#normas" class="text-base font-bold text-text-muted hover:text-brand-primary transition-all">Normas & Tabelas</a>
+            <a href="#regras" class="text-base font-bold text-text-muted hover:text-brand-primary transition-all">Regras Checadas</a>
+        </nav>
+        <div>
+            <span class="inline-flex items-center gap-2 bg-brand-faded text-brand-primary text-sm font-bold px-4 py-2 rounded-full border border-brand-light/30">
+                <i class="fa-solid fa-lock"></i> Sandbox Offline Local
+            </span>
+        </div>
+    </header>
+
+    <!-- === [Hero Section] INFORMAÇÕES GERAIS E PROPOSTA === -->
+    <section id="proposta" class="relative pt-36 pb-20 px-6 md:px-12 max-w-7xl mx-auto flex flex-col items-center text-center">
+        <span class="bg-brand-faded text-brand-primary text-sm font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-6 border border-brand-light/30">Seção de Auditoria de Pessoal (SAU)</span>
+        
+        <h1 class="font-display-heading font-bold text-4xl md:text-6xl text-text-main tracking-tight leading-tight max-w-5xl mb-6">
+            Pré-Auditoria Automatizada de Folhas de Pagamento
+        </h1>
+        
+        <p class="text-xl md:text-2xl text-text-muted max-w-4xl leading-relaxed mb-10 font-normal">
+            Ferramenta local de triagem automatizada para o <strong>TSE</strong>. O aplicativo identifica instantaneamente inconsistências cadastrais e financeiras para orientar a verificação manual detalhada realizada pelos auditores da <strong>Seção de Auditoria de Pessoal</strong>.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+            <a href="#regras" class="btn bg-brand-primary text-white text-lg font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-3 shadow-lg shadow-blue-500/20 hover:bg-brand-light transition-all">
+                <i class="fa-solid fa-list-check"></i> Consultar Regras Checadas
+            </a>
+            <a href="#normas" class="btn bg-white border border-surface-border text-text-main text-lg font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-surface-bg transition-all">
+                <i class="fa-solid fa-book-bookmark"></i> Legislação e Tabelas
+            </a>
+        </div>
+    </section>
+
+    <!-- === [Conceito do App] TRIAGEM vs VERIFICAÇÃO MANUAL === -->
+    <section class="py-16 bg-white border-y border-surface-border px-6 md:px-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <h2 class="font-display-heading font-bold text-3xl text-text-main">Como a Pré-Auditoria Apoia a SAU?</h2>
+                <p class="text-xl text-text-muted mt-3">O aplicativo não substitui a análise humana; ele atua como um filtro preventivo de alta velocidade.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Papel da Pré-Auditoria -->
+                <div class="bg-surface-bg p-8 rounded-2xl border border-surface-border flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 bg-brand-faded text-brand-primary rounded-xl flex items-center justify-center text-xl mb-4">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <h3 class="font-display-heading font-bold text-2xl text-text-main mb-3">1. Triagem Automatizada (App)</h3>
+                        <p class="text-lg text-text-muted leading-relaxed">
+                            Processa mais de 20 mil linhas em segundos dentro da própria máquina do auditor. O app aplica regras matemáticas e legais estritas para isolar apenas os casos com suspeita de erro.
+                        </p>
+                    </div>
+                    <span class="inline-flex items-center gap-2 text-sm font-bold text-brand-primary mt-6">
+                        <i class="fa-solid fa-check"></i> Resultado: Tabela focada apenas em divergências.
+                    </span>
+                </div>
+
+                <!-- Papel do Auditor da SAU -->
+                <div class="bg-surface-bg p-8 rounded-2xl border border-surface-border flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 bg-white text-text-main rounded-xl flex items-center justify-center text-xl mb-4 border border-surface-border">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                        <h3 class="font-display-heading font-bold text-2xl text-text-main mb-3">2. Verificação Detalhada (Auditor)</h3>
+                        <p class="text-lg text-text-muted leading-relaxed">
+                            Com a lista reduzida de divergências em mãos, o auditor da SAU investiga o histórico funcional, analisa os processos administrativos no SEI e confirma se a inconsistência procede antes de tomar providências.
+                        </p>
+                    </div>
+                    <span class="inline-flex items-center gap-2 text-sm font-bold text-text-main mt-6">
+                        <i class="fa-solid fa-magnifying-glass"></i> Resultado: Análise humana direcionada e assertiva.
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- === [Capacidades e Limitações] === -->
+    <section class="py-16 px-6 md:px-12 max-w-7xl mx-auto">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+            <h2 class="font-display-heading font-bold text-3xl text-text-main">Escopo de Atuação no TSE</h2>
+            <p class="text-xl text-text-muted mt-2">Delimitação clara do que é e do que não é analisado pelo sistema.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <!-- O que o App FAZ -->
+            <div class="bg-white border border-emerald-300 rounded-2xl p-8 shadow-sm">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-emerald-50 text-semantic-success rounded-lg flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h3 class="font-display-heading font-bold text-2xl text-text-main">O que o aplicativo FAZ</h3>
+                </div>
+                <ul class="space-y-4">
+                    <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
+                        <i class="fa-solid fa-check text-semantic-success mt-1"></i>
+                        <span>Audita lançamentos de <strong>Analistas</strong> e <strong>Técnicos Judiciários</strong> ativos da folha do TSE.</span>
+                    </li>
+                    <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
+                        <i class="fa-solid fa-check text-semantic-success mt-1"></i>
+                        <span>Processa planilhas em formato .xlsx e arquivos .txt delimitados por hashtag (#) em milissegundos.</span>
+                    </li>
+                    <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
+                        <i class="fa-solid fa-check text-semantic-success mt-1"></i>
+                        <span>Exibe o diagnóstico de desvios com nomes reais e gera relatórios em Excel (.xlsx) para a equipe da SAU.</span>
+                    </li>
+                    <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
+                        <i class="fa-solid fa-check text-semantic-success mt-1"></i>
+                        <span>Roda de forma 100% offline, garantindo sigilo absoluto dos dados de pessoal.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- O que o App NÃO FAZ -->
+            <div class="bg-white border border-rose-300 rounded-2xl p-8 shadow-sm">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-rose-50 text-semantic-error rounded-lg flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                    <h3 class="font-display-heading font-bold text-2xl text-text-main">O que o aplicativo NÃO faz</h3>
+                </div>
+                <ul class="space-y-4">
+                    <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
+                        <i class="fa-solid fa-xmark text-semantic-error mt-1"></i>
+                        <span><strong>Não analisa inativos e pensionistas:</strong> Registros de aposentados e pensões são marcados como "Não analisado" para evitar alarmes falsos de gratificações exclusivas de ativos.</span>
+                    </li>
+                    <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
+                        <i class="fa-solid fa-xmark text-semantic-error mt-1"></i>
+                        <span><strong>Não transmite dados para serviços externos:</strong> Isento de conexões com servidores ou inteligência artificial em nuvem.</span>
+                    </li>
+                    <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
+                        <i class="fa-solid fa-xmark text-semantic-error mt-1"></i>
+                        <span><strong>Não audita folhas retroativas (Suplementares):</strong> Lançamentos com `Tipo Competência` diferente de zero são filtrados automaticamente.</span>
+                    </li>
+                    <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
+                        <i class="fa-solid fa-xmark text-semantic-error mt-1"></i>
+                        <span><strong>Não salva ou armazena arquivos:</strong> Não possui banco de dados persistente. O fechamento da aba limpa a memória.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- === [LEGISLAÇÃO E TABELA REMUNERATÓRIA COMPLETA] === -->
+    <section id="normas" class="py-20 bg-white border-y border-surface-border px-6 md:px-12">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="bg-brand-faded text-brand-primary text-sm font-bold tracking-wider uppercase px-4 py-1.5 rounded-full border border-brand-light/30">Embasamento Jurídico</span>
+                <h2 class="font-display-heading font-bold text-3xl md:text-4xl text-text-main mt-4">Normas Aplicadas e Tabela de Remuneração</h2>
+                <p class="text-xl text-text-muted mt-3">Relação das leis, portarias e tabelas oficiais integradas à inteligência do aplicativo.</p>
+            </div>
+
+            <!-- Grid de Leis e Portarias -->
+            <div class="grid md:grid-cols-2 gap-6 mb-16">
+                <div class="p-6 bg-surface-bg rounded-xl border border-surface-border">
+                    <h4 class="font-display-heading font-bold text-xl text-text-main mb-2">
+                        <i class="fa-solid fa-scale-balanced text-brand-primary mr-2"></i> Lei nº 11.416/2006
+                    </h4>
+                    <p class="text-base text-text-muted leading-relaxed">
+                        Dispõe sobre as carreiras dos Servidores do Poder Judiciário da União. Fundamenta o cálculo compulsório da <strong>GAJ (140% do Vencimento Básico)</strong> no Artigo 13 e da <strong>GAS (35% do Vencimento Básico)</strong> no Artigo 17.
+                    </p>
+                </div>
+
+                <div class="p-6 bg-surface-bg rounded-xl border border-surface-border">
+                    <h4 class="font-display-heading font-bold text-xl text-text-main mb-2">
+                        <i class="fa-solid fa-scale-balanced text-brand-primary mr-2"></i> Lei nº 15.292/2025
+                    </h4>
+                    <p class="text-base text-text-muted leading-relaxed">
+                        Regulamenta os novos adicionais de qualificação (AQ) e a tabela salarial. Define o <strong>Valor de Referência (VR) unificado de R$ 714,40</strong> e estabelece as regras de absorção de títulos e tetos de acúmulo.
+                    </p>
+                </div>
+
+                <div class="p-6 bg-surface-bg rounded-xl border border-surface-border">
+                    <h4 class="font-display-heading font-bold text-xl text-text-main mb-2">
+                        <i class="fa-solid fa-bookmark text-brand-primary mr-2"></i> Portaria Conjunta nº 1/2026
+                    </h4>
+                    <p class="text-base text-text-muted leading-relaxed">
+                        Estabelece as diretrizes unificadas de aplicação dos adicionais de qualificação, limites de horas de ações de capacitação e a coerência entre Funções Comissionadas (FC/CJ) e níveis de Atribuição.
+                    </p>
+                </div>
+
+                <div class="p-6 bg-surface-bg rounded-xl border border-surface-border">
+                    <h4 class="font-display-heading font-bold text-xl text-text-main mb-2">
+                        <i class="fa-solid fa-shield-halved text-brand-primary mr-2"></i> Resolução TSE nº 23.380/2012
+                    </h4>
+                    <p class="text-base text-text-muted leading-relaxed">
+                        Regulamenta a concessão e a manutenção da Gratificação de Atividade de Segurança (GAS) para os servidores da Polícia Judicial no âmbito da Justiça Eleitoral.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Tabela Remuneratória Completa e Detalhada do TSE (Janeiro/2026) -->
+            <div class="bg-surface-bg p-8 rounded-2xl border border-surface-border">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                        <h3 class="font-display-heading font-bold text-2xl text-text-main">Tabela Remuneratória Oficial Completa do TSE (Janeiro/2026)</h3>
+                        <p class="text-base text-text-muted mt-1">Valores individuais de Vencimento Básico, GAJ (140%) e GAS (35%) programados no aplicativo.</p>
+                    </div>
+                    <span class="bg-white border border-surface-border px-4 py-2 rounded-lg font-bold text-sm text-brand-primary shadow-sm">
+                        <i class="fa-solid fa-calendar-day mr-2"></i> Vigência: 01/01/2026
+                    </span>
+                </div>
+
+                <div class="max-h-[550px] overflow-y-auto border border-surface-border rounded-xl bg-white shadow-inner">
+                    <table class="w-full text-left border-collapse text-base">
+                        <thead class="sticky top-0 z-10 bg-slate-100 text-text-main font-bold border-b border-surface-border shadow-sm">
+                            <tr>
+                                <th class="p-3">Cargo</th>
+                                <th class="p-3">Classe</th>
+                                <th class="p-3">Padrão</th>
+                                <th class="p-3">Vencimento Básico (R$)</th>
+                                <th class="p-3">GAJ 140% (R$)</th>
+                                <th class="p-3">GAS 35% (R$)</th>
+                                <th class="p-3">Total Básico sem GAS (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-surface-border text-text-muted font-medium">
+                            <!-- ANALISTAS (13 a 1) -->
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe C</td><td class="p-3 font-bold">13</td><td class="p-3">9.292,14</td><td class="p-3">13.009,00</td><td class="p-3">3.252,25</td><td class="p-3 font-bold text-text-main">22.301,14</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe C</td><td class="p-3 font-bold">12</td><td class="p-3">9.021,50</td><td class="p-3">12.630,10</td><td class="p-3">3.157,53</td><td class="p-3 font-bold text-text-main">21.651,60</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe C</td><td class="p-3 font-bold">11</td><td class="p-3">8.758,73</td><td class="p-3">12.262,22</td><td class="p-3">3.065,56</td><td class="p-3 font-bold text-text-main">21.020,95</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">10</td><td class="p-3">8.503,62</td><td class="p-3">11.905,07</td><td class="p-3">2.976,27</td><td class="p-3 font-bold text-text-main">20.408,69</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">9</td><td class="p-3">8.255,95</td><td class="p-3">11.558,33</td><td class="p-3">2.889,58</td><td class="p-3 font-bold text-text-main">19.814,28</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">8</td><td class="p-3">7.810,73</td><td class="p-3">10.935,02</td><td class="p-3">2.733,76</td><td class="p-3 font-bold text-text-main">18.745,75</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">7</td><td class="p-3">7.583,23</td><td class="p-3">10.616,52</td><td class="p-3">2.654,13</td><td class="p-3 font-bold text-text-main">18.199,75</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">6</td><td class="p-3">7.362,37</td><td class="p-3">10.307,32</td><td class="p-3">2.576,83</td><td class="p-3 font-bold text-text-main">17.669,69</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">5</td><td class="p-3">7.147,92</td><td class="p-3">10.007,09</td><td class="p-3">2.501,77</td><td class="p-3 font-bold text-text-main">17.155,01</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">4</td><td class="p-3">6.939,75</td><td class="p-3">9.715,65</td><td class="p-3">2.428,91</td><td class="p-3 font-bold text-text-main">16.655,40</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">3</td><td class="p-3">6.565,50</td><td class="p-3">9.191,70</td><td class="p-3">2.297,93</td><td class="p-3 font-bold text-text-main">15.757,20</td></tr>
+                            <tr class="hover:bg-slate-50"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">2</td><td class="p-3">6.374,26</td><td class="p-3">8.923,96</td><td class="p-3">2.230,99</td><td class="p-3 font-bold text-text-main">15.298,22</td></tr>
+                            <tr class="hover:bg-slate-50 border-b-2 border-slate-300"><td class="p-3 font-bold text-text-main">Analista Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">1</td><td class="p-3">6.188,61</td><td class="p-3">8.664,05</td><td class="p-3">2.166,01</td><td class="p-3 font-bold text-text-main">14.852,66</td></tr>
+                            
+                            <!-- TÉCNICOS (13 a 1) -->
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe C</td><td class="p-3 font-bold">13</td><td class="p-3">5.663,47</td><td class="p-3">7.928,86</td><td class="p-3">1.982,21</td><td class="p-3 font-bold text-text-main">13.592,33</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe C</td><td class="p-3 font-bold">12</td><td class="p-3">5.498,51</td><td class="p-3">7.697,91</td><td class="p-3">1.924,48</td><td class="p-3 font-bold text-text-main">13.196,42</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe C</td><td class="p-3 font-bold">11</td><td class="p-3">5.338,36</td><td class="p-3">7.473,70</td><td class="p-3">1.868,43</td><td class="p-3 font-bold text-text-main">12.812,06</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">10</td><td class="p-3">5.182,88</td><td class="p-3">7.256,03</td><td class="p-3">1.814,01</td><td class="p-3 font-bold text-text-main">12.438,91</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">9</td><td class="p-3">5.031,90</td><td class="p-3">7.044,66</td><td class="p-3">1.761,17</td><td class="p-3 font-bold text-text-main">12.076,56</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">8</td><td class="p-3">4.760,56</td><td class="p-3">6.664,78</td><td class="p-3">1.666,20</td><td class="p-3 font-bold text-text-main">11.425,34</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">7</td><td class="p-3">4.621,90</td><td class="p-3">6.470,66</td><td class="p-3">1.617,67</td><td class="p-3 font-bold text-text-main">11.092,56</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe B</td><td class="p-3 font-bold">6</td><td class="p-3">4.487,29</td><td class="p-3">6.282,21</td><td class="p-3">1.570,55</td><td class="p-3 font-bold text-text-main">10.769,50</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">5</td><td class="p-3">4.356,59</td><td class="p-3">6.099,23</td><td class="p-3">1.524,81</td><td class="p-3 font-bold text-text-main">10.455,82</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">4</td><td class="p-3">4.229,69</td><td class="p-3">5.921,57</td><td class="p-3">1.480,39</td><td class="p-3 font-bold text-text-main">10.151,26</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">3</td><td class="p-3">4.001,60</td><td class="p-3">5.602,24</td><td class="p-3">1.400,56</td><td class="p-3 font-bold text-text-main">9.603,84</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">2</td><td class="p-3">3.885,06</td><td class="p-3">5.439,08</td><td class="p-3">1.359,77</td><td class="p-3 font-bold text-text-main">9.324,14</td></tr>
+                            <tr class="hover:bg-slate-50 bg-slate-50/50"><td class="p-3 font-bold text-text-main">Técnico Judiciário</td><td class="p-3">Classe A</td><td class="p-3 font-bold">1</td><td class="p-3">3.771,88</td><td class="p-3">5.280,63</td><td class="p-3">1.320,16</td><td class="p-3 font-bold text-text-main">9.052,51</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- === [A LISTA DE REGRAS CHECADAS] === -->
+    <section id="regras" class="py-20 bg-slate-900 text-white px-6 md:px-12">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-brand-light text-sm font-bold uppercase tracking-widest">A Lógica da Sandbox</span>
+                <h2 class="font-display-heading font-bold text-3xl md:text-5xl mt-2 text-white">Relação de Regras Checadas</h2>
+                <p class="text-xl text-slate-300 mt-4">Clique nos itens para expandir os parâmetros de cálculo e o embasamento legal correspondente.</p>
+            </div>
+
+            <!-- Acordeão Interativo de Regras -->
+            <div class="space-y-4">
+                
+                <!-- Regra 1 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">01</span>
+                            Filtro de Escopo de Carreiras (Analista e Técnico)
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>O aplicativo seleciona e avalia apenas lançamentos de <strong>Analista Judiciário</strong> e <strong>Técnico Judiciário</strong>. Lançamentos de outros cargos externos ou comissões puras são isolados para evitar erros na conciliação.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Diretrizes de Carreiras da Lei nº 11.416/2006.</p>
+                    </div>
+                </div>
+
+                <!-- Regra 2 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">02</span>
+                            Isolamento de Inativos e Pensionistas
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>Aposentados, pensionistas e instituidores de pensão (Categoria de Situação 5, 6 ou 7, ou sem lançamentos de salários base ativos no mês) são definidos como <strong>"Não analisado"</strong>. Isso limpa falsos alarmes de gratificações exclusivas de ativos.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Limites de ativos da Portaria Conjunta nº 1/2026.</p>
+                    </div>
+                </div>
+
+                <!-- Regra 3 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">03</span>
+                            Filtro de Folha Regular (Descarte de Suplementares)
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>Lançamentos suplementares ou acertos retroativos de meses passados com `Tipo Competência !== 0` são descartados na leitura. O sistema analisa estritamente a folha salarial mensal cheia e corrente.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Normalização de Competências Financeiras do TSE.</p>
+                    </div>
+                </div>
+
+                <!-- Regra 4 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">04</span>
+                            Enquadramento do Vencimento Básico (Rubrica 1001)
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>O aplicativo lê o valor do Vencimento Básico pago e busca correspondência na Tabela Oficial do TSE nas Classes A, B ou C e Padrões 1 a 13. Variações numéricas são apontadas como divergências de enquadramento.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Anexo I da Lei nº 15.292/2025.</p>
+                    </div>
+                </div>
+
+                <!-- Regra 5 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">05</span>
+                            Cálculo da GAJ (140% do Vencimento Básico - Rubrica 2001)
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>A GAJ é devida aos servidores ativos. O sistema calcula se o valor pago equivale a exatamente <strong>140% do Vencimento Básico</strong> previsto para o padrão correspondente. Diferenças de valores são reportadas.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Artigo 13 da Lei nº 11.416/2006.</p>
+                    </div>
+                </div>
+
+                <!-- Regra 6 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">06</span>
+                            Gratificação de Segurança (GAS - 35% do Vencimento - Rubrica 2002)
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>O aplicativo verifica se a GAS paga a policiais judiciais corresponde a <strong>35% do Vencimento Básico</strong> esperado de seu padrão. O sistema também identifica pagamentos indevidos dessa rubrica para cargos sem atribuições policiais.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Artigo 17 da Lei nº 11.416/2006 e Resolução TSE nº 23.380/2012.</p>
+                    </div>
+                </div>
+
+                <!-- Regra 7 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">07</span>
+                            AQ - Absorção Automática de Títulos Menores
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>Com base no Valor de Referência (VR) de R$ 714,40, o app valida a regra de exclusão mútua: o título de Doutorado (5,0 VR = R$ 3.572,00) ou Mestrado (3,5 VR = R$ 2.500,40) absorve e anula adicionais por especializações, graduações ou certificações secundárias.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Artigo 15, § 1º-B da Lei nº 15.292/2025.</p>
+                    </div>
+                </div>
+
+                <!-- Regra 8 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">08</span>
+                            AQ - Teto de Acúmulo de Títulos (Especialização/Graduação)
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>Para servidores sem Mestrado ou Doutorado, a soma de especializações (1,0 VR cada), segunda graduação (1,0 VR) e certificações (0,5 VR) pagas em folha é limitada ao <strong>teto de 2,0 VR (R$ 1.428,80)</strong>. O aplicativo aponta pagamentos acima desse limite.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Artigo 15, § 1º-C da Lei nº 15.292/2025.</p>
+                    </div>
+                </div>
+
+                <!-- Regra 9 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">09</span>
+                            AQ - Acúmulo de Capacitações e Teto Máximo Geral
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>O aplicativo avalia ações de treinamento (frações de 0,2 VR = R$ 142,88 para cada 120h). O sistema valida se o acúmulo respeitou o teto máximo de 3 conjuntos (<strong>0,6 VR = R$ 428,64</strong>) e se a soma total de todo o AQ respeitou o limite absoluto de <strong>5,6 VR (R$ 4.000,64)</strong> por servidor.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Artigo 15, V e § 1º-D da Lei nº 15.292/2025.</p>
+                    </div>
+                </div>
+
+                <!-- Regra 10 -->
+                <div class="border-b border-slate-800 pb-4 rule-accordion">
+                    <button class="w-full flex justify-between items-center text-left py-4 focus:outline-none" aria-expanded="false" onclick="toggleRule(this)">
+                        <span class="font-display-heading font-bold text-xl md:text-2xl flex items-center gap-4 text-slate-100 hover:text-brand-light transition-all">
+                            <span class="w-10 h-10 bg-slate-800 text-brand-light rounded-lg flex items-center justify-center text-base font-sans">10</span>
+                            Coerência Cadastral de FC/CJ e Atribuições
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-300 text-lg"></i>
+                    </button>
+                    <div class="rule-content hidden mt-3 pl-14 text-lg text-slate-300 leading-relaxed space-y-2">
+                        <p>O app cruza a `Sigla` da função com o nível de `Atribuição` (1, 2 ou 3) cadastrado para identificar inconsistências de digitação no RH. Ele gera avisos se a função <strong>FC 6</strong> estiver com atribuição diferente de <strong>1</strong>, se funções <strong>FC 4, 3 ou 1</strong> não estiverem com atribuição <strong>3</strong>, ou se cargos de comissão (<strong>CJ</strong>) estiverem erroneamente associados a atribuição <strong>3</strong>.</p>
+                        <p class="text-base text-brand-light font-medium"><i class="fa-solid fa-scale-balanced"></i> Base Normativa: Regras de Atribuições da Portaria Conjunta nº 1/2026.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- === [Rodapé] === -->
+    <footer class="bg-slate-950 text-slate-400 py-12 px-6 border-t border-slate-900 text-center text-base">
+        <div class="max-w-4xl mx-auto space-y-3">
+            <p class="font-bold text-slate-300">Tribunal Superior Eleitoral — Seção de Auditoria de Pessoal (SAU)</p>
+            <div class="flex justify-center gap-4 text-sm text-slate-400">
+                <span><i class="fa-solid fa-lock text-brand-light"></i> Processamento Local em Memória</span>
+                <span>•</span>
+                <span>Análise Orientada a Auditores</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- === LÓGICA DE INTERAÇÃO DO SITE (GSAP & ACCORDION) === -->
+    <script>
+        function toggleRule(button) {
+            const isExpanded = button.getAttribute('aria-expanded') === 'true';
+            
+            document.querySelectorAll('.rule-accordion button').forEach(btn => {
+                if (btn !== button) {
+                    btn.setAttribute('aria-expanded', 'false');
+                    const content = btn.nextElementSibling;
+                    content.classList.add('hidden');
+                    const icon = btn.querySelector('.fa-chevron-down');
+                    if (icon) icon.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            button.setAttribute('aria-expanded', !isExpanded);
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('.fa-chevron-down');
+
+            if (isExpanded) {
+                content.classList.add('hidden');
+                if (icon) icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.remove('hidden');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+                
+                gsap.fromTo(content, 
+                    { opacity: 0, y: -5 }, 
+                    { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" }
+                );
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            gsap.from("header", { opacity: 0, y: -20, duration: 0.6, ease: "power2.out" });
+            gsap.from("h1", { opacity: 0, y: 15, duration: 0.8, delay: 0.1, ease: "power2.out" });
+            gsap.from("p", { opacity: 0, y: 15, duration: 0.8, delay: 0.2, ease: "power2.out" });
+            gsap.from(".btn", { opacity: 0, scale: 0.95, duration: 0.6, delay: 0.3, ease: "back.out(1.5)" });
+        });
+    </script>
+</body>
+</html>
