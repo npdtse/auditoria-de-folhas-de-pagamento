@@ -100,8 +100,8 @@
                 <i class="fa-solid fa-shield-halved"></i>
             </div>
             <div>
-                <span class="font-display-heading font-bold text-xl tracking-tight text-text-main block leading-tight">Pré-Auditoria de Pessoal</span>
-                <span class="text-xs font-semibold text-text-sub uppercase tracking-wider">Tribunal Superior Eleitoral — SAU</span>
+                <span class="font-display-heading font-bold text-xl tracking-tight text-text-main block leading-tight">Pré-Auditoria de Pagamentos</span>
+                <span class="text-xs font-semibold text-text-sub uppercase tracking-wider">Secretaria de Auditoria</span>
             </div>
         </div>
         <nav class="hidden md:flex items-center gap-8">
@@ -125,7 +125,7 @@
         </h1>
         
         <p class="text-xl md:text-2xl text-text-muted max-w-4xl leading-relaxed mb-10 font-normal">
-            Ferramenta local de triagem automatizada para o <strong>TSE</strong>. O aplicativo identifica instantaneamente inconsistências cadastrais e financeiras para orientar a verificação manual detalhada realizada pelas auditoras da <strong>Seção de Auditoria de Pessoal</strong>.
+            Ferramenta local de triagem automatizada. O aplicativo identifica inconsistências cadastrais e financeiras para orientar a verificação manual detalhada realizada pelas auditoras da <strong>Seção de Auditoria de Pessoal</strong>.
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4">
@@ -143,7 +143,7 @@
         <div class="max-w-6xl mx-auto">
             <div class="text-center max-w-3xl mx-auto mb-12">
                 <h2 class="font-display-heading font-bold text-3xl text-text-main">Como a Pré-Auditoria Apoia a SAU?</h2>
-                <p class="text-xl text-text-muted mt-3">O aplicativo não substitui a análise humana; ele atua como um filtro preventivo de alta velocidade.</p>
+                <p class="text-xl text-text-muted mt-3">O aplicativo não substitui a análise humana; ele é uma ferramenta acessória de alertas.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -155,7 +155,7 @@
                         </div>
                         <h3 class="font-display-heading font-bold text-2xl text-text-main mb-3">1. Triagem Automatizada (App)</h3>
                         <p class="text-lg text-text-muted leading-relaxed">
-                            Processa mais de 20 mil linhas em segundos dentro da própria máquina do auditor. O app aplica regras matemáticas e legais estritas para isolar apenas os casos com suspeita de erro.
+                            Processa mais de 20 mil linhas em segundos dentro do próprio computador do usuário. O app aplica regras matemáticas e legais estritas para isolar apenas os casos com suspeita de erro.
                         </p>
                     </div>
                     <span class="inline-flex items-center gap-2 text-sm font-bold text-brand-primary mt-6">
@@ -171,7 +171,7 @@
                         </div>
                         <h3 class="font-display-heading font-bold text-2xl text-text-main mb-3">2. Verificação Detalhada (Auditor)</h3>
                         <p class="text-lg text-text-muted leading-relaxed">
-                            Com a lista reduzida de divergências em mãos, o auditor da SAU investiga o histórico funcional, analisa os processos administrativos no SEI e confirma se a inconsistência procede antes de tomar providências.
+                            Com a lista reduzida de divergências em mãos, a auditoria faz as diligências necessárias e confirma se a inconsistência procede antes de tomar providências.
                         </p>
                     </div>
                     <span class="inline-flex items-center gap-2 text-sm font-bold text-text-main mt-6">
@@ -186,7 +186,7 @@
     <section class="py-16 px-6 md:px-12 max-w-7xl mx-auto">
         <div class="text-center max-w-2xl mx-auto mb-12">
             <h2 class="font-display-heading font-bold text-3xl text-text-main">Escopo de Atuação no TSE</h2>
-            <p class="text-xl text-text-muted mt-2">Delimitação clara do que é e do que não é analisado pelo sistema.</p>
+            <p class="text-xl text-text-muted mt-2">Delimitação do que é e do que não é analisado pelo sistema.</p>
         </div>
 
         <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -205,15 +205,15 @@
                     </li>
                     <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
                         <i class="fa-solid fa-check text-semantic-success mt-1"></i>
-                        <span>Processa planilhas em formato .xlsx e arquivos .txt delimitados por hashtag (#) em milissegundos.</span>
+                        <span>Processa planilhas em formato .xlsx em segundos.</span>
                     </li>
                     <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
                         <i class="fa-solid fa-check text-semantic-success mt-1"></i>
-                        <span>Exibe o diagnóstico de desvios com nomes reais e gera relatórios em Excel (.xlsx) para a equipe da SAU.</span>
+                        <span>Exibe o diagnóstico de desvios com identificação e gera relatórios em Excel (.xlsx) para a equipe da SAU.</span>
                     </li>
                     <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
                         <i class="fa-solid fa-check text-semantic-success mt-1"></i>
-                        <span>Roda de forma 100% offline, garantindo sigilo absoluto dos dados de pessoal.</span>
+                        <span>Roda de forma 100% offline, garantindo sigilo dos dados de pessoal.</span>
                     </li>
                 </ul>
             </div>
@@ -237,7 +237,7 @@
                     </li>
                     <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
                         <i class="fa-solid fa-xmark text-semantic-error mt-1"></i>
-                        <span><strong>Não audita folhas retroativas (Suplementares):</strong> Lançamentos com `Tipo Competência` diferente de zero são filtrados automaticamente.</span>
+                        <span><strong>Não audita folhas suplementares:</strong> Lançamentos com `Tipo Competência` diferente de zero são filtrados automaticamente.</span>
                     </li>
                     <li class="flex items-start gap-3 text-lg text-text-muted leading-relaxed">
                         <i class="fa-solid fa-xmark text-semantic-error mt-1"></i>
@@ -264,7 +264,7 @@
                         <i class="fa-solid fa-scale-balanced text-brand-primary mr-2"></i> Lei nº 11.416/2006
                     </h4>
                     <p class="text-base text-text-muted leading-relaxed">
-                        Dispõe sobre as carreiras dos Servidores do Poder Judiciário da União. Fundamenta o cálculo compulsório da <strong>GAJ (140% do Vencimento Básico)</strong> no Artigo 13 e da <strong>GAS (35% do Vencimento Básico)</strong> no Artigo 17.
+                        Dispõe sobre as carreiras dos Servidores do Poder Judiciário da União. Fundamenta o cálculo compulsório da <strong>GAJ (140% do Vencimento Básico)</strong> e da <strong>GAS (35% do Vencimento Básico)</strong>.
                     </p>
                 </div>
 
@@ -363,7 +363,7 @@
         <div class="max-w-4xl mx-auto">
             <div class="text-center max-w-3xl mx-auto mb-16">
                 <span class="text-brand-light text-sm font-bold uppercase tracking-widest">A Lógica da Sandbox</span>
-                <h2 class="font-display-heading font-bold text-3xl md:text-5xl mt-2 text-white">Relação de Regras Checadas</h2>
+                <h2 class="font-display-heading font-bold text-3xl md:text-5xl mt-2 text-white">Regras Checadas</h2>
                 <p class="text-xl text-slate-300 mt-4">Clique nos itens para expandir os parâmetros de cálculo e o embasamento legal correspondente.</p>
             </div>
 
@@ -530,8 +530,6 @@
             <p class="font-bold text-slate-300">Tribunal Superior Eleitoral — Seção de Auditoria de Pessoal (SAU)</p>
             <div class="flex justify-center gap-4 text-sm text-slate-400">
                 <span><i class="fa-solid fa-lock text-brand-light"></i> Processamento Local em Memória</span>
-                <span>•</span>
-                <span>Análise Orientada a Auditores</span>
             </div>
         </div>
     </footer>
