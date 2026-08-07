@@ -118,6 +118,15 @@
                             <button class="btn btn--primary dropzone__btn" tabindex="-1">Selecionar Arquivo</button>
                         </div>
 
+                        <!-- Painel de Carregamento Assíncrono Dinâmico -->
+                        <div class="upload-loading" id="upload-loading-panel" style="display: none; padding: 40px; text-align: center;">
+                            <div class="upload-loading__spinner" style="margin-bottom: 20px;">
+                                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 48px; color: var(--primary);"></i>
+                            </div>
+                            <h4 class="upload-loading__title" style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Processando Informações da Folha...</h4>
+                            <p class="upload-loading__status" id="loading-status-text" style="font-size: 13px; color: var(--text3); font-weight: 500;">Iniciando pivotagem e agrupamento de registros...</p>
+                        </div>
+
                         <!-- Painel de Pré-visualização pós Ingestão em Memória -->
                         <div class="upload-preview" id="upload-preview-panel" style="display: none;">
                             <div class="upload-preview__header">
@@ -390,7 +399,7 @@
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Isenção das Verbas de Caráter Indenizatório</span>
-                                    <p class="parameter-item__desc">Auxílios assistenciais e indenizações (Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte) são <strong>excluídos da soma do teto</strong> por expressa determinação constitucional (Art. 37, § 11).</p>
+                                    <p class="parameter-item__desc">Auxílios assistenciais e indenizações (Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte) são <strong>excluídos da soma do teto</strong> por expressa determinação constitutional (Art. 37, § 11).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -459,10 +468,10 @@
             </main>
 
             <!-- === [Rodapé] RODAPÉ INSTITUCIONAL === -->
-            <app-footer class="app-footer">
+            <footer class="app-footer">
                 <span class="app-footer__text">© 2026 Secretaria de Auditoria de Pessoal — TSE</span>
                 <span class="app-footer__badge"><i class="fa-solid fa-lock"></i> Zero-Knowledge (Nenhum dado trafega fora de sua máquina)</span>
-            </app-footer>
+            </footer>
 
         </div>
     </div>

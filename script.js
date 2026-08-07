@@ -273,28 +273,45 @@ function normalizeHeaderName(str) {
         .replace(/\s+/g, "_");
 }
 
-/* --- [Seção] Resolvedor de Vigência de Tabela por Data de Competência --- */
+/* --- [Seção] Resolvedor de Vigência com Conversor de Ordinal do Excel --- */
 function resolveActiveTableConfig(competenciaStr) {
     if (!competenciaStr || competenciaStr === "N/A") {
-        return { key: "2026_JAN", vr: 714.40, isIncompatible: false, label: "Janeiro/2026 (Padrão)" };
+        return { key: "2026_JAN", vr: 714.40, isIncompatible: false, label: "Janeiro/2026 (Padrão)", formattedDate: "N/A" };
     }
 
-    const cleanComp = competenciaStr.toString().trim();
-    const parts = cleanComp.split(/[\/\.\-]/);
+    let cleanComp = competenciaStr.toString().trim();
     let month = 1;
     let year = 2026;
 
-    if (parts.length >= 3) {
-        month = parseInt(parts[1]) || 1;
-        year = parseInt(parts[2]) || 2026;
-    } else if (parts.length === 2) {
-        if (parts[0].length === 4) {
-            year = parseInt(parts[0]) || 2026;
-            month = parseInt(parts[1]) || 1;
-        } else {
-            month = parseInt(parts[0]) || 1;
-            year = parseInt(parts[1]) || 2026;
+    // CONVERSOR DE NÚMERO DE SÉRIE DO EXCEL (Ex: 44713 para 01/06/2022 ou 45566 para 01/10/2024)
+    const numericComp = Number(cleanComp);
+    if (!isNaN(numericComp) && numericComp > 30000 && numericComp < 60000) {
+        const excelEpoch = new Date(1899, 11, 30);
+        const jsDate = new Date(excelEpoch.getTime() + numericComp * 86400 * 1000);
+        month = jsDate.getMonth() + 1;
+        year = jsDate.getFullYear();
+        cleanComp = `${month.toString().padStart(2, '0')}/${year}`;
+    } else {
+        // Leitura de texto normal (Ex: "01/06/2022", "06/2022", "2022-06-01")
+        const parts = cleanComp.split(/[\/\.\-]/);
+        if (parts.length >= 3) {
+            if (parts[0].length === 4) {
+                year = parseInt(parts[0]) || 2026;
+                month = parseInt(parts[1]) || 1;
+            } else {
+                month = parseInt(parts[1]) || 1;
+                year = parseInt(parts[2]) || 2026;
+            }
+        } else if (parts.length === 2) {
+            if (parts[0].length === 4) {
+                year = parseInt(parts[0]) || 2026;
+                month = parseInt(parts[1]) || 1;
+            } else {
+                month = parseInt(parts[0]) || 1;
+                year = parseInt(parts[1]) || 2026;
+            }
         }
+        cleanComp = `${month.toString().padStart(2, '0')}/${year}`;
     }
 
     if (year > 2026 || (year === 2026 && month >= 7)) {
@@ -302,22 +319,25 @@ function resolveActiveTableConfig(competenciaStr) {
             key: "2026_JUL", 
             vr: TABELAS_HISTORICAS["2026_JUL"].vr, 
             isIncompatible: false, 
-            label: TABELAS_HISTORICAS["2026_JUL"].label 
+            label: TABELAS_HISTORICAS["2026_JUL"].label,
+            formattedDate: cleanComp
         };
     } else if (year === 2026 && month >= 1) {
         return { 
             key: "2026_JAN", 
             vr: TABELAS_HISTORICAS["2026_JAN"].vr, 
             isIncompatible: false, 
-            label: TABELAS_HISTORICAS["2026_JAN"].label 
+            label: TABELAS_HISTORICAS["2026_JAN"].label,
+            formattedDate: cleanComp
         };
     } else {
-        // Folha histórica anterior a 2026 (Ex: Outubro/2018)
+        // Folha histórica anterior a 2026 (Ex: Junho/2022 ou Outubro/2024)
         return { 
             key: "2026_JAN", 
             vr: TABELAS_HISTORICAS["2026_JAN"].vr, 
             isIncompatible: true, 
-            label: `Sem Tabela Histórica (${competenciaStr}) — Espelho Jan/2026` 
+            label: `Sem Tabela Histórica (${cleanComp}) — Espelho Jan/2026`,
+            formattedDate: cleanComp
         };
     }
 }
@@ -486,8 +506,19 @@ function pivotAndNormalizeData() {
         codigo_rubrica: ["codigo_da_rubrica", "codigo_rubrica", "rubrica", "cod_rubrica"],
         descricao_rubrica: ["descricao_da_rubrica", "descricao_rubrica", "desc_rubrica"],
         valor: ["valor", "valor_rubrica", "vlr_pago", "vlr"],
-        codigo_rendimento_desconto: ["codigo_rendimento_desconto", "codigo_rendimento", "rendimento_desconto", "cod_rend_desc", "tipo_rubrica"]
+        codigo_rendimento_desconto: ["codigo_rendimento_desconto", "codigo_rendimento", "rendimento_desconto", "cod_rend_desc", "tipo_rubrica"],
+        competencia: ["mes_ano", "competencia", "mes", "compet"]
     };
+
+    // PASSAGEM ANTECIPADA DEDICADA DE CAPTURA DA COMPETÊNCIA (Garante extração antes de qualquer return)
+    for (const rec of AppState.rawRecords) {
+        const keys = Object.keys(rec);
+        const findCompKey = keys.find(k => fuzzyMap.competencia.some(pat => k.includes(pat)) && !k.includes("tipo"));
+        if (findCompKey && rec[findCompKey] !== undefined && rec[findCompKey].toString().trim() !== "") {
+            matchedCompetence = rec[findCompKey].toString().trim();
+            break;
+        }
+    }
 
     AppState.rawRecords.forEach(record => {
         const keys = Object.keys(record);
@@ -584,7 +615,7 @@ function pivotAndNormalizeData() {
 
     // RESOLUÇÃO DINÂMICA DA TABELA TEMPORAL
     const tableConfig = resolveActiveTableConfig(matchedCompetence);
-    AppState.matchedCompetence = matchedCompetence;
+    AppState.matchedCompetence = tableConfig.formattedDate; // Armazena a data limpa formatada
     AppState.activeTableKey = tableConfig.key;
     AppState.activeVR = tableConfig.vr;
     AppState.isIncompatibleCompetence = tableConfig.isIncompatible;
@@ -603,10 +634,26 @@ function pivotAndNormalizeData() {
     if (rowCountText) rowCountText.textContent = `${AppState.rawRecords.length} lançamentos`;
     if (serverCountText) serverCountText.textContent = activeServerCount;
 
+    // BANNER NÍVEL 1: Exibe notificação de incompatibilidade de tabela na prévia de upload (Passo 1)
+    let previewBanner = document.getElementById("preview-incompatible-banner");
+    const previewPanel = document.getElementById("upload-preview-panel");
+
+    if (AppState.isIncompatibleCompetence && previewPanel) {
+        if (!previewBanner) {
+            previewBanner = document.createElement("div");
+            previewBanner.id = "preview-incompatible-banner";
+            previewBanner.style.cssText = "margin-top: 16px; padding: 14px 16px; background-color: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; font-size: 13.5px; color: #92400E; display: flex; align-items: center; gap: 10px;";
+            previewPanel.appendChild(previewBanner);
+        }
+        previewBanner.style.display = "flex";
+        previewBanner.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #D97706;"></i> <div><strong>Aviso de Competência Histórica (${AppState.matchedCompetence}):</strong> Não há tabela salarial cadastrada para este ano no aplicativo. A auditoria usará a Tabela de Jan/2026 como espelho estático.</div>`;
+    } else if (previewBanner) {
+        previewBanner.style.display = "none";
+    }
+
     const loader = document.getElementById("upload-loading-panel");
     if (loader) loader.style.display = "none";
     
-    const previewPanel = document.getElementById("upload-preview-panel");
     if (previewPanel) {
         previewPanel.style.display = "block";
         gsap.fromTo(previewPanel, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.3 });
@@ -629,28 +676,29 @@ function resetFileUIPanel() {
    === [CAPÍTULO] MOTOR DE AUDITORIA DETERMINÍSTICA ===
    ========================================================================== */
 
-function runDeterministicAudit() {
+async function runDeterministicAudit() {
     if (Object.keys(AppState.pivotedServers).length === 0) {
         Swal.fire("Aviso", "Não há dados em memória para processar.", "warning");
         return;
     }
 
-    // DISPARO DE NOTIFICAÇÃO DE INADEQUAÇÃO TEMPORAL (Sem bloqueio)
+    // NÍVEL 2: POP-UP DE ALERTA COM PAUSA OBRIGATÓRIA (AWAIT)
     if (AppState.isIncompatibleCompetence) {
-        Swal.fire({
+        await Swal.fire({
             icon: "warning",
             title: "Aviso de Inadequação de Tabela",
-            text: `A competência desta folha (${AppState.matchedCompetence}) é anterior a 2026. Não existe tabela salarial histórica cadastrada para este período. A auditoria será executada utilizando a Tabela de Janeiro/2026 como referência estática.`,
+            html: `A competência desta folha (<strong>${AppState.matchedCompetence}</strong>) é anterior a 2026.<br><br>Não existe tabela salarial histórica cadastrada para este período no aplicativo. O diagnóstico será executado utilizando a <strong>Tabela de Janeiro/2026</strong> como referência estática de apoio.`,
+            confirmButtonText: "Entendi, continuar mesmo assim",
             confirmButtonColor: "var(--primary)"
         });
-    } else {
-        Swal.fire({
-            title: "Processando Auditoria",
-            text: `Comparando valores contra a Tabela do TSE (${TABELAS_HISTORICAS[AppState.activeTableKey].label})...`,
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
     }
+
+    Swal.fire({
+        title: "Processando Auditoria",
+        text: `Comparando valores contra a Tabela do TSE (${TABELAS_HISTORICAS[AppState.activeTableKey].label})...`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
 
     const activeConfig = TABELAS_HISTORICAS[AppState.activeTableKey];
     const activeVR = activeConfig.vr;
@@ -1014,9 +1062,8 @@ function runDeterministicAudit() {
     filterAndPaginateFindings();
     renderComplianceChart(conformingCount, discrepancies = AppState.auditFindings.filter(f => f.status === "DIVERGENTE").length);
 
-    if (!AppState.isIncompatibleCompetence) {
-        Swal.close();
-    }
+    // FECHAMENTO INCONDICIONAL DO SPINNER DE CARREGAMENTO
+    Swal.close();
     
     switchView("tab-auditoria");
 }
@@ -1041,6 +1088,23 @@ function updateAuditDashboardUI(total, conforming, errors) {
 
     if (kpiConformingPct) kpiConformingPct.textContent = `${conformingPct}% da folha ativa`;
     if (kpiDiscrepanciesPct) kpiDiscrepanciesPct.textContent = `${errorsPct}% desvios cadastrais`;
+
+    // BANNER NÍVEL 3: Exibe o banner de alerta de incompatibilidade no topo do relatório de desvios
+    let auditBanner = document.getElementById("audit-incompatible-banner");
+    const auditViewHeader = document.querySelector("#view-auditoria .view-header");
+
+    if (AppState.isIncompatibleCompetence && auditViewHeader) {
+        if (!auditBanner) {
+            auditBanner = document.createElement("div");
+            auditBanner.id = "audit-incompatible-banner";
+            auditBanner.style.cssText = "margin-top: 16px; padding: 14px 16px; background-color: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; font-size: 13.5px; color: #92400E; display: flex; align-items: center; gap: 10px;";
+            auditViewHeader.appendChild(auditBanner);
+        }
+        auditBanner.style.display = "flex";
+        auditBanner.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #D97706;"></i> <div><strong>Folha de Período Histórico (${AppState.matchedCompetence}):</strong> Não há tabela remuneratória cadastrada para este ano. A análise utilizou a Tabela de Jan/2026 como espelho temporário.</div>`;
+    } else if (auditBanner) {
+        auditBanner.style.display = "none";
+    }
 }
 
 function renderComplianceChart(conforming, discrepancies) {
@@ -1304,7 +1368,6 @@ function openAuditDetailModal(serverId) {
         ${compRow("Teto Constitucional STF", finding.soma_remuneratoria, TETO_CONSTITUCIONAL_STF, isTetoConforming, "fa-solid fa-gavel", noteTeto)}
     `;
 
-    // Etiqueta de vigência de tabela aplicada
     const tableBadgeLabel = AppState.isIncompatibleCompetence 
         ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 4px 8px; margin-left: 8px; background: #FEF3C7; color: #D97706;">Tabela Espelho Jan/2026</span>`
         : `<span class="badge badge--success" style="font-size: 11px; padding: 4px 8px; margin-left: 8px;">Tabela ${activeConfig.label.split(' ')[0]}</span>`;
