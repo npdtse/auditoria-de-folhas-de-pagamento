@@ -1114,7 +1114,7 @@ function openAuditDetailModal(serverId) {
 
                 <!-- SEÇÃO 2: RAIO-X DE LANÇAMENTOS -->
                 <div style="margin-bottom: 24px;">
-                    <h4 style="font-size: 14px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">1. Detalhamento de Lançamentos em Folha</h4>
+                    <h4 style="font-size: 16px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">1. Detalhamento de Lançamentos em Folha</h4>
                     <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; background: var(--surface2);">
                         ${rubricsHtml}
                     </div>
@@ -1122,8 +1122,8 @@ function openAuditDetailModal(serverId) {
 
                 <!-- SEÇÃO 3: CONCILIAÇÃO LEGAL -->
                 <div style="margin-bottom: 16px;">
-                    <h4 style="font-size: 14px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">2. Conciliação contra Tabela Remuneratória</h4>
-                    <div style="display: flex; flex-direction: column;">
+                    <h4 style="font-size: 16px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">2. Conciliação contra Tabela Remuneratória</h4>
+                    <div style="display: flex; flex-direction: column; font-size: 16px">
                         ${reconciliaHtml}
                     </div>
                 </div>
@@ -1131,10 +1131,10 @@ function openAuditDetailModal(serverId) {
                 <!-- PAINEL DE SALDO -->
                 <div style="padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
                     <div>
-                        <span style="font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; display: block;">Saldo do Desvio Financeiro</span>
-                        <span style="font-size: 12px; color: var(--text2); display: block; margin-top: 2px;">Fundamentação: Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026</span>
+                        <span style="font-size: 13px; font-weight: 700; color: var(--text3); text-transform: uppercase; display: block;">Saldo do Desvio Financeiro</span>
+                        <span style="font-size: 14px; color: var(--text2); display: block; margin-top: 2px;">Fundamentação: Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026</span>
                     </div>
-                    <strong style="font-size: 20px; color: ${finding.desvio === 0 ? 'var(--color-start)' : 'var(--color-conclusion)'}">R$ ${finding.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                    <strong style="font-size: 22px; color: ${finding.desvio === 0 ? 'var(--color-start)' : 'var(--color-conclusion)'}">R$ ${finding.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
                 </div>
             </div>
         `
