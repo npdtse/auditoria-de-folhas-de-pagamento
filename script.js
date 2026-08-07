@@ -43,10 +43,6 @@ const RUBRICA_GAS = "2002";
 
 /* --- [Seção] Constantes de Enquadramento da Lei nº 15.292/2025 --- */
 const VALOR_REFERENCIA_AQ = 714.40;
-const COEFICIENTES_VALIDOS_AQ = [
-    0.0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.7, 1.9, 
-    2.0, 2.1, 2.2, 2.4, 2.6, 3.5, 3.7, 3.9, 4.1, 5.0, 5.2, 5.4, 5.6
-];
 
 /* --- [Seção] Armazenamento de Estado Local (App Store) --- */
 const AppState = {
@@ -385,8 +381,6 @@ function pivotAndNormalizeData() {
 
         if (idRaw === undefined || idRaw === "") return;
 
-        // FILTRAGEM INDIVIDUAL DE COMPETÊNCIA: Se a linha individual for de folha suplementar (tipo 1),
-        // descarta profilaticamente antes de iniciar qualquer agregação do salário mensal da folha regular (Tipo 0)
         let parsedTipoComp = 0;
         if (tipoCompRaw !== undefined && tipoCompRaw !== "") {
             parsedTipoComp = parseInt(tipoCompRaw);
@@ -408,7 +402,7 @@ function pivotAndNormalizeData() {
                 atribuicao: atribuicaoRaw !== undefined ? parseInt(atribuicaoRaw) : 0,
                 situacao: situacaoRaw ? situacaoRaw.toString().trim().toUpperCase() : "EFETIVO",
                 categoria: categoriaRaw !== undefined && categoriaRaw !== "" ? parseInt(categoriaRaw) : 1,
-                tipo_competencia: 0, // Fixo 0 por causa da filtragem seletiva de lote
+                tipo_competencia: 0,
                 rubricas: {},
                 detalheRubricas: []
             };
@@ -428,7 +422,6 @@ function pivotAndNormalizeData() {
                 cleanRubrica = cleanRubrica.slice(0, -2);
             }
 
-            // CORREÇÃO DE ACÚMULO (Fator de Proteção de Sobrescrita): Se a mesma rubrica vier duplicada, acumula somando
             servers[cleanId].rubricas[cleanRubrica] = (servers[cleanId].rubricas[cleanRubrica] || 0) + valorParsed;
 
             servers[cleanId].detalheRubricas.push({
@@ -518,12 +511,10 @@ function runDeterministicAudit() {
         const paidGaj = server.rubricas[RUBRICA_GAJ] || 0;
         const paidGas = server.rubricas[RUBRICA_GAS] || 0;
 
-        // CORREÇÃO DE ACÚMULO MULTI-RUBRICA DE AQ: Consolida a soma de todos os códigos de AQ ativos mapeados na planilha
         const paidAq = (server.rubricas["462001"] || 0) + 
                        (server.rubricas["463001"] || 0) + 
                        (server.rubricas["23001"] || 0);
 
-        // Regra 1: Isolamento de Inativos e Pensionistas (Categoria da Situação 5, 6, 7 ou Situação Funcional correspondente)
         const isInactiveOrPensioner = server.categoria === 5 || server.categoria === 6 || server.categoria === 7 ||
                                       server.situacao.includes("INATIVO") || server.situacao.includes("PENSIONISTA") ||
                                       server.situacao.includes("PENSAO") || (paidVenc === 0 && paidGaj === 0);
@@ -558,7 +549,6 @@ function runDeterministicAudit() {
             continue;
         }
 
-        // Regra 2: Busca do enquadramento exato por Classe/Padrão
         const referenceTable = TABELA_REMUNERATORIA[normalizedCareer];
         let matchedGrade = null;
 
@@ -573,8 +563,6 @@ function runDeterministicAudit() {
             }
         }
 
-        // REGRA DE CONGESTÃO (Âncora de Enquadramento): Se o casamento duplo falhar (ex: GAJ zerada),
-        // prioriza o Vencimento Básico (VB) como âncora para enquadrar o padrão e apontar a falta da GAJ
         if (!matchedGrade) {
             matchedGrade = referenceTable.find(g => Math.abs(g.vencimento - paidVenc) < 0.1);
         }
@@ -583,76 +571,79 @@ function runDeterministicAudit() {
             const expectedVenc = matchedGrade.vencimento;
             const expectedGaj = matchedGrade.gaj;
             
-            // Validação de GAS (35% do Vencimento Básico se possuir a rubrica)
             let expectedGas = 0;
             if (paidGas > 0) {
                 expectedGas = expectedVenc * 0.35;
             }
             const isGasConforming = Math.abs(expectedGas - paidGas) < 0.1;
 
-            // RECALCULO INTELIGENTE DO AQ ESPERADO (Análise de Componentes Ativos de Pós e Treinamento)
+            // =========================================================================
+            // RECALCULO REVOLUCIONADO DO AQ ESPERADO (LÓGICA DE FAIXAS DE PISO DE DIREITO)
+            // =========================================================================
             let expectedAq = 0;
             let expectedT = 0; // Parcela de Treinamento
-            let expectedQ = 0; // Parcela de Títulos (Especialização, Mestrado, Doutorado, etc)
+            let expectedQ = 0; // Parcela de Títulos (Especialização, Mestrado, Doutorado)
 
-            // A. Decodifica e valida a parcela de Capacitação/Treinamento (Rubrica 23001)
+            // A. Avaliação por Faixas da Parcela de Treinamento/Capacitação (Rubrica 23001)
             const rawT = server.rubricas["23001"] || 0;
             const coefT = rawT / VALOR_REFERENCIA_AQ;
-            const matchedCoefT = [0.0, 0.2, 0.4, 0.6].find(c => Math.abs(c - coefT) < 0.05);
-            expectedT = (matchedCoefT !== undefined ? matchedCoefT : 0.0) * VALOR_REFERENCIA_AQ;
+            let matchedCoefT = 0.0;
 
-            // B. Decodifica e valida as parcelas de Títulos (Especialização 462001 e Graduação 463001)
+            if (coefT >= 0.60 - 0.01) {
+                matchedCoefT = 0.6; // Teto de 3 conjuntos (360h)
+            } else if (coefT >= 0.40 - 0.01) {
+                matchedCoefT = 0.4; // 2 conjuntos (240h)
+            } else if (coefT >= 0.20 - 0.01) {
+                matchedCoefT = 0.2; // 1 conjunto (120h)
+            } else {
+                matchedCoefT = 0.0; // Abaixo do módulo mínimo legal de 120h
+            }
+            expectedT = matchedCoefT * VALOR_REFERENCIA_AQ;
+
+            // B. Avaliação por Faixas das Parcelas de Títulos (Rubricas 462001 e 463001)
             const rawQ = (server.rubricas["462001"] || 0) + (server.rubricas["463001"] || 0);
             const coefQ = rawQ / VALOR_REFERENCIA_AQ;
-            const matchedCoefQ = [0.0, 1.0, 2.0, 3.5, 5.0].find(c => Math.abs(c - coefQ) < 0.05);
+            let matchedCoefQ = 0.0;
 
-            if (matchedCoefQ !== undefined) {
-                expectedQ = matchedCoefQ * VALOR_REFERENCIA_AQ;
+            if (coefQ >= 5.0 - 0.01) {
+                matchedCoefQ = 5.0; // Doutorado (absorve títulos menores)
+            } else if (coefQ >= 3.5 - 0.01) {
+                matchedCoefQ = 3.5; // Mestrado (absorve títulos menores)
+            } else if (coefQ >= 2.0 - 0.01) {
+                matchedCoefQ = 2.0; // Teto Máximo de Títulos Menores (Art. 15, § 1º-C)
+            } else if (coefQ >= 1.0 - 0.01) {
+                matchedCoefQ = 1.0; // Especialização ou Segunda Graduação
             } else {
-                // Se a soma do grupo de títulos estourou ou é inválida, resgata os componentes e aplica os limites de lei
-                const raw462 = server.rubricas["462001"] || 0;
-                const raw463 = server.rubricas["463001"] || 0;
-                const coef462 = raw462 / VALOR_REFERENCIA_AQ;
-                const coef463 = raw463 / VALOR_REFERENCIA_AQ;
-
-                const validTitleCoefs = [1.0, 3.5, 5.0];
-                const matched462 = validTitleCoefs.find(c => Math.abs(c - coef462) < 0.05) || 0;
-                const matched463 = validTitleCoefs.find(c => Math.abs(c - coef463) < 0.05) || 0;
-
-                // Aplica regras de absorção do Art. 15, § 1º-B e teto de acúmulo de títulos menores do § 1º-C da Lei 15.292/2025
-                if (matched462 === 5.0 || matched463 === 5.0) {
-                    expectedQ = 5.0 * VALOR_REFERENCIA_AQ; // Doutorado absorve tudo
-                } else if (matched462 === 3.5 || matched463 === 3.5) {
-                    expectedQ = 3.5 * VALOR_REFERENCIA_AQ; // Mestrado absorve tudo
-                } else {
-                    expectedQ = Math.min(2.0, matched462 + matched463) * VALOR_REFERENCIA_AQ; // Limite de 2.0 VR
-                }
+                matchedCoefQ = 0.0; // Sem títulos homologados
             }
+            expectedQ = matchedCoefQ * VALOR_REFERENCIA_AQ;
 
             expectedAq = expectedT + expectedQ;
 
-            // Validação de conformidade matemática com base no cálculo reconstruído
             const isAqConforming = Math.abs(expectedAq - paidAq) < 0.1;
             let aqErrorReason = "";
 
             if (!isAqConforming) {
                 const calculatedCoefficient = paidAq / VALOR_REFERENCIA_AQ;
+                const expectedCoefficient = expectedAq / VALOR_REFERENCIA_AQ;
+                const diffAqValue = paidAq - expectedAq;
+
                 if (calculatedCoefficient > 5.6) {
-                    aqErrorReason = "O valor ultrapassa o teto máximo de 5,6 VR (Doutorado + 3 Capacitações), violando o limite absoluto de acúmulo.";
+                    aqErrorReason = `O valor pago de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) extrapola o teto máximo de 5,6 VR (Doutorado + 3 Capacitações). O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
                 } else if (calculatedCoefficient > 2.6 && calculatedCoefficient < 3.5) {
-                    aqErrorReason = "A acumulação de especializações, segunda graduação e certificações excede o teto de 2,0 VR estabelecido em lei.";
+                    aqErrorReason = `A soma de títulos secundários excede o teto de 2,0 VR (R$ 1.428,80). O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
                 } else if (calculatedCoefficient > 3.5 && calculatedCoefficient < 4.1) {
-                    aqErrorReason = "O Mestrado (3,5 VR) absorve automaticamente títulos de menor nível, violando a regra de exclusão mútua.";
+                    aqErrorReason = `O Mestrado (3,5 VR) absorve títulos de menor nível. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
                 } else if (calculatedCoefficient > 5.0 && calculatedCoefficient < 5.6) {
-                    aqErrorReason = "O Doutorado (5,0 VR) absorve automaticamente títulos de menor nível, violando a regra de exclusão mútua.";
+                    aqErrorReason = `O Doutorado (5,0 VR) absorve títulos de menor nível. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
                 } else if (calculatedCoefficient < 0.2) {
-                    aqErrorReason = `A fração paga de R$ ${paidAq.toFixed(2)} é inferior ao coeficiente mínimo legal para ações de capacitação de 0,2 VR (R$ 142,88).`;
+                    aqErrorReason = `O valor de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) é inferior ao módulo mínimo de 0,20 VR (R$ 142,88 / 120h). O valor legal esperado é de R$ 0,00, gerando divergência de R$ ${paidAq.toFixed(2)}.`;
                 } else {
-                    aqErrorReason = `O coeficiente pago de ${calculatedCoefficient.toFixed(2)} VR é fracionado e incompatível com a tabela regulamentar.`;
+                    aqErrorReason = `O valor de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) possui um resíduo excedente em relação ao direito reconhecido de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}). Diferença calculada em excesso de R$ ${diffAqValue.toFixed(2)}.`;
                 }
             }
 
-            // Validação de Cadastro: Sigla vs Atribuição (Portaria Conjunta nº 1/2026)
+            // Validação Cadastral de FC/CJ
             let cadastralIssue = "";
             const sigla = server.sigla;
             const atrib = server.atribuicao;
@@ -699,7 +690,6 @@ function runDeterministicAudit() {
                 });
                 conformingCount++;
             } else {
-                // ÁRVORE DE DECISÕES DE BLOCOS SEMÂNTICOS RICOS (UX INTEGRADA)
                 let errorDetails = [];
                 
                 if (!isVencConforming) {
@@ -961,7 +951,6 @@ function renderAuditTable() {
             <td data-label="Desvio Financeiro"><strong style="color: ${desvioStyleColor}">R$ ${item.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
         `;
 
-        // ADICIONA COMPORTAMENTO DE INTERATIVIDADE (Inspeção Semântica por Ficha Individual)
         row.style.cursor = "pointer";
         row.setAttribute("data-id", item.id);
         row.addEventListener("click", () => openAuditDetailModal(item.id));
@@ -995,7 +984,6 @@ function openAuditDetailModal(serverId) {
             ? `<span class="badge badge--neutral" style="font-size: 13px; padding: 6px 12px; margin-top: 8px;">Suplementar</span>`
             : `<span class="badge badge--error" style="font-size: 13px; padding: 6px 12px; margin-top: 8px;">Divergente</span>`);
 
-    // 1. Geração Linear do Painel "Raio-X de Lançamentos Recebidos" (Espaço Vertical Ampliado para 280px)
     let rubricsHtml = "";
     server.detalheRubricas.forEach(rub => {
         const isAudited = [RUBRICA_VENCIMENTO, RUBRICA_GAJ, "2002", "23001", "462001", "463001"].includes(rub.codigo);
@@ -1014,13 +1002,11 @@ function openAuditDetailModal(serverId) {
         `;
     });
 
-    // 2. Geração Linear do Painel "Conciliação das Rubricas Críticas"
     const isVencConforming = Math.abs(finding.venc_pago - finding.venc_esperado) < 0.1;
     const isGajConforming = Math.abs(finding.gaj_paga - finding.gaj_esperada) < 0.1;
     const isGasConforming = Math.abs(finding.gas_paga - finding.gas_esperada) < 0.1;
     const isAqConforming = Math.abs(finding.aq_pago - finding.aq_esperado) < 0.1;
 
-    // Árvore de Decisão Local com Explicação Matemática e Didática para o Auditor
     const diffVenc = finding.venc_pago - finding.venc_esperado;
     const noteVenc = isVencConforming ? "" : `
         O vencimento básico de <strong>R$ ${finding.venc_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> pago difere do previsto na Tabela Remuneratória Oficial (Anexo I da Lei nº 15.292/2025) para o padrão de enquadramento <strong>${gradeStr}</strong> (que deveria ser de <strong>R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
@@ -1049,57 +1035,31 @@ function openAuditDetailModal(serverId) {
         }
     }
 
+    // NOTA TÉCNICA ATUALIZADA: Exibe didaticamente o direito reconhecido e o excesso residual apurado
     let noteAq = "";
     if (!isAqConforming) {
         const calculatedCoefficient = finding.aq_pago / VALOR_REFERENCIA_AQ;
         const expectedCoefficient = finding.aq_esperado / VALOR_REFERENCIA_AQ;
         const diffAq = finding.aq_pago - finding.aq_esperado;
 
-        if (calculatedCoefficient > 5.6) {
+        if (calculatedCoefficient < 0.2) {
             noteAq = `
                 O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (coeficiente de <strong>${calculatedCoefficient.toFixed(2)} VR</strong>). 
-                O limite absoluto acumulado permitido por lei é de <strong>5,6 VR</strong> (5,0 do Doutorado + 0,6 de 3 Capacitações), equivalente a R$ ${ (5.6 * VALOR_REFERENCIA_AQ).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }. 
-                Como o servidor tem direito apenas a <strong>${expectedCoefficient.toFixed(2)} VR</strong> (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}), há uma extrapolação de teto de <strong style="color: var(--color-conclusion);">R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 15 da Lei nº 15.292/2025).
-            `;
-        } else if (calculatedCoefficient > 2.6 && calculatedCoefficient < 3.5) {
-            noteAq = `
-                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (coeficiente de <strong>${calculatedCoefficient.toFixed(2)} VR</strong>) em títulos secundários acumulados. 
-                O Artigo 15, § 1º-C da Lei nº 15.292/2025 impõe um teto de <strong>2,0 VR</strong> (R$ 1.428,80) para a soma de Especializações, Segunda Graduação e Certificações. 
-                Somando as capacitações autorizadas, o valor máximo de direito é de <strong>${expectedCoefficient.toFixed(2)} VR</strong> (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}), gerando um desvio de <strong style="color: var(--color-conclusion);">R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>.
-            `;
-        } else if (calculatedCoefficient > 3.5 && calculatedCoefficient < 4.1) {
-            noteAq = `
-                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (coeficiente de <strong>${calculatedCoefficient.toFixed(2)} VR</strong>). 
-                No entanto, o seu título de maior nível (Mestrado de <strong>3,5 VR</strong>) absorve e invalida qualquer acúmulo com especializações, graduações ou certificações secundárias. O único acúmulo permitido por lei com o Mestrado são as Capacitações (limite de 0,6 VR). 
-                O valor correto de direito é de <strong>${expectedCoefficient.toFixed(2)} VR</strong> (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}), indicando desvio de <strong style="color: var(--color-conclusion);">R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 15, § 1º-B da Lei nº 15.292/2025).
-            `;
-        } else if (calculatedCoefficient > 5.0 && calculatedCoefficient < 5.6) {
-            noteAq = `
-                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (coeficiente de <strong>${calculatedCoefficient.toFixed(2)} VR</strong>). 
-                No entanto, o seu título de maior nível (Doutorado de <strong>5,0 VR</strong>) absorve e invalida qualquer acúmulo com especializações, graduações ou certificações secundárias. O único acúmulo permitido por lei com o Doutorado são as Capacitações (limite de 0,6 VR). 
-                O valor correto de direito é de <strong>${expectedCoefficient.toFixed(2)} VR</strong> (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}), indicando desvio de <strong style="color: var(--color-conclusion);">R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 15, § 1º-B da Lei nº 15.292/2025).
-            `;
-        } else if (calculatedCoefficient < 0.2) {
-            noteAq = `
-                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (coeficiente de <strong>${calculatedCoefficient.toFixed(2)} VR</strong>). 
-                Este valor é inferior ao bloco mínimo legal de 120 horas exigido para Ações de Capacitação, que equivale a <strong>0,2 VR</strong> (R$ 142,88). Valores inferiores residuais não são autorizados para pagamento. 
-                Desvio integral de <strong style="color: var(--color-conclusion);">R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 15, V da Lei nº 15.292/2025).
+                Este valor é inferior ao bloco mínimo de 120 horas exigido para Ações de Capacitação (0,20 VR = R$ 142,88). Como não atinge o módulo mínimo, o direito esperado é de <strong>0,00 VR (R$ 0,00)</strong>, gerando divergência integral de <strong style="color: var(--color-conclusion);">R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 15, V da Lei nº 15.292/2025).
             `;
         } else {
             noteAq = `
                 O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (coeficiente de <strong>${calculatedCoefficient.toFixed(2)} VR</strong>). 
-                Este valor representa uma fração ou resíduo de cálculo que não corresponde a nenhum acúmulo regulamentar de especializações (1,0 VR), graduações (1,0 VR), certificações (0,5 VR) ou capacitações (múltiplos de 0,2 VR). 
-                O valor legal esperado de direito é de <strong>${expectedCoefficient.toFixed(2)} VR</strong> (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}), gerando divergência de <strong style="color: var(--color-conclusion);">R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026).
+                Com base na faixa de enquadramento legal, o direito reconhecido do servidor é de <strong>${expectedCoefficient.toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong>. 
+                O valor pago contém um resíduo em excesso, gerando divergência a ser corrigida de <strong style="color: var(--color-conclusion);">R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (<strong>${(calculatedCoefficient - expectedCoefficient).toFixed(2)} VR</strong>). (Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026).
             `;
         }
     }
 
-    // Geração de Linhas Comparativas Linearizadas sem Bordas Laterais Coloridas
     const compRow = (label, paid, expected, conforms, icon, note = "") => {
         const color = conforms ? "#10B981" : "#E11D48";
         const statusText = conforms ? "Conforme" : "Divergente";
         
-        // Seção da Nota Técnica explicativa ampliada (fundo integrado e tamanho de fonte 13px)
         const noteHtml = (!conforms && note) ? `
             <div style="margin-top: 10px; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 13px; color: var(--text); line-height: 1.45;">
                 <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 6px;"></i> <strong>Nota Técnica:</strong> ${note}
@@ -1128,7 +1088,6 @@ function openAuditDetailModal(serverId) {
         ${compRow("Adicional de Qualificação (AQ)", finding.aq_pago, finding.aq_esperado, isAqConforming, "fa-solid fa-graduation-cap", noteAq)}
     `;
 
-    // Renderização com SweetAlert2 de alta densidade semântica em formato estritamente linear
     Swal.fire({
         width: '780px',
         showConfirmButton: true,
@@ -1153,7 +1112,7 @@ function openAuditDetailModal(serverId) {
                     </div>
                 </div>
 
-                <!-- SEÇÃO 2: RAIO-X DE LANÇAMENTOS (Max-height ampliado para 280px) -->
+                <!-- SEÇÃO 2: RAIO-X DE LANÇAMENTOS -->
                 <div style="margin-bottom: 24px;">
                     <h4 style="font-size: 14px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">1. Detalhamento de Lançamentos em Folha</h4>
                     <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; background: var(--surface2);">
