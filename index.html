@@ -147,7 +147,7 @@
                     <div class="view-header">
                         <div class="view-header__title-box">
                             <h3 class="view-header__title" id="view-auditoria-title">Resultados do Diagnóstico de Pessoal</h3>
-                            <p class="view-header__subtitle">Este painel cruza o Vencimento Básico (1001), GAJ (2001), GAS (2002) e o Adicional de Qualificação (462001) pagos contra a legislação e as Tabelas Remuneratórias do TSE para mapear inconsistências cadastrais ou de enquadramento.</p>
+                            <p class="view-header__subtitle">Este painel cruza o Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001) e o Teto Constitucional (STF - R$ 46.366,19) pagos contra a legislação e as Tabelas Remuneratórias do TSE para mapear inconsistências cadastrais ou de enquadramento.</p>
                             <br>
                         </div>
                     </div>
@@ -291,7 +291,7 @@
                             2. Adicional de Qualificação (AQ) - Regras de Acúmulo
                         </h4>
                         
-                        <p class="section-subtitle" style="margin-bottom: 16px;">O AQ deixou de ser calculado sobre o Vencimento Básico e passou a ser fixado em múltiplos do **Valor de Referência (VR) nacional unificado de R$ 714,40**, obedecendo às seguintes regras estritas de concessão:</p>
+                        <p class="section-subtitle" style="margin-bottom: 16px;">O AQ deixou de ser calculado sobre o Vencimento Básico e passou a ser fixado em múltiplos do <strong>Valor de Referência (VR) nacional unificado de R$ 714,40</strong>, obedecendo às seguintes regras estritas de concessão:</p>
                         
                         <ul class="parameter-list">
                             <li class="parameter-item">
@@ -304,14 +304,14 @@
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Teto de Acúmulo de Títulos Menores (Especialização/Graduação/Certificação)</span>
-                                    <p class="parameter-item__desc">A soma de Especializações (1,0 VR cada), Segunda Graduação (1,0 VR) e Certificações Profissionais (0,5 VR cada) é **estritamente limitada ao teto máximo de 2,0 VR (R$ 1.428,80)** para servidores sem Mestrado ou Doutorado (Artigo 15, § 1º-C).</p>
+                                    <p class="parameter-item__desc">A soma de Especializações (1,0 VR cada), Segunda Graduação (1,0 VR) e Certificações Profissionais (0,5 VR cada) é <strong>estritamente limitada ao teto máximo de 2,0 VR (R$ 1.428,80)</strong> para servidores sem Mestrado ou Doutorado (Artigo 15, § 1º-C).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Ações de Capacitação/Treinamento (Rubrica 23001)</span>
-                                    <p class="parameter-item__desc">Devido à razão de 0,2 VR (R$ 142,88) para cada conjunto de ações que some 120 horas. É cumulativo com qualquer outro título (Artigo 15, § 1º-D) e limitado ao **teto de 3 conjuntos (0,6 VR = R$ 428,64)** (Artigo 15, V).</p>
+                                    <p class="parameter-item__desc">Devido à razão de 0,2 VR (R$ 142,88) para cada conjunto de ações que some 120 horas. É cumulativo com qualquer outro título (Artigo 15, § 1º-D) e limitado ao <strong>teto de 3 conjuntos (0,6 VR = R$ 428,64)</strong> (Artigo 15, V).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -342,7 +342,7 @@
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Adicional de Risco (Rubrica 2002)</span>
-                                    <p class="parameter-item__desc">Devida exclusivamente a Técnicos e Analistas Judiciários na especialidade de Polícia Judicial (atividades de segurança ativa). Corresponde a **35% sobre o Vencimento Básico** esperado do padrão do servidor (Artigo 17 da Lei nº 11.416/2006).</p>
+                                    <p class="parameter-item__desc">Devida exclusivamente a Técnicos e Analistas Judiciários na especialidade de Polícia Judicial (atividades de segurança ativa). Corresponde a <strong>35% sobre o Vencimento Básico</strong> esperado do padrão do servidor (Artigo 17 da Lei nº 11.416/2006).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -369,11 +369,49 @@
                         </div>
                     </div>
 
-                    <!-- Cartão 4: Regras Cadastrais e Profilaxia de Falsos Positivos -->
+                    <!-- Cartão 4: Teto Remuneratório Constitucional (NOVO) -->
+                    <div class="card card--paddings">
+                        <h4 class="card-title">
+                            <i class="fa-solid fa-gavel" style="color: var(--primary); margin-right: 8px;"></i>
+                            4. Teto Remuneratório Constitucional (STF - R$ 46.366,19)
+                        </h4>
+                        
+                        <ul class="parameter-list">
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Abate-Teto sobre Remuneração Bruta Total</span>
+                                    <p class="parameter-item__desc">Soma todas as verbas de natureza remuneratória do mês (Vencimento, GAJ, GAS, AQ, Funções FC/CJ e VPNI). Caso a soma bruta ultrapasse o subsídio de Ministro do STF (<strong>R$ 46.366,19</strong>), o sistema aponta a necessidade do desconto de corte de retenção na fonte.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Isenção das Verbas de Caráter Indenizatório</span>
+                                    <p class="parameter-item__desc">Auxílios assistenciais e indenizações (Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte) são <strong>excluídos da soma do teto</strong> por expressa determinação constitucional (Art. 37, § 11).</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                        </ul>
+
+                        <!-- Prateleira Normativa do Cartão 4 -->
+                        <div class="normative-shelf">
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Resoluções do CNJ</span>
+                            <div class="normative-shelf__list">
+                                <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm" target="_blank" class="normative-shelf__link" aria-label="Acessar Constituição Federal no Planalto">
+                                    <i class="fa-solid fa-scale-balanced"></i> Artigo 37, XI e § 11 da CF/88
+                                </a>
+                                <a href="https://atos.cnj.jus.br/atos/detalhar/88" target="_blank" class="normative-shelf__link" aria-label="Abrir Resolução CNJ 14 de 2006">
+                                    <i class="fa-solid fa-bookmark"></i> Resolução CNJ nº 14/2006 (Teto)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cartão 5: Regras Cadastrais e Profilaxia de Falsos Positivos -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-user-check" style="color: var(--primary); margin-right: 8px;"></i>
-                            4. Consistência Cadastral e Filtros de Ingestão
+                            5. Consistência Cadastral e Filtros de Ingestão
                         </h4>
                         
                         <ul class="parameter-list">
@@ -386,21 +424,21 @@
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Filtro Seletivo de Folha Normal (Não Suplementar ou Retroativa) - Folha de Pagamento Mensal</span>
-                                    <p class="parameter-item__desc">Registros de acertos suplementares ou retroativos com `Tipo Competência !== 0` ainda não estão sob análise. Por isso, esses registros são descartados automaticamente na leitura da planilha a partir da aplicação de um filtro.</p>
+                                    <span class="parameter-item__label">Filtro Seletivo de Folha Normal (Não Suplementar ou Retroativa)</span>
+                                    <p class="parameter-item__desc">Registros de acertos suplementares ou retroativos com `Tipo Competência !== 0` ainda não estão sob análise. Por isso, esses registros são descartados automaticamente na leitura da planilha.</p>
                                 </div>
                                 <span class="badge badge--success">Filtro Aplicado</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Validade Quadrienal de AQ (Capacitações e Certificações)</span>
-                                    <p class="parameter-item__desc">Os adicionais correspondentes a Certificações Profissionais (0,5 VR) e Ações de Capacitação (múltiplos de 0,2 VR) possuem prazo de validade de exatamente 4 anos (48 meses) da conclusão (Portaria Conjunta nº 1/2026). Não há dados suficientes nas planilhas de origem para a verificação automatizada desses adicionais.</p>
+                                    <p class="parameter-item__desc">Os adicionais correspondentes a Certificações Profissionais (0,5 VR) e Ações de Capacitação (múltiplos de 0,2 VR) possuem prazo de validade de exatamente 4 anos (48 meses) da conclusão (Portaria Conjunta nº 1/2026). Não há dados suficientes nas planilhas de origem para a verificação automatizada dessa validade temporal.</p>
                                 </div>
                                 <span class="badge badge--neutral">Não Verificado</span>
                             </li>
                         </ul>
 
-                        <!-- Prateleira Normativa do Cartão 4 -->
+                        <!-- Prateleira Normativa do Cartão 5 -->
                         <div class="normative-shelf">
                             <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Tabelas de Apoio</span>
                             <div class="normative-shelf__list">

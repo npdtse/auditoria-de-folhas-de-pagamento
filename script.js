@@ -41,8 +41,20 @@ const RUBRICA_VENCIMENTO = "1001";
 const RUBRICA_GAJ = "2001";
 const RUBRICA_GAS = "2002"; 
 
-/* --- [Seção] Constantes de Enquadramento da Lei nº 15.292/2025 --- */
-const VALOR_REFERENCIA_AQ = 714.40;
+/* --- [Seção] Constantes do Teto Constitucional e Legislação --- */
+const TETO_CONSTITUCIONAL_STF = 46366.19; // Subsídio mensal de Ministro do STF (Lei nº 14.520/2023)
+const VALOR_REFERENCIA_AQ = 714.40;       // Valor de Referência unificado de AQ (Lei nº 15.292/2025)
+
+/* --- [Seção] Rol de Rubricas Indenizatórias e Benefícios Excluídos do Teto --- */
+const RUBRICAS_EXCLUIDAS_TETO = [
+    "85001", // Auxílio-Alimentação
+    "85002", // Auxílio-Saúde
+    "85003", // Assistência Pré-Escolar
+    "85004", // Auxílio-Natalidade
+    "85005", // Auxílio-Transporte
+    "85006", // Ajuda de Custo
+    "85007"  // Diárias
+];
 
 /* --- [Seção] Armazenamento de Estado Local (App Store) --- */
 const AppState = {
@@ -88,21 +100,18 @@ function switchView(targetTabId) {
     const targetViewId = viewMap[targetTabId];
     if (!targetViewId) return;
 
-    // Remove classes ativas da sidebar
     document.querySelectorAll(".sidebar__menu-item").forEach(item => {
         item.classList.remove("sidebar__menu-item--active");
     });
     const clickedTab = document.getElementById(targetTabId);
     if (clickedTab) clickedTab.classList.add("sidebar__menu-item--active");
 
-    // Oculta e reseta todas as views SPA
     document.querySelectorAll(".spa-view").forEach(view => {
         view.classList.remove("spa-view--active");
         view.style.display = "none";
         view.style.opacity = "0";
     });
 
-    // Ativa view correspondente com GSAP
     const activeView = document.getElementById(targetViewId);
     if (activeView) {
         activeView.style.display = "block";
@@ -114,7 +123,6 @@ function switchView(targetTabId) {
         );
     }
 
-    // Reset absoluto de scroll vertical
     const scrollContainer = document.getElementById("main-scroll-area");
     if (scrollContainer) scrollContainer.scrollTop = 0;
     window.scrollTo(0, 0);
@@ -124,7 +132,6 @@ function initAppNavigation() {
     document.querySelectorAll(".sidebar__menu-item").forEach(tab => {
         tab.addEventListener("click", (e) => {
             const tabId = e.currentTarget.id;
-            // Bloqueia seletivamente apenas a aba de auditoria antes da carga (Critérios fica 100% livre)
             if (tabId === "tab-auditoria" && AppState.auditFindings.length === 0) {
                 Swal.fire({
                     icon: "info",
@@ -268,12 +275,12 @@ function runVisualLoadingProgress(callback) {
 
 function handleRawFileLoad(file) {
     if (AppState.isProcessing) return;
-    AppState.isProcessing = true;
+    
+    const fileExtension = file.name.split('.').pop().toLowerCase();
 
-    runVisualLoadingProgress(() => {
-        const fileExtension = file.name.split('.').pop().toLowerCase();
-
-        if (fileExtension === "xlsx" || fileExtension === "xls") {
+    if (fileExtension === "xlsx" || fileExtension === "xls") {
+        AppState.isProcessing = true;
+        runVisualLoadingProgress(() => {
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -290,22 +297,53 @@ function handleRawFileLoad(file) {
                 }
             };
             reader.readAsArrayBuffer(file);
-        } else {
-            Papa.parse(file, {
-                skipEmptyLines: true,
-                header: false,
-                delimiter: "", 
-                delimitersToGuess: [',', ';', '\t', '|', '#'],
-                complete: function(results) {
-                    parseMatrixData(results.data);
-                },
-                error: function() {
-                    Swal.fire("Erro", "Erro crítico de leitura local com PapaParse.", "error");
-                    resetFileUIPanel();
-                }
-            });
-        }
-    });
+        });
+    } else {
+        Swal.fire({
+            title: "Configuração do Arquivo",
+            html: `
+                <p style="font-size: 14.5px; color: var(--text2); margin-bottom: 24px; line-height: 1.4;">
+                    Como as colunas do seu arquivo de texto plano estão separadas? Selecione a opção correspondente:
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin: 0 auto;">
+                    <button class="btn btn--secondary btn-delim-choice" data-delim="#" style="justify-content: flex-start; padding: 12px 20px;"><i class="fa-solid fa-hashtag" style="color: var(--primary); margin-right: 12px;"></i> Hashtag (#)</button>
+                    <button class="btn btn--secondary btn-delim-choice" data-delim=";" style="justify-content: flex-start; padding: 12px 20px;"><i class="fa-solid fa-list-ol" style="color: var(--primary); margin-right: 12px;"></i> Ponto e Vírgula (;)</button>
+                    <button class="btn btn--secondary btn-delim-choice" data-delim="\t" style="justify-content: flex-start; padding: 12px 20px;"><i class="fa-solid fa-arrows-left-right" style="color: var(--primary); margin-right: 12px;"></i> Tabulação (Tab / Espaço)</button>
+                    <button class="btn btn--secondary btn-delim-choice" data-delim="," style="justify-content: flex-start; padding: 12px 20px;"><i class="fa-solid fa-comma" style="color: var(--primary); margin-right: 12px;"></i> Vírgula (,)</button>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: "Cancelar",
+            cancelButtonColor: "var(--text3)",
+            didOpen: () => {
+                const buttons = document.querySelectorAll(".btn-delim-choice");
+                buttons.forEach(btn => {
+                    btn.addEventListener("click", (e) => {
+                        const delim = e.currentTarget.getAttribute("data-delim");
+                        Swal.close();
+                        
+                        AppState.isProcessing = true;
+                        runVisualLoadingProgress(() => {
+                            Papa.parse(file, {
+                                skipEmptyLines: true,
+                                header: false,
+                                delimiter: delim,
+                                encoding: "ISO-8859-1",
+                                complete: function(results) {
+                                    parseMatrixData(results.data);
+                                },
+                                error: function() {
+                                    Swal.fire("Erro", "Erro crítico de leitura local com PapaParse.", "error");
+                                    resetFileUIPanel();
+                                }
+                            });
+                        });
+                    });
+                });
+            }
+        });
+    }
 }
 
 function parseMatrixData(matrix) {
@@ -334,6 +372,7 @@ function parseMatrixData(matrix) {
     pivotAndNormalizeData();
 }
 
+/* --- [Seção] Pivoteamento com Mapeamento de Rendimento vs Desconto --- */
 function pivotAndNormalizeData() {
     const servers = {};
 
@@ -341,7 +380,7 @@ function pivotAndNormalizeData() {
         id: ["identificacao_unica", "matricula", "id", "identific", "cod_servidor"],
         nome: ["nome", "servidor", "nome_do_servidor"],
         cpf: ["cpf", "documento", "num_cpf"],
-        carreira: ["carreira", "cargo", "cargo_efetivo", "desc_cargo"],
+        carreira: ["carreira", "cargo_efetivo", "cargo"],
         sigla: ["sigla", "cargo_comissao", "funcao", "sigla_fc_cj"],
         atribuicao: ["atribuicao", "atrib", "nivel_atribuicao"],
         situacao: ["situacao_funcional", "situac", "situacao_func"],
@@ -349,18 +388,19 @@ function pivotAndNormalizeData() {
         tipo_competencia: ["tipo_competencia", "tipo_comp", "comp_tipo"],
         codigo_rubrica: ["codigo_da_rubrica", "codigo_rubrica", "rubrica", "cod_rubrica"],
         descricao_rubrica: ["descricao_da_rubrica", "descricao_rubrica", "desc_rubrica"],
-        valor: ["valor", "valor_rubrica", "vlr_pago", "vlr"]
+        valor: ["valor", "valor_rubrica", "vlr_pago", "vlr"],
+        codigo_rendimento_desconto: ["codigo_rendimento_desconto", "codigo_rendimento", "rendimento_desconto", "cod_rend_desc", "tipo_rubrica"]
     };
 
     AppState.rawRecords.forEach(record => {
         const keys = Object.keys(record);
 
-        const getVal = (fieldKeys) => {
+        const getVal = (fieldKeys, excludePatterns = []) => {
             for (const key of fieldKeys) {
                 if (keys.includes(key)) return record[key];
             }
             for (const key of fieldKeys) {
-                const foundKey = keys.find(k => k.includes(key));
+                const foundKey = keys.find(k => k.includes(key) && !excludePatterns.some(ex => k.includes(ex)));
                 if (foundKey) return record[foundKey];
             }
             return undefined;
@@ -369,15 +409,16 @@ function pivotAndNormalizeData() {
         const idRaw = getVal(fuzzyMap.id);
         const nomeRaw = getVal(fuzzyMap.nome);
         const cpfRaw = getVal(fuzzyMap.cpf);
-        const carreiraRaw = getVal(fuzzyMap.carreira);
+        const carreiraRaw = getVal(fuzzyMap.carreira, ["requisito", "ingresso"]);
         const siglaRaw = getVal(fuzzyMap.sigla);
         const atribuicaoRaw = getVal(fuzzyMap.atribuicao);
-        const situacaoRaw = getVal(fuzzyMap.situacao);
+        const situacaoRaw = getVal(fuzzyMap.situacao, ["categoria"]);
         const categoriaRaw = getVal(fuzzyMap.categoria);
-        const tipoCompRaw = getVal(fuzzyMap.tipo_competencia);
-        const rubricaRaw = getVal(fuzzyMap.codigo_rubrica);
+        const tipoCompRaw = getVal(fuzzyMap.tipo_competencia, ["sequencial", "rubrica"]);
+        const rubricaRaw = getVal(fuzzyMap.codigo_rubrica, ["desc", "tipo", "rendimento"]);
         const descRubricaRaw = getVal(fuzzyMap.descricao_rubrica);
-        const valorRaw = getVal(fuzzyMap.valor);
+        const valorRaw = getVal(fuzzyMap.valor, ["tipo", "codigo"]);
+        const rendDescRaw = getVal(fuzzyMap.codigo_rendimento_desconto, ["desc", "sequencial"]);
 
         if (idRaw === undefined || idRaw === "") return;
 
@@ -408,6 +449,13 @@ function pivotAndNormalizeData() {
             };
         }
 
+        // CAPTURA DO CÓDIGO RENDIMENTO DESCONTO (1 = Rendimento, 2 = Desconto)
+        let cleanRendDesc = 1; // Padrão: Rendimento
+        if (rendDescRaw !== undefined && rendDescRaw !== "") {
+            const parsedRD = parseInt(rendDescRaw);
+            if (!isNaN(parsedRD)) cleanRendDesc = parsedRD;
+        }
+
         if (rubricaRaw && valorRaw !== undefined) {
             let valorParsed = 0;
             if (typeof valorRaw === "number") {
@@ -422,12 +470,16 @@ function pivotAndNormalizeData() {
                 cleanRubrica = cleanRubrica.slice(0, -2);
             }
 
-            servers[cleanId].rubricas[cleanRubrica] = (servers[cleanId].rubricas[cleanRubrica] || 0) + valorParsed;
+            // Armazena no dicionário do servidor apenas se for do tipo Rendimento (1) para não inflar a rubrica com descontos
+            if (cleanRendDesc === 1) {
+                servers[cleanId].rubricas[cleanRubrica] = (servers[cleanId].rubricas[cleanRubrica] || 0) + valorParsed;
+            }
 
             servers[cleanId].detalheRubricas.push({
                 codigo: cleanRubrica,
                 descricao: descRubricaRaw ? descRubricaRaw.toString().trim() : "Sem descrição",
-                valor: valorParsed
+                valor: valorParsed,
+                tipoRD: cleanRendDesc
             });
         }
     });
@@ -483,7 +535,7 @@ function runDeterministicAudit() {
 
     Swal.fire({
         title: "Processando Auditoria",
-        text: "Comparando valores contra a legislação e tabelas de maio de 2026...",
+        text: "Comparando valores contra a legislação e tabelas do TSE...",
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
@@ -515,6 +567,22 @@ function runDeterministicAudit() {
                        (server.rubricas["463001"] || 0) + 
                        (server.rubricas["23001"] || 0);
 
+        // =========================================================================
+        // CÁLCULO DA SOMA REMUNERATÓRIA BRUTA PARA O TETO CONSTITUCIONAL (STF)
+        // Apenas rubricas com Código Rendimento Desconto == 1 (Rendimento) somam!
+        // =========================================================================
+        let somaRemuneratoriaBruta = 0;
+        
+        server.detalheRubricas.forEach(rub => {
+            if (rub.tipoRD === 1 && !RUBRICAS_EXCLUIDAS_TETO.includes(rub.codigo)) {
+                somaRemuneratoriaBruta += rub.valor;
+            }
+        });
+
+        const excessoTetoBruto = Math.max(0, somaRemuneratoriaBruta - TETO_CONSTITUCIONAL_STF);
+        const possuiExcessoTeto = excessoTetoBruto > 0.01;
+
+        // Isolamento de Inativos e Pensionistas
         const isInactiveOrPensioner = server.categoria === 5 || server.categoria === 6 || server.categoria === 7 ||
                                       server.situacao.includes("INATIVO") || server.situacao.includes("PENSIONISTA") ||
                                       server.situacao.includes("PENSAO") || (paidVenc === 0 && paidGaj === 0);
@@ -536,6 +604,8 @@ function runDeterministicAudit() {
                 gas_paga: paidGas,
                 aq_esperado: 0,
                 aq_pago: paidAq,
+                soma_remuneratoria: somaRemuneratoriaBruta,
+                excesso_teto: 0,
                 detalhe: `
                     <div class="audit-issue">
                         <span class="audit-issue__badge badge badge--neutral"><i class="fa-solid fa-user-slash"></i> Não Analisado</span>
@@ -577,44 +647,40 @@ function runDeterministicAudit() {
             }
             const isGasConforming = Math.abs(expectedGas - paidGas) < 0.1;
 
-            // =========================================================================
-            // RECALCULO REVOLUCIONADO DO AQ ESPERADO (LÓGICA DE FAIXAS DE PISO DE DIREITO)
-            // =========================================================================
+            // Recálculo Inteligente de AQ
             let expectedAq = 0;
-            let expectedT = 0; // Parcela de Treinamento
-            let expectedQ = 0; // Parcela de Títulos (Especialização, Mestrado, Doutorado)
+            let expectedT = 0; 
+            let expectedQ = 0; 
 
-            // A. Avaliação por Faixas da Parcela de Treinamento/Capacitação (Rubrica 23001)
             const rawT = server.rubricas["23001"] || 0;
             const coefT = rawT / VALOR_REFERENCIA_AQ;
             let matchedCoefT = 0.0;
 
             if (coefT >= 0.60 - 0.01) {
-                matchedCoefT = 0.6; // Teto de 3 conjuntos (360h)
+                matchedCoefT = 0.6;
             } else if (coefT >= 0.40 - 0.01) {
-                matchedCoefT = 0.4; // 2 conjuntos (240h)
+                matchedCoefT = 0.4;
             } else if (coefT >= 0.20 - 0.01) {
-                matchedCoefT = 0.2; // 1 conjunto (120h)
+                matchedCoefT = 0.2;
             } else {
-                matchedCoefT = 0.0; // Abaixo do módulo mínimo legal de 120h
+                matchedCoefT = 0.0;
             }
             expectedT = matchedCoefT * VALOR_REFERENCIA_AQ;
 
-            // B. Avaliação por Faixas das Parcelas de Títulos (Rubricas 462001 e 463001)
             const rawQ = (server.rubricas["462001"] || 0) + (server.rubricas["463001"] || 0);
             const coefQ = rawQ / VALOR_REFERENCIA_AQ;
             let matchedCoefQ = 0.0;
 
             if (coefQ >= 5.0 - 0.01) {
-                matchedCoefQ = 5.0; // Doutorado (absorve títulos menores)
+                matchedCoefQ = 5.0;
             } else if (coefQ >= 3.5 - 0.01) {
-                matchedCoefQ = 3.5; // Mestrado (absorve títulos menores)
+                matchedCoefQ = 3.5;
             } else if (coefQ >= 2.0 - 0.01) {
-                matchedCoefQ = 2.0; // Teto Máximo de Títulos Menores (Art. 15, § 1º-C)
+                matchedCoefQ = 2.0;
             } else if (coefQ >= 1.0 - 0.01) {
-                matchedCoefQ = 1.0; // Especialização ou Segunda Graduação
+                matchedCoefQ = 1.0;
             } else {
-                matchedCoefQ = 0.0; // Sem títulos homologados
+                matchedCoefQ = 0.0;
             }
             expectedQ = matchedCoefQ * VALOR_REFERENCIA_AQ;
 
@@ -663,7 +729,7 @@ function runDeterministicAudit() {
             const isVencConforming = Math.abs(expectedVenc - paidVenc) < 0.1;
             const isGajConforming = Math.abs(expectedGaj - paidGaj) < 0.1;
 
-            if (isVencConforming && isGajConforming && isGasConforming && isAqConforming && !cadastralIssue) {
+            if (isVencConforming && isGajConforming && isGasConforming && isAqConforming && !cadastralIssue && !possuiExcessoTeto) {
                 findings.push({
                     id: server.id,
                     nome: server.nome,
@@ -680,6 +746,8 @@ function runDeterministicAudit() {
                     gas_paga: paidGas,
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
+                    soma_remuneratoria: somaRemuneratoriaBruta,
+                    excesso_teto: 0,
                     detalhe: `
                         <div class="audit-issue">
                             <span class="audit-issue__badge badge badge--success"><i class="fa-solid fa-circle-check"></i> Conforme</span>
@@ -691,6 +759,17 @@ function runDeterministicAudit() {
                 conformingCount++;
             } else {
                 let errorDetails = [];
+
+                if (possuiExcessoTeto) {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-gavel"></i> Teto Constitucional STF</span>
+                            <div class="audit-issue__math">Remuneração Bruta: <strong>R$ ${somaRemuneratoriaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Teto STF: <strong>R$ 46.366,19</strong></div>
+                            <div class="audit-issue__rule">A soma das verbas de natureza remuneratória ultrapassa o teto constitucional do funcionalismo em R$ ${excessoTetoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.</div>
+                            <div class="audit-issue__law">Base Legal: Artigo 37, Inciso XI e § 11 da Constituição Federal e Resolução CNJ nº 14/2006.</div>
+                        </div>
+                    `);
+                }
                 
                 if (!isVencConforming) {
                     errorDetails.push(`
@@ -757,7 +836,7 @@ function runDeterministicAudit() {
                     `);
                 }
 
-                const desvioFinanceiro = (paidVenc - expectedVenc) + (paidGaj - expectedGaj) + (paidGas - expectedGas) + (paidAq - expectedAq);
+                const desvioFinanceiro = (paidVenc - expectedVenc) + (paidGaj - expectedGaj) + (paidGas - expectedGas) + (paidAq - expectedAq) + excessoTetoBruto;
                 const detailHtml = errorDetails.join('<div class="audit-issue-divider"></div>');
 
                 findings.push({
@@ -776,6 +855,8 @@ function runDeterministicAudit() {
                     gas_paga: paidGas,
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
+                    soma_remuneratoria: somaRemuneratoriaBruta,
+                    excesso_teto: excessoTetoBruto,
                     detalhe: detailHtml,
                     desvio: desvioFinanceiro
                 });
@@ -783,7 +864,7 @@ function runDeterministicAudit() {
             }
 
         } else {
-            const desvioTotal = paidVenc + paidGaj;
+            const desvioTotal = paidVenc + paidGaj + excessoTetoBruto;
             findings.push({
                 id: server.id,
                 nome: server.nome,
@@ -800,6 +881,8 @@ function runDeterministicAudit() {
                 gas_paga: paidGas,
                 aq_esperado: 0,
                 aq_pago: paidAq,
+                soma_remuneratoria: somaRemuneratoriaBruta,
+                excesso_teto: excessoTetoBruto,
                 detalhe: `
                     <div class="audit-issue">
                         <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> Vencimento</span>
@@ -987,17 +1070,23 @@ function openAuditDetailModal(serverId) {
     let rubricsHtml = "";
     server.detalheRubricas.forEach(rub => {
         const isAudited = [RUBRICA_VENCIMENTO, RUBRICA_GAJ, "2002", "23001", "462001", "463001"].includes(rub.codigo);
-        const tag = isAudited 
-            ? `<span class="badge badge--success" style="font-size: 10px; padding: 2px 6px;">Auditada</span>` 
-            : `<span class="badge badge--neutral" style="font-size: 10px; padding: 2px 6px;">Não Auditada</span>`;
+        const tagAudited = isAudited 
+            ? `<span class="badge badge--success" style="font-size: 11px; padding: 2px 6px;">Auditada</span>` 
+            : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px;">Não Auditada</span>`;
         
+        const tagRD = rub.tipoRD === 1 
+            ? `<span class="badge badge--success" style="font-size: 11px; padding: 2px 6px; margin-left: 4px;">Rendimento</span>` 
+            : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; margin-left: 4px;">Desconto</span>`;
+
         rubricsHtml += `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px;">
                 <div style="text-align: left;">
                     <strong style="color: var(--text);">${rub.codigo}</strong> - <span style="color: var(--text2);">${rub.descricao}</span>
-                    <div style="margin-top: 2px;">${tag}</div>
+                    <div style="margin-top: 3px; display: flex; gap: 4px;">${tagAudited}${tagRD}</div>
                 </div>
-                <strong style="color: var(--text); white-space: nowrap;">R$ ${rub.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                <strong style="color: ${rub.tipoRD === 1 ? 'var(--text)' : 'var(--color-conclusion)'}; white-space: nowrap;">
+                    ${rub.tipoRD === 1 ? '' : '- '}R$ ${rub.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </strong>
             </div>
         `;
     });
@@ -1006,6 +1095,7 @@ function openAuditDetailModal(serverId) {
     const isGajConforming = Math.abs(finding.gaj_paga - finding.gaj_esperada) < 0.1;
     const isGasConforming = Math.abs(finding.gas_paga - finding.gas_esperada) < 0.1;
     const isAqConforming = Math.abs(finding.aq_pago - finding.aq_esperado) < 0.1;
+    const isTetoConforming = finding.excesso_teto <= 0.01;
 
     const diffVenc = finding.venc_pago - finding.venc_esperado;
     const noteVenc = isVencConforming ? "" : `
@@ -1035,7 +1125,6 @@ function openAuditDetailModal(serverId) {
         }
     }
 
-    // NOTA TÉCNICA ATUALIZADA: Exibe didaticamente o direito reconhecido e o excesso residual apurado
     let noteAq = "";
     if (!isAqConforming) {
         const calculatedCoefficient = finding.aq_pago / VALOR_REFERENCIA_AQ;
@@ -1056,25 +1145,33 @@ function openAuditDetailModal(serverId) {
         }
     }
 
+    let noteTeto = "";
+    if (!isTetoConforming) {
+        noteTeto = `
+            A soma das verbas de natureza remuneratória pagas no mês (<strong>R$ ${finding.soma_remuneratoria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) ultrapassa o teto constitucional do funcionalismo público (<strong>R$ 46.366,19</strong> — Subsídio de Ministro do STF). 
+            Excesso bruto sujeito a abate-teto: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_teto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 37, XI da Constituição Federal e Resolução CNJ nº 14/2006).
+        `;
+    }
+
     const compRow = (label, paid, expected, conforms, icon, note = "") => {
         const color = conforms ? "#10B981" : "#E11D48";
         const statusText = conforms ? "Conforme" : "Divergente";
         
         const noteHtml = (!conforms && note) ? `
-            <div style="margin-top: 10px; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 13px; color: var(--text); line-height: 1.45;">
+            <div style="margin-top: 10px; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 14.5px; color: var(--text); line-height: 1.5;">
                 <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 6px;"></i> <strong>Nota Técnica:</strong> ${note}
             </div>
         ` : '';
 
         return `
-            <div style="padding: 12px; background: var(--bg2); border-radius: 8px; margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; color: var(--text);">
-                    <span><i class="${icon}" style="margin-right: 6px; color: ${color};"></i> ${label}</span>
-                    <span style="color: ${color}; font-size: 11px; text-transform: uppercase;">${statusText}</span>
+            <div style="padding: 14px; background: var(--bg2); border-radius: 10px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700; color: var(--text);">
+                    <span><i class="${icon}" style="margin-right: 8px; color: ${color}; font-size: 16px;"></i> ${label}</span>
+                    <span style="color: ${color}; font-size: 12px; font-weight: 800; text-transform: uppercase;">${statusText}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-top: 6px; color: var(--text2);">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; margin-top: 8px; color: var(--text2);">
                     <span>Pago: R$ ${paid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                    <span>Esperado: R$ ${expected.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span>Esperado / Limite: R$ ${expected.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
                 ${noteHtml}
             </div>
@@ -1086,10 +1183,11 @@ function openAuditDetailModal(serverId) {
         ${compRow("Gratificação Judiciária (GAJ)", finding.gaj_paga, finding.gaj_esperada, isGajConforming, "fa-solid fa-coins", noteGaj)}
         ${compRow("Gratificação de Segurança (GAS)", finding.gas_paga, finding.gas_esperada, isGasConforming, "fa-solid fa-shield-halved", noteGas)}
         ${compRow("Adicional de Qualificação (AQ)", finding.aq_pago, finding.aq_esperado, isAqConforming, "fa-solid fa-graduation-cap", noteAq)}
+        ${compRow("Teto Constitucional STF", finding.soma_remuneratoria, TETO_CONSTITUCIONAL_STF, isTetoConforming, "fa-solid fa-gavel", noteTeto)}
     `;
 
     Swal.fire({
-        width: '780px',
+        width: '820px',
         showConfirmButton: true,
         confirmButtonText: 'Fechar Diagnóstico',
         confirmButtonColor: 'var(--primary)',
@@ -1102,9 +1200,9 @@ function openAuditDetailModal(serverId) {
                 <div style="border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
-                            <h3 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 4px;">${server.nome}</h3>
-                            <p style="font-size: 13px; color: var(--text3); margin-bottom: 4px;">CPF: <strong>${formattedCpf}</strong> | Matrícula: <strong>${server.id}</strong></p>
-                            <p style="font-size: 13px; color: var(--text2); font-weight: 600;">${normalizedCareer} • Padrão ${gradeStr}</p>
+                            <h3 style="font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px;">${server.nome}</h3>
+                            <p style="font-size: 14.5px; color: var(--text3); margin-bottom: 4px;">CPF: <strong>${formattedCpf}</strong> | Matrícula: <strong>${server.id}</strong></p>
+                            <p style="font-size: 14.5px; color: var(--text2); font-weight: 600;">${normalizedCareer} • Padrão ${gradeStr}</p>
                         </div>
                         <div style="text-align: right;">
                             ${statusBadgeHtml}
@@ -1114,25 +1212,25 @@ function openAuditDetailModal(serverId) {
 
                 <!-- SEÇÃO 2: RAIO-X DE LANÇAMENTOS -->
                 <div style="margin-bottom: 24px;">
-                    <h4 style="font-size: 16px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">1. Detalhamento de Lançamentos em Folha</h4>
-                    <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; background: var(--surface2);">
+                    <h4 style="font-size: 15.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">1. Detalhamento de Lançamentos em Folha</h4>
+                    <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 0 14px; background: var(--surface2);">
                         ${rubricsHtml}
                     </div>
                 </div>
 
                 <!-- SEÇÃO 3: CONCILIAÇÃO LEGAL -->
                 <div style="margin-bottom: 16px;">
-                    <h4 style="font-size: 16px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">2. Conciliação contra Tabela Remuneratória</h4>
-                    <div style="display: flex; flex-direction: column; font-size: 16px">
+                    <h4 style="font-size: 15.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">2. Conciliação contra Tabela Remuneratória e Teto</h4>
+                    <div style="display: flex; flex-direction: column;">
                         ${reconciliaHtml}
                     </div>
                 </div>
 
                 <!-- PAINEL DE SALDO -->
-                <div style="padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                <div style="padding: 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
                     <div>
-                        <span style="font-size: 13px; font-weight: 700; color: var(--text3); text-transform: uppercase; display: block;">Saldo do Desvio Financeiro</span>
-                        <span style="font-size: 14px; color: var(--text2); display: block; margin-top: 2px;">Fundamentação: Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026</span>
+                        <span style="font-size: 12.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; display: block;">Saldo do Desvio Financeiro</span>
+                        <span style="font-size: 13.5px; color: var(--text2); display: block; margin-top: 2px;">Fundamentação: Art. 37, XI da CF/88, Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026</span>
                     </div>
                     <strong style="font-size: 22px; color: ${finding.desvio === 0 ? 'var(--color-start)' : 'var(--color-conclusion)'}">R$ ${finding.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
                 </div>
@@ -1245,6 +1343,8 @@ function exportAuditToXLSX() {
             "GAS Paga (R$)": item.gas_paga,
             "AQ Esperado (R$)": item.aq_esperado,
             "AQ Pago (R$)": item.aq_pago,
+            "Remuneração Bruta Sujeita ao Teto (R$)": item.soma_remuneratoria,
+            "Excesso de Teto Constitucional (R$)": item.excesso_teto,
             "Resultado do Diagnóstico": item.detalhe ? item.detalhe.replace(/<[^>]*>/g, " | ").replace(/\s+/g, " ").trim() : "Sem inconsistências",
             "Desvio Financeiro Geral (R$)": item.desvio
         }));
