@@ -1097,7 +1097,7 @@ function updateAuditDashboardUI(total, conforming, errors) {
         if (!auditBanner) {
             auditBanner = document.createElement("div");
             auditBanner.id = "audit-incompatible-banner";
-            auditBanner.style.cssText = "margin-top: 16px; padding: 14px 16px; background-color: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; font-size: 13.5px; color: #92400E; display: flex; align-items: center; gap: 10px;";
+            auditBanner.style.cssText = "margin-top: 16px; padding: 14px 16px; background-color: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; font-size: 13.5px; color: #92400E; display: flex; align-items: center; gap: 10px; margin-bottom: 10px";
             auditViewHeader.appendChild(auditBanner);
         }
         auditBanner.style.display = "flex";
