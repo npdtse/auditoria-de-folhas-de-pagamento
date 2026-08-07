@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auditoria de Pessoal - Folha de Pagamento</title>
+    <title>Pré-Auditoria de Pessoal — TSE / SAU</title>
     
     <!-- === IMPORTAÇÕES DE FONTES E ÍCONES === -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,13 +70,13 @@
                 <div class="main-header__identity">
                     <!-- Logotipo e Textos Institucionais Ativos na Inicialização -->
                     <div class="main-header__meta-box" id="header-brand-box">
-                        <h1 class="main-header__institution">Secretaria de Auditoria de Pessoal</h1>
+                        <h1 class="main-header__institution">Secretaria de Auditoria de Pessoal — TSE</h1>
                         <p class="main-header__sub-institution">Sandbox Local Analítica — Seguro e Isento de Conexão Externa</p>
                     </div>
                     <!-- Cabeçalho de Navegação Ativa Pós-Importação -->
                     <div class="main-header__active-box" id="header-active-box" style="display: none;">
                         <span class="main-header__badge">Diagnóstico Ativo</span>
-                        <h2 class="main-header__active-title" id="active-flow-title">Processamento de Lançamentos de Maio/2026</h2>
+                        <h2 class="main-header__active-title" id="active-flow-title">Processamento de Lançamentos Salariais</h2>
                     </div>
                 </div>
 
@@ -90,7 +90,7 @@
                             <i class="fa-solid fa-user-lock"></i>
                         </div>
                         <div class="user-profile__info">
-                            <span class="user-profile__name">Auditor Interno</span>
+                            <span class="user-profile__name">Auditor da SAU</span>
                             <span class="user-profile__role">Sandbox offline</span>
                         </div>
                     </div>
@@ -105,7 +105,7 @@
                     <div class="upload-container">
                         <div class="section-title-box">
                             <h2 class="section-title" id="view-dashboard-title">Carregar Folha Salarial do Mês</h2>
-                            <p class="section-subtitle">Arraste ou selecione o arquivo gerado pelo sistema de folha de pagamento (.xlsx, .txt ou .csv)</p>
+                            <p class="section-subtitle">Arraste ou selecione o arquivo gerado pelo sistema de folha de pagamento do TSE (.xlsx, .txt ou .csv)</p>
                         </div>
                         
                         <div class="dropzone" id="file-dropzone" tabindex="0" role="button" aria-label="Área de upload de arquivos. Arraste ou selecione o arquivo de folha de pagamento">
@@ -114,7 +114,7 @@
                                 <i class="fa-solid fa-file-arrow-up"></i>
                             </div>
                             <h4 class="dropzone__title">Arraste o arquivo de folha de pagamento aqui</h4>
-                            <p class="dropzone__limits">Suporta planilhas Excel (XLSX) e textos tabulados de até 50MB</p>
+                            <p class="dropzone__limits">Suporta planilhas Excel (XLSX) e textos tabulados/hashtag (#) de até 50MB</p>
                             <button class="btn btn--primary dropzone__btn" tabindex="-1">Selecionar Arquivo</button>
                         </div>
 
@@ -147,7 +147,7 @@
                     <div class="view-header">
                         <div class="view-header__title-box">
                             <h3 class="view-header__title" id="view-auditoria-title">Resultados do Diagnóstico de Pessoal</h3>
-                            <p class="view-header__subtitle">Este painel cruza o Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001) e o Teto Constitucional (STF - R$ 46.366,19) pagos contra a legislação e as Tabelas Remuneratórias do TSE para mapear inconsistências cadastrais ou de enquadramento.</p>
+                            <p class="view-header__subtitle">Este painel cruza o Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001) e o Teto Constitucional (STF - R$ 46.366,19) pagos contra a legislação e as Tabelas Remuneratórias vigentes do TSE para mapear inconsistências cadastrais ou de enquadramento.</p>
                             <br>
                         </div>
                     </div>
@@ -241,7 +241,7 @@
                         <div class="view-header__title-box">
                             <h3 class="view-header__title" id="view-criterios-title">Critérios de Avaliação e Regras de Negócio</h3>
                             <br>
-                            <p class="view-header__subtitle">Esta página descreve a fundamentação jurídica, as fórmulas de cálculo e as premissas de auditoria que governam a análise em lote das folhas de pagamento mensais.</p>
+                            <p class="view-header__subtitle">Esta página descreve a fundamentação jurídica, as fórmulas de cálculo e as premissas de auditoria que governam a análise em lote das folhas de pagamento mensais do TSE.</p>
                             <br>
                         </div>
                     </div>
@@ -257,7 +257,7 @@
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Vencimento Básico (Rubrica 1001)</span>
-                                    <p class="parameter-item__desc">Serve como a âncora contratual do servidor. O sistema busca o casamento exato deste valor pago contra os limites das Classes A, B ou C e Padrões 1 a 13 da Tabela Oficial de Janeiro de 2026 para os cargos de Analista e Técnico Judiciário.</p>
+                                    <p class="parameter-item__desc">Serve como a âncora contratual do servidor. O sistema busca o casamento exato deste valor pago contra os limites das Classes A, B ou C e Padrões 1 a 13 das Tabelas Oficiais vigentes para os cargos de Analista e Técnico Judiciário.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -274,7 +274,10 @@
                         <div class="normative-shelf">
                             <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Tabelas de Apoio</span>
                             <div class="normative-shelf__list">
-                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/arquivos/2026/tse-anexo-iii-tabela-remuneratoria-transparencia-tse/@@display-file/file/ANEXO-III-RES-102-CNJ-VIGENCIA-01-07-2026.pdf" target="_blank" class="normative-shelf__link" aria-label="Abrir Tabela Remuneratória de Cargos Efetivos da Justiça Eleitoral">
+                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/arquivos/2026/tse-anexo-iii-tabela-remuneratoria-transparencia-tse/@@display-file/file/ANEXO-III-RES-102-CNJ-VIGENCIA-01-01-2026.pdf" target="_blank" class="normative-shelf__link" aria-label="Abrir Tabela Remuneratória de Cargos Efetivos do TSE vigente em Janeiro de 2026">
+                                    <i class="fa-solid fa-file-pdf"></i> Tabela Efetivos TSE (Vigência 01/01/2026)
+                                </a>
+                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/arquivos/2026/tse-anexo-iii-tabela-remuneratoria-transparencia-tse/@@display-file/file/ANEXO-III-RES-102-CNJ-VIGENCIA-01-07-2026.pdf" target="_blank" class="normative-shelf__link" aria-label="Abrir Tabela Remuneratória de Cargos Efetivos do TSE vigente em Julho de 2026">
                                     <i class="fa-solid fa-file-pdf"></i> Tabela Efetivos TSE (Vigência 01/07/2026)
                                 </a>
                                 <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" class="normative-shelf__link" aria-label="Acessar Lei 11416 de 2006 no Planalto">
@@ -284,34 +287,34 @@
                         </div>
                     </div>
 
-                    <!-- Cartão 2: Adicional de Qualificação (AQ) - Modelo VR 2026 -->
+                    <!-- Cartão 2: Adicional de Qualificação (AQ) - Modelo VR -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 8px;"></i>
-                            2. Adicional de Qualificação (AQ) - Regras de Acúmulo
+                            2. Adicional de Qualificação (AQ) - Modelo de Valor de Referência
                         </h4>
                         
-                        <p class="section-subtitle" style="margin-bottom: 16px;">O AQ deixou de ser calculado sobre o Vencimento Básico e passou a ser fixado em múltiplos do <strong>Valor de Referência (VR) nacional unificado de R$ 714,40</strong>, obedecendo às seguintes regras estritas de concessão:</p>
+                        <p class="section-subtitle" style="margin-bottom: 16px;">O AQ é fixado em múltiplos do <strong>Valor de Referência (VR) nacional unificado</strong> (R$ 714,40 até Jun/2026 e R$ 771,55 a partir de Jul/2026), obedecendo às seguintes regras estritas de concessão:</p>
                         
                         <ul class="parameter-list">
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Regra de Absorção e Exclusão Mútua (Mestrado/Doutorado)</span>
-                                    <p class="parameter-item__desc">O título de Doutor (5,0 VR = R$ 3.572,00) ou Mestre (3,5 VR = R$ 2.500,40) absorve automaticamente qualquer adicional de nível inferior (Especialização, Segunda Graduação ou Certificação). Eles <strong>não se acumulam sob nenhuma hipótese</strong>, exceto com as Ações de Capacitação (Artigo 15, § 1º-B).</p>
+                                    <p class="parameter-item__desc">O título de Doutor (5,0 VR) ou Mestre (3,5 VR) absorve automaticamente qualquer adicional de nível inferior (Especialização, Segunda Graduação ou Certificação). Eles <strong>não se acumulam sob nenhuma hipótese</strong>, exceto com as Ações de Capacitação (Artigo 15, § 1º-B).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Teto de Acúmulo de Títulos Menores (Especialização/Graduação/Certificação)</span>
-                                    <p class="parameter-item__desc">A soma de Especializações (1,0 VR cada), Segunda Graduação (1,0 VR) e Certificações Profissionais (0,5 VR cada) é <strong>estritamente limitada ao teto máximo de 2,0 VR (R$ 1.428,80)</strong> para servidores sem Mestrado ou Doutorado (Artigo 15, § 1º-C).</p>
+                                    <p class="parameter-item__desc">A soma de Especializações (1,0 VR cada), Segunda Graduação (1,0 VR) e Certificações Profissionais (0,5 VR cada) é <strong>estritamente limitada ao teto máximo de 2,0 VR</strong> para servidores sem Mestrado ou Doutorado (Artigo 15, § 1º-C).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Ações de Capacitação/Treinamento (Rubrica 23001)</span>
-                                    <p class="parameter-item__desc">Devido à razão de 0,2 VR (R$ 142,88) para cada conjunto de ações que some 120 horas. É cumulativo com qualquer outro título (Artigo 15, § 1º-D) e limitado ao <strong>teto de 3 conjuntos (0,6 VR = R$ 428,64)</strong> (Artigo 15, V).</p>
+                                    <p class="parameter-item__desc">Devido à razão de 0,2 VR para cada conjunto de ações que some 120 horas. É cumulativo com qualquer outro título (Artigo 15, § 1º-D) e limitado ao <strong>teto de 3 conjuntos (0,6 VR)</strong> (Artigo 15, V).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -369,7 +372,7 @@
                         </div>
                     </div>
 
-                    <!-- Cartão 4: Teto Remuneratório Constitucional (NOVO) -->
+                    <!-- Cartão 4: Teto Remuneratório Constitucional -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-gavel" style="color: var(--primary); margin-right: 8px;"></i>
@@ -380,7 +383,7 @@
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Abate-Teto sobre Remuneração Bruta Total</span>
-                                    <p class="parameter-item__desc">Soma todas as verbas de natureza remuneratória do mês (Vencimento, GAJ, GAS, AQ, Funções FC/CJ e VPNI). Caso a soma bruta ultrapasse o subsídio de Ministro do STF (<strong>R$ 46.366,19</strong>), o sistema aponta a necessidade do desconto de corte de retenção na fonte.</p>
+                                    <p class="parameter-item__desc">Soma todas as verbas de natureza remuneratória do mês (`Código Rendimento Desconto = 1`: Vencimento, GAJ, GAS, AQ, Funções FC/CJ e VPNI). Caso a soma bruta ultrapasse o subsídio de Ministro do STF (<strong>R$ 46.366,19</strong>), o sistema aponta a necessidade do desconto de corte de retenção na fonte.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -456,10 +459,10 @@
             </main>
 
             <!-- === [Rodapé] RODAPÉ INSTITUCIONAL === -->
-            <footer class="app-footer">
-                <span class="app-footer__text">© 2026 Secretaria de Auditoria de Pessoal</span>
+            <app-footer class="app-footer">
+                <span class="app-footer__text">© 2026 Secretaria de Auditoria de Pessoal — TSE</span>
                 <span class="app-footer__badge"><i class="fa-solid fa-lock"></i> Zero-Knowledge (Nenhum dado trafega fora de sua máquina)</span>
-            </footer>
+            </app-footer>
 
         </div>
     </div>

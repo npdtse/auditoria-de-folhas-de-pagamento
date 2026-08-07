@@ -1,39 +1,81 @@
 /* ==========================================================================
-   === [CAPÍTULO] CONFIGURAÇÃO E BASE DE DADOS ===
+   === [CAPÍTULO] CONFIGURAÇÃO E LINHA DO TEMPO DE TABELAS ===
    ========================================================================== */
 
-/* --- [Seção] Constante da Tabela Remuneratória de Janeiro/2026 --- */
-const TABELA_REMUNERATORIA = {
-    "ANALISTA JUDICIARIO": [
-        { classe: "C", padrao: 13, vencimento: 9292.14, gaj: 13009.00 },
-        { classe: "C", padrao: 12, vencimento: 9021.50, gaj: 12630.10 },
-        { classe: "C", padrao: 11, vencimento: 8758.73, gaj: 12262.22 },
-        { classe: "B", padrao: 10, vencimento: 8503.62, gaj: 11905.07 },
-        { classe: "B", padrao: 9,  vencimento: 8255.95, gaj: 11558.33 },
-        { classe: "B", padrao: 8,  vencimento: 7810.73, gaj: 10935.02 },
-        { classe: "B", padrao: 7,  vencimento: 7583.23, gaj: 10616.52 },
-        { classe: "B", padrao: 6,  vencimento: 7362.37, gaj: 10307.32 },
-        { classe: "A", padrao: 5,  vencimento: 7147.92, gaj: 10007.09 },
-        { classe: "A", padrao: 4,  vencimento: 6939.75, gaj: 9715.65 },
-        { classe: "A", padrao: 3,  vencimento: 6565.50, gaj: 9191.70 },
-        { classe: "A", padrao: 2,  vencimento: 6374.26, gaj: 8923.96 },
-        { classe: "A", padrao: 1,  vencimento: 6188.61, gaj: 8664.05 }
-    ],
-    "TECNICO JUDICIARIO": [
-        { classe: "C", padrao: 13, vencimento: 5663.47, gaj: 7928.86 },
-        { classe: "C", padrao: 12, vencimento: 5498.51, gaj: 7697.91 },
-        { classe: "C", padrao: 11, vencimento: 5338.36, gaj: 7473.70 },
-        { classe: "B", padrao: 10, vencimento: 5182.88, gaj: 7256.03 },
-        { classe: "B", padrao: 9,  vencimento: 5031.90, gaj: 7044.66 },
-        { classe: "B", padrao: 8,  vencimento: 4760.56, gaj: 6664.78 },
-        { classe: "B", padrao: 7,  vencimento: 4621.90, gaj: 6470.66 },
-        { classe: "B", padrao: 6,  vencimento: 4487.29, gaj: 6282.21 },
-        { classe: "A", padrao: 5,  vencimento: 4356.59, gaj: 6099.23 },
-        { classe: "A", padrao: 4,  vencimento: 4229.69, gaj: 5921.57 },
-        { classe: "A", padrao: 3,  vencimento: 4001.60, gaj: 5602.24 },
-        { classe: "A", padrao: 2,  vencimento: 3885.06, gaj: 5439.08 },
-        { classe: "A", padrao: 1,  vencimento: 3771.88, gaj: 5280.63 }
-    ]
+/* --- [Seção] Dicionário Temporal de Tabelas Remuneratórias do TSE --- */
+const TABELAS_HISTORICAS = {
+    "2026_JUL": {
+        label: "Julho/2026 em diante (Lei nº 15.293/2025)",
+        vr: 771.55,
+        tabelas: {
+            "ANALISTA JUDICIARIO": [
+                { classe: "C", padrao: 13, vencimento: 10035.51, gaj: 14049.71 },
+                { classe: "C", padrao: 12, vencimento: 9743.22,  gaj: 13640.51 },
+                { classe: "C", padrao: 11, vencimento: 9459.43,  gaj: 13243.20 },
+                { classe: "B", padrao: 10, vencimento: 9183.91,  gaj: 12857.47 },
+                { classe: "B", padrao: 9,  vencimento: 8916.43,  gaj: 12483.00 },
+                { classe: "B", padrao: 8,  vencimento: 8435.59,  gaj: 11809.83 },
+                { classe: "B", padrao: 7,  vencimento: 8189.89,  gaj: 11465.85 },
+                { classe: "B", padrao: 6,  vencimento: 7951.36,  gaj: 11131.90 },
+                { classe: "A", padrao: 5,  vencimento: 7719.75,  gaj: 10807.65 },
+                { classe: "A", padrao: 4,  vencimento: 7494.93,  gaj: 10492.90 },
+                { classe: "A", padrao: 3,  vencimento: 7090.74,  gaj: 9927.04 },
+                { classe: "A", padrao: 2,  vencimento: 6884.20,  gaj: 9637.88 },
+                { classe: "A", padrao: 1,  vencimento: 6683.70,  gaj: 9357.18 }
+            ],
+            "TECNICO JUDICIARIO": [
+                { classe: "C", padrao: 13, vencimento: 6116.55, gaj: 8563.17 },
+                { classe: "C", padrao: 12, vencimento: 5938.39, gaj: 8313.75 },
+                { classe: "C", padrao: 11, vencimento: 5765.43, gaj: 8071.60 },
+                { classe: "B", padrao: 10, vencimento: 5597.51, gaj: 7836.51 },
+                { classe: "B", padrao: 9,  vencimento: 5434.45, gaj: 7608.23 },
+                { classe: "B", padrao: 8,  vencimento: 5141.40, gaj: 7197.96 },
+                { classe: "B", padrao: 7,  vencimento: 4991.65, gaj: 6988.31 },
+                { classe: "B", padrao: 6,  vencimento: 4846.27, gaj: 6784.78 },
+                { classe: "A", padrao: 5,  vencimento: 4705.12, gaj: 6587.17 },
+                { classe: "A", padrao: 4,  vencimento: 4568.07, gaj: 6395.30 },
+                { classe: "A", padrao: 3,  vencimento: 4321.73, gaj: 6050.42 },
+                { classe: "A", padrao: 2,  vencimento: 4195.86, gaj: 5874.20 },
+                { classe: "A", padrao: 1,  vencimento: 4073.63, gaj: 5703.08 }
+            ]
+        }
+    },
+    "2026_JAN": {
+        label: "Janeiro/2026 a Junho/2026 (Lei nº 15.292/2025)",
+        vr: 714.40,
+        tabelas: {
+            "ANALISTA JUDICIARIO": [
+                { classe: "C", padrao: 13, vencimento: 9292.14, gaj: 13009.00 },
+                { classe: "C", padrao: 12, vencimento: 9021.50, gaj: 12630.10 },
+                { classe: "C", padrao: 11, vencimento: 8758.73, gaj: 12262.22 },
+                { classe: "B", padrao: 10, vencimento: 8503.62, gaj: 11905.07 },
+                { classe: "B", padrao: 9,  vencimento: 8255.95, gaj: 11558.33 },
+                { classe: "B", padrao: 8,  vencimento: 7810.73, gaj: 10935.02 },
+                { classe: "B", padrao: 7,  vencimento: 7583.23, gaj: 10616.52 },
+                { classe: "B", padrao: 6,  vencimento: 7362.37, gaj: 10307.32 },
+                { classe: "A", padrao: 5,  vencimento: 7147.92, gaj: 10007.09 },
+                { classe: "A", padrao: 4,  vencimento: 6939.75, gaj: 9715.65 },
+                { classe: "A", padrao: 3,  vencimento: 6565.50, gaj: 9191.70 },
+                { classe: "A", padrao: 2,  vencimento: 6374.26, gaj: 8923.96 },
+                { classe: "A", padrao: 1,  vencimento: 6188.61, gaj: 8664.05 }
+            ],
+            "TECNICO JUDICIARIO": [
+                { classe: "C", padrao: 13, vencimento: 5663.47, gaj: 7928.86 },
+                { classe: "C", padrao: 12, vencimento: 5498.51, gaj: 7697.91 },
+                { classe: "C", padrao: 11, vencimento: 5338.36, gaj: 7473.70 },
+                { classe: "B", padrao: 10, vencimento: 5182.88, gaj: 7256.03 },
+                { classe: "B", padrao: 9,  vencimento: 5031.90, gaj: 7044.66 },
+                { classe: "B", padrao: 8,  vencimento: 4760.56, gaj: 6664.78 },
+                { classe: "B", padrao: 7,  vencimento: 4621.90, gaj: 6470.66 },
+                { classe: "B", padrao: 6,  vencimento: 4487.29, gaj: 6282.21 },
+                { classe: "A", padrao: 5,  vencimento: 4356.59, gaj: 6099.23 },
+                { classe: "A", padrao: 4,  vencimento: 4229.69, gaj: 5921.57 },
+                { classe: "A", padrao: 3,  vencimento: 4001.60, gaj: 5602.24 },
+                { classe: "A", padrao: 2,  vencimento: 3885.06, gaj: 5439.08 },
+                { classe: "A", padrao: 1,  vencimento: 3771.88, gaj: 5280.63 }
+            ]
+        }
+    }
 };
 
 /* --- [Seção] Códigos de Rubricas Mapeados --- */
@@ -41,9 +83,8 @@ const RUBRICA_VENCIMENTO = "1001";
 const RUBRICA_GAJ = "2001";
 const RUBRICA_GAS = "2002"; 
 
-/* --- [Seção] Constantes do Teto Constitucional e Legislação --- */
+/* --- [Seção] Constantes do Teto Constitucional --- */
 const TETO_CONSTITUCIONAL_STF = 46366.19; // Subsídio mensal de Ministro do STF (Lei nº 14.520/2023)
-const VALOR_REFERENCIA_AQ = 714.40;       // Valor de Referência unificado de AQ (Lei nº 15.292/2025)
 
 /* --- [Seção] Rol de Rubricas Indenizatórias e Benefícios Excluídos do Teto --- */
 const RUBRICAS_EXCLUIDAS_TETO = [
@@ -64,6 +105,12 @@ const AppState = {
     filteredFindings: [],    // Conclusões filtradas (ativas para tabela)
     isProcessing: false,     // Semáforo concorrente
     chartInstance: null,     // Instância ativa do Chart.js
+    
+    // Propriedades do Motor Temporal
+    matchedCompetence: "N/A",
+    activeTableKey: "2026_JAN",
+    activeVR: 714.40,
+    isIncompatibleCompetence: false,
     
     // Paginação
     currentPage: 1,
@@ -226,6 +273,55 @@ function normalizeHeaderName(str) {
         .replace(/\s+/g, "_");
 }
 
+/* --- [Seção] Resolvedor de Vigência de Tabela por Data de Competência --- */
+function resolveActiveTableConfig(competenciaStr) {
+    if (!competenciaStr || competenciaStr === "N/A") {
+        return { key: "2026_JAN", vr: 714.40, isIncompatible: false, label: "Janeiro/2026 (Padrão)" };
+    }
+
+    const cleanComp = competenciaStr.toString().trim();
+    const parts = cleanComp.split(/[\/\.\-]/);
+    let month = 1;
+    let year = 2026;
+
+    if (parts.length >= 3) {
+        month = parseInt(parts[1]) || 1;
+        year = parseInt(parts[2]) || 2026;
+    } else if (parts.length === 2) {
+        if (parts[0].length === 4) {
+            year = parseInt(parts[0]) || 2026;
+            month = parseInt(parts[1]) || 1;
+        } else {
+            month = parseInt(parts[0]) || 1;
+            year = parseInt(parts[1]) || 2026;
+        }
+    }
+
+    if (year > 2026 || (year === 2026 && month >= 7)) {
+        return { 
+            key: "2026_JUL", 
+            vr: TABELAS_HISTORICAS["2026_JUL"].vr, 
+            isIncompatible: false, 
+            label: TABELAS_HISTORICAS["2026_JUL"].label 
+        };
+    } else if (year === 2026 && month >= 1) {
+        return { 
+            key: "2026_JAN", 
+            vr: TABELAS_HISTORICAS["2026_JAN"].vr, 
+            isIncompatible: false, 
+            label: TABELAS_HISTORICAS["2026_JAN"].label 
+        };
+    } else {
+        // Folha histórica anterior a 2026 (Ex: Outubro/2018)
+        return { 
+            key: "2026_JAN", 
+            vr: TABELAS_HISTORICAS["2026_JAN"].vr, 
+            isIncompatible: true, 
+            label: `Sem Tabela Histórica (${competenciaStr}) — Espelho Jan/2026` 
+        };
+    }
+}
+
 function runVisualLoadingProgress(callback) {
     const dropzone = document.getElementById("file-dropzone");
     if (!dropzone) return;
@@ -257,8 +353,8 @@ function runVisualLoadingProgress(callback) {
 
     const steps = [
         { delay: 300, text: "Lendo linhas locais em memória temporária..." },
-        { delay: 800, text: "Buscando correspondências aproximadas de cabeçalhos..." },
-        { delay: 1400, text: "Normalizando rubricas por servidor (Mapeando ativos de interesse)..." },
+        { delay: 800, text: "Identificando competência e selecionando Tabela Salarial..." },
+        { delay: 1400, text: "Normalizando rubricas por servidor (Pivotagem local)..." },
         { delay: 1900, text: "Pivotagem estrutural concluída na Sandbox!" }
     ];
 
@@ -372,9 +468,10 @@ function parseMatrixData(matrix) {
     pivotAndNormalizeData();
 }
 
-/* --- [Seção] Pivoteamento com Mapeamento de Rendimento vs Desconto --- */
+/* --- [Seção] Pivoteamento com Mapeamento de Rendimento e Resolução de Vigência --- */
 function pivotAndNormalizeData() {
     const servers = {};
+    let matchedCompetence = "N/A";
 
     const fuzzyMap = {
         id: ["identificacao_unica", "matricula", "id", "identific", "cod_servidor"],
@@ -449,8 +546,7 @@ function pivotAndNormalizeData() {
             };
         }
 
-        // CAPTURA DO CÓDIGO RENDIMENTO DESCONTO (1 = Rendimento, 2 = Desconto)
-        let cleanRendDesc = 1; // Padrão: Rendimento
+        let cleanRendDesc = 1; 
         if (rendDescRaw !== undefined && rendDescRaw !== "") {
             const parsedRD = parseInt(rendDescRaw);
             if (!isNaN(parsedRD)) cleanRendDesc = parsedRD;
@@ -470,7 +566,6 @@ function pivotAndNormalizeData() {
                 cleanRubrica = cleanRubrica.slice(0, -2);
             }
 
-            // Armazena no dicionário do servidor apenas se for do tipo Rendimento (1) para não inflar a rubrica com descontos
             if (cleanRendDesc === 1) {
                 servers[cleanId].rubricas[cleanRubrica] = (servers[cleanId].rubricas[cleanRubrica] || 0) + valorParsed;
             }
@@ -486,6 +581,13 @@ function pivotAndNormalizeData() {
 
     AppState.pivotedServers = servers;
     AppState.isProcessing = false;
+
+    // RESOLUÇÃO DINÂMICA DA TABELA TEMPORAL
+    const tableConfig = resolveActiveTableConfig(matchedCompetence);
+    AppState.matchedCompetence = matchedCompetence;
+    AppState.activeTableKey = tableConfig.key;
+    AppState.activeVR = tableConfig.vr;
+    AppState.isIncompatibleCompetence = tableConfig.isIncompatible;
 
     let activeServerCount = 0;
     for (const id in servers) {
@@ -533,12 +635,26 @@ function runDeterministicAudit() {
         return;
     }
 
-    Swal.fire({
-        title: "Processando Auditoria",
-        text: "Comparando valores contra a legislação e tabelas do TSE...",
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
+    // DISPARO DE NOTIFICAÇÃO DE INADEQUAÇÃO TEMPORAL (Sem bloqueio)
+    if (AppState.isIncompatibleCompetence) {
+        Swal.fire({
+            icon: "warning",
+            title: "Aviso de Inadequação de Tabela",
+            text: `A competência desta folha (${AppState.matchedCompetence}) é anterior a 2026. Não existe tabela salarial histórica cadastrada para este período. A auditoria será executada utilizando a Tabela de Janeiro/2026 como referência estática.`,
+            confirmButtonColor: "var(--primary)"
+        });
+    } else {
+        Swal.fire({
+            title: "Processando Auditoria",
+            text: `Comparando valores contra a Tabela do TSE (${TABELAS_HISTORICAS[AppState.activeTableKey].label})...`,
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+    }
+
+    const activeConfig = TABELAS_HISTORICAS[AppState.activeTableKey];
+    const activeVR = activeConfig.vr;
+    const activeTables = activeConfig.tabelas;
 
     const findings = [];
     let totalAudited = 0;
@@ -567,12 +683,8 @@ function runDeterministicAudit() {
                        (server.rubricas["463001"] || 0) + 
                        (server.rubricas["23001"] || 0);
 
-        // =========================================================================
         // CÁLCULO DA SOMA REMUNERATÓRIA BRUTA PARA O TETO CONSTITUCIONAL (STF)
-        // Apenas rubricas com Código Rendimento Desconto == 1 (Rendimento) somam!
-        // =========================================================================
         let somaRemuneratoriaBruta = 0;
-        
         server.detalheRubricas.forEach(rub => {
             if (rub.tipoRD === 1 && !RUBRICAS_EXCLUIDAS_TETO.includes(rub.codigo)) {
                 somaRemuneratoriaBruta += rub.valor;
@@ -619,7 +731,7 @@ function runDeterministicAudit() {
             continue;
         }
 
-        const referenceTable = TABELA_REMUNERATORIA[normalizedCareer];
+        const referenceTable = activeTables[normalizedCareer];
         let matchedGrade = null;
 
         for (let i = 0; i < referenceTable.length; i++) {
@@ -647,13 +759,13 @@ function runDeterministicAudit() {
             }
             const isGasConforming = Math.abs(expectedGas - paidGas) < 0.1;
 
-            // Recálculo Inteligente de AQ
+            // Recálculo por Faixas de Piso de Direito do AQ com o VR Ativo
             let expectedAq = 0;
             let expectedT = 0; 
             let expectedQ = 0; 
 
             const rawT = server.rubricas["23001"] || 0;
-            const coefT = rawT / VALOR_REFERENCIA_AQ;
+            const coefT = rawT / activeVR;
             let matchedCoefT = 0.0;
 
             if (coefT >= 0.60 - 0.01) {
@@ -665,10 +777,10 @@ function runDeterministicAudit() {
             } else {
                 matchedCoefT = 0.0;
             }
-            expectedT = matchedCoefT * VALOR_REFERENCIA_AQ;
+            expectedT = matchedCoefT * activeVR;
 
             const rawQ = (server.rubricas["462001"] || 0) + (server.rubricas["463001"] || 0);
-            const coefQ = rawQ / VALOR_REFERENCIA_AQ;
+            const coefQ = rawQ / activeVR;
             let matchedCoefQ = 0.0;
 
             if (coefQ >= 5.0 - 0.01) {
@@ -682,7 +794,7 @@ function runDeterministicAudit() {
             } else {
                 matchedCoefQ = 0.0;
             }
-            expectedQ = matchedCoefQ * VALOR_REFERENCIA_AQ;
+            expectedQ = matchedCoefQ * activeVR;
 
             expectedAq = expectedT + expectedQ;
 
@@ -690,22 +802,22 @@ function runDeterministicAudit() {
             let aqErrorReason = "";
 
             if (!isAqConforming) {
-                const calculatedCoefficient = paidAq / VALOR_REFERENCIA_AQ;
-                const expectedCoefficient = expectedAq / VALOR_REFERENCIA_AQ;
+                const calculatedCoefficient = paidAq / activeVR;
+                const expectedCoefficient = expectedAq / activeVR;
                 const diffAqValue = paidAq - expectedAq;
 
                 if (calculatedCoefficient > 5.6) {
-                    aqErrorReason = `O valor pago de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) extrapola o teto máximo de 5,6 VR (Doutorado + 3 Capacitações). O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
+                    aqErrorReason = `O valor pago de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) extrapola o teto máximo de 5,6 VR. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
                 } else if (calculatedCoefficient > 2.6 && calculatedCoefficient < 3.5) {
-                    aqErrorReason = `A soma de títulos secundários excede o teto de 2,0 VR (R$ 1.428,80). O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
+                    aqErrorReason = `A soma de títulos excede o teto de 2,0 VR (R$ ${(2.0 * activeVR).toFixed(2)}). O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
                 } else if (calculatedCoefficient > 3.5 && calculatedCoefficient < 4.1) {
-                    aqErrorReason = `O Mestrado (3,5 VR) absorve títulos de menor nível. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
+                    aqErrorReason = `O Mestrado (3,5 VR) absorve títulos menores. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
                 } else if (calculatedCoefficient > 5.0 && calculatedCoefficient < 5.6) {
-                    aqErrorReason = `O Doutorado (5,0 VR) absorve títulos de menor nível. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
+                    aqErrorReason = `O Doutorado (5,0 VR) absorve títulos menores. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
                 } else if (calculatedCoefficient < 0.2) {
-                    aqErrorReason = `O valor de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) é inferior ao módulo mínimo de 0,20 VR (R$ 142,88 / 120h). O valor legal esperado é de R$ 0,00, gerando divergência de R$ ${paidAq.toFixed(2)}.`;
+                    aqErrorReason = `O valor de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) é inferior ao módulo mínimo de 0,20 VR (R$ ${(0.20 * activeVR).toFixed(2)}). O valor legal esperado é de R$ 0,00, gerando divergência de R$ ${paidAq.toFixed(2)}.`;
                 } else {
-                    aqErrorReason = `O valor de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) possui um resíduo excedente em relação ao direito reconhecido de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}). Diferença calculada em excesso de R$ ${diffAqValue.toFixed(2)}.`;
+                    aqErrorReason = `O valor de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) possui resíduo excedente em relação ao direito reconhecido de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}). Diferença calculada de R$ ${diffAqValue.toFixed(2)}.`;
                 }
             }
 
@@ -751,7 +863,7 @@ function runDeterministicAudit() {
                     detalhe: `
                         <div class="audit-issue">
                             <span class="audit-issue__badge badge badge--success"><i class="fa-solid fa-circle-check"></i> Conforme</span>
-                            <div class="audit-issue__rule">Enquadramento e rubricas em conformidade com as diretrizes vigentes.</div>
+                            <div class="audit-issue__rule">Enquadramento e rubricas em conformidade com as diretrizes da vigência.</div>
                         </div>
                     `,
                     desvio: 0
@@ -765,8 +877,8 @@ function runDeterministicAudit() {
                         <div class="audit-issue">
                             <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-gavel"></i> Teto Constitucional STF</span>
                             <div class="audit-issue__math">Remuneração Bruta: <strong>R$ ${somaRemuneratoriaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Teto STF: <strong>R$ 46.366,19</strong></div>
-                            <div class="audit-issue__rule">A soma das verbas de natureza remuneratória ultrapassa o teto constitucional do funcionalismo em R$ ${excessoTetoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.</div>
-                            <div class="audit-issue__law">Base Legal: Artigo 37, Inciso XI e § 11 da Constituição Federal e Resolução CNJ nº 14/2006.</div>
+                            <div class="audit-issue__rule">A soma das verbas remuneratórias ultrapassa o teto constitucional em R$ ${excessoTetoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.</div>
+                            <div class="audit-issue__law">Base Legal: Artigo 37, XI e § 11 da Constituição Federal e Resolução CNJ nº 14/2006.</div>
                         </div>
                     `);
                 }
@@ -776,8 +888,8 @@ function runDeterministicAudit() {
                         <div class="audit-issue">
                             <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> Vencimento</span>
                             <div class="audit-issue__math">Pago: <strong>R$ ${paidVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                            <div class="audit-issue__rule">O valor do vencimento básico difere da tabela salarial oficial.</div>
-                            <div class="audit-issue__law">Base Legal: Anexo I da Lei nº 15.292/2025.</div>
+                            <div class="audit-issue__rule">O valor do vencimento básico difere da tabela salarial oficial da vigência.</div>
+                            <div class="audit-issue__law">Base Legal: Tabela de Vencimentos do TSE.</div>
                         </div>
                     `);
                 }
@@ -787,8 +899,8 @@ function runDeterministicAudit() {
                         <div class="audit-issue">
                             <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-coins"></i> Gratificação Judiciária (GAJ)</span>
                             <div class="audit-issue__math">Paga: <strong>R$ ${paidGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                            <div class="audit-issue__rule">A Gratificação de Atividade Judiciária deve equivaler estritamente a 140% do vencimento básico do padrão.</div>
-                            <div class="audit-issue__law">Base Legal: Artigo 13 da Lei nº 11.416/2006 (atualizado).</div>
+                            <div class="audit-issue__rule">A Gratificação de Atividade Judiciária deve equivaler estritamente a 140% do vencimento básico.</div>
+                            <div class="audit-issue__law">Base Legal: Artigo 13 da Lei nº 11.416/2006.</div>
                         </div>
                     `);
                 }
@@ -821,7 +933,7 @@ function runDeterministicAudit() {
                             <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-graduation-cap"></i> Adicional de Qualificação (AQ)</span>
                             <div class="audit-issue__math">Pago: <strong>R$ ${paidAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                             <div class="audit-issue__rule">${aqErrorReason}</div>
-                            <div class="audit-issue__law">Base Legal: Artigo 15 da Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026.</div>
+                            <div class="audit-issue__law">Base Legal: Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026.</div>
                         </div>
                     `);
                 }
@@ -886,8 +998,8 @@ function runDeterministicAudit() {
                 detalhe: `
                     <div class="audit-issue">
                         <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> Vencimento</span>
-                        <div class="audit-issue__rule">Vencimentos ordinários pagos não correspondem a nenhuma classe salarial de maio de 2026.</div>
-                        <div class="audit-issue__law">Base Legal: Tabela Remuneratória Geral de Ativos da Portaria Conjunta nº 1/2026.</div>
+                        <div class="audit-issue__rule">Vencimentos ordinários pagos não correspondem a nenhuma classe salarial de referência.</div>
+                        <div class="audit-issue__law">Base Legal: Tabela Remuneratória do TSE.</div>
                     </div>
                 `,
                 desvio: desvioTotal
@@ -902,7 +1014,10 @@ function runDeterministicAudit() {
     filterAndPaginateFindings();
     renderComplianceChart(conformingCount, discrepancies = AppState.auditFindings.filter(f => f.status === "DIVERGENTE").length);
 
-    Swal.close();
+    if (!AppState.isIncompatibleCompetence) {
+        Swal.close();
+    }
+    
     switchView("tab-auditoria");
 }
 
@@ -1049,6 +1164,9 @@ function openAuditDetailModal(serverId) {
     const finding = AppState.auditFindings.find(f => f.id === serverId);
     if (!server || !finding) return;
 
+    const activeConfig = TABELAS_HISTORICAS[AppState.activeTableKey];
+    const activeVR = activeConfig.vr;
+
     let normalizedCareer = "";
     if (server.carreira.includes("ANALISTA")) {
         normalizedCareer = "ANALISTA JUDICIÁRIO";
@@ -1099,14 +1217,14 @@ function openAuditDetailModal(serverId) {
 
     const diffVenc = finding.venc_pago - finding.venc_esperado;
     const noteVenc = isVencConforming ? "" : `
-        O vencimento básico de <strong>R$ ${finding.venc_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> pago difere do previsto na Tabela Remuneratória Oficial (Anexo I da Lei nº 15.292/2025) para o padrão de enquadramento <strong>${gradeStr}</strong> (que deveria ser de <strong>R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
-        Diferença líquida calculada: <strong style="color: var(--color-conclusion);">R$ ${diffVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>.
+        O vencimento básico de <strong>R$ ${finding.venc_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> pago difere do previsto na Tabela Remuneratória Oficial do TSE para o padrão <strong>${gradeStr}</strong> (esperado: <strong>R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
+        Diferença calculada: <strong style="color: var(--color-conclusion);">R$ ${diffVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>.
     `;
 
     const diffGaj = finding.gaj_paga - finding.gaj_esperada;
     const noteGaj = isGajConforming ? "" : `
-        A Gratificação Judiciária (GAJ) paga de <strong>R$ ${finding.gaj_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge do percentual compulsório de 140% incidente sobre o Vencimento Básico previsto para o padrão <strong>${gradeStr}</strong> (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 140% = <strong>R$ ${finding.gaj_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
-        Desvio identificado de <strong style="color: var(--color-conclusion);">R$ ${diffGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 13 da Lei nº 11.416/2006).
+        A GAJ paga de <strong>R$ ${finding.gaj_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge de 140% sobre o Vencimento Básico do padrão <strong>${gradeStr}</strong> (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 140% = <strong>R$ ${finding.gaj_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
+        Desvio de <strong style="color: var(--color-conclusion);">R$ ${diffGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 13 da Lei nº 11.416/2006).
     `;
     
     let noteGas = "";
@@ -1114,33 +1232,33 @@ function openAuditDetailModal(serverId) {
         const diffGas = finding.gas_paga - finding.gas_esperada;
         if (finding.gas_esperada === 0 && finding.gas_paga > 0) {
             noteGas = `
-                Recebimento indevido: foi pago o valor de <strong>R$ ${finding.gas_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> a título de GAS (Adicional de Segurança), porém o servidor não possui cargo ou atribuições de segurança ativas homologadas na folha de ativos ordinários. 
+                Recebimento indevido: foi pago <strong>R$ ${finding.gas_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> de GAS (Adicional de Segurança), mas o servidor não possui atribuições policiais ativas. 
                 Diferença a ser glosada: <strong style="color: var(--color-conclusion);">R$ ${diffGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 17 da Lei nº 11.416/2006).
             `;
         } else {
             noteGas = `
-                O Adicional de Segurança (GAS) pago de <strong>R$ ${finding.gas_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge do percentual legal de 35% incidente sobre o Vencimento Básico do padrão enquadrado (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 35% = <strong>R$ ${finding.gas_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
-                Divergência calculada de <strong style="color: var(--color-conclusion);">R$ ${diffGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 17 da Lei nº 11.416/2006).
+                A GAS paga de <strong>R$ ${finding.gas_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge do percentual de 35% sobre o Vencimento Básico (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 35% = <strong>R$ ${finding.gas_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
+                Divergência: <strong style="color: var(--color-conclusion);">R$ ${diffGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 17 da Lei nº 11.416/2006).
             `;
         }
     }
 
     let noteAq = "";
     if (!isAqConforming) {
-        const calculatedCoefficient = finding.aq_pago / VALOR_REFERENCIA_AQ;
-        const expectedCoefficient = finding.aq_esperado / VALOR_REFERENCIA_AQ;
+        const calculatedCoefficient = finding.aq_pago / activeVR;
+        const expectedCoefficient = finding.aq_esperado / activeVR;
         const diffAq = finding.aq_pago - finding.aq_esperado;
 
         if (calculatedCoefficient < 0.2) {
             noteAq = `
-                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (coeficiente de <strong>${calculatedCoefficient.toFixed(2)} VR</strong>). 
-                Este valor é inferior ao bloco mínimo de 120 horas exigido para Ações de Capacitação (0,20 VR = R$ 142,88). Como não atinge o módulo mínimo, o direito esperado é de <strong>0,00 VR (R$ 0,00)</strong>, gerando divergência integral de <strong style="color: var(--color-conclusion);">R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 15, V da Lei nº 15.292/2025).
+                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${calculatedCoefficient.toFixed(2)} VR). 
+                Este valor é inferior ao bloco mínimo de 120h para Capacitações (0,20 VR = R$ ${(0.20 * activeVR).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}). O direito esperado é de <strong>0,00 VR (R$ 0,00)</strong>, gerando divergência integral de <strong style="color: var(--color-conclusion);">R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>.
             `;
         } else {
             noteAq = `
-                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (coeficiente de <strong>${calculatedCoefficient.toFixed(2)} VR</strong>). 
-                Com base na faixa de enquadramento legal, o direito reconhecido do servidor é de <strong>${expectedCoefficient.toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong>. 
-                O valor pago contém um resíduo em excesso, gerando divergência a ser corrigida de <strong style="color: var(--color-conclusion);">R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (<strong>${(calculatedCoefficient - expectedCoefficient).toFixed(2)} VR</strong>). (Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026).
+                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${calculatedCoefficient.toFixed(2)} VR). 
+                Com base na faixa legal da tabela vigente, o direito reconhecido é de <strong>${expectedCoefficient.toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong>. 
+                Divergência residual em excesso a ser corrigida: <strong style="color: var(--color-conclusion);">R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${(calculatedCoefficient - expectedCoefficient).toFixed(2)} VR).
             `;
         }
     }
@@ -1148,8 +1266,8 @@ function openAuditDetailModal(serverId) {
     let noteTeto = "";
     if (!isTetoConforming) {
         noteTeto = `
-            A soma das verbas de natureza remuneratória pagas no mês (<strong>R$ ${finding.soma_remuneratoria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) ultrapassa o teto constitucional do funcionalismo público (<strong>R$ 46.366,19</strong> — Subsídio de Ministro do STF). 
-            Excesso bruto sujeito a abate-teto: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_teto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 37, XI da Constituição Federal e Resolução CNJ nº 14/2006).
+            A soma das verbas remuneratórias pagas no mês (<strong>R$ ${finding.soma_remuneratoria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) ultrapassa o teto constitucional do funcionalismo (<strong>R$ 46.366,19</strong>). 
+            Excesso bruto sujeito a corte: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_teto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 37, XI da CF/88 e Resolução CNJ nº 14/2006).
         `;
     }
 
@@ -1186,6 +1304,11 @@ function openAuditDetailModal(serverId) {
         ${compRow("Teto Constitucional STF", finding.soma_remuneratoria, TETO_CONSTITUCIONAL_STF, isTetoConforming, "fa-solid fa-gavel", noteTeto)}
     `;
 
+    // Etiqueta de vigência de tabela aplicada
+    const tableBadgeLabel = AppState.isIncompatibleCompetence 
+        ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 4px 8px; margin-left: 8px; background: #FEF3C7; color: #D97706;">Tabela Espelho Jan/2026</span>`
+        : `<span class="badge badge--success" style="font-size: 11px; padding: 4px 8px; margin-left: 8px;">Tabela ${activeConfig.label.split(' ')[0]}</span>`;
+
     Swal.fire({
         width: '820px',
         showConfirmButton: true,
@@ -1202,7 +1325,7 @@ function openAuditDetailModal(serverId) {
                         <div>
                             <h3 style="font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px;">${server.nome}</h3>
                             <p style="font-size: 14.5px; color: var(--text3); margin-bottom: 4px;">CPF: <strong>${formattedCpf}</strong> | Matrícula: <strong>${server.id}</strong></p>
-                            <p style="font-size: 14.5px; color: var(--text2); font-weight: 600;">${normalizedCareer} • Padrão ${gradeStr}</p>
+                            <p style="font-size: 14.5px; color: var(--text2); font-weight: 600;">${normalizedCareer} • Padrão ${gradeStr} ${tableBadgeLabel}</p>
                         </div>
                         <div style="text-align: right;">
                             ${statusBadgeHtml}
@@ -1220,7 +1343,7 @@ function openAuditDetailModal(serverId) {
 
                 <!-- SEÇÃO 3: CONCILIAÇÃO LEGAL -->
                 <div style="margin-bottom: 16px;">
-                    <h4 style="font-size: 15.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">2. Conciliação contra Tabela Remuneratória e Teto</h4>
+                    <h4 style="font-size: 15.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">2. Conciliação contra Tabela Vigente e Teto</h4>
                     <div style="display: flex; flex-direction: column;">
                         ${reconciliaHtml}
                     </div>
@@ -1427,6 +1550,9 @@ function initProcessReset() {
                 AppState.filteredFindings = [];
                 AppState.currentPage = 1;
                 AppState.itemsPerPage = 25;
+                AppState.matchedCompetence = "N/A";
+                AppState.activeTableKey = "2026_JAN";
+                AppState.isIncompatibleCompetence = false;
                 
                 if (AppState.chartInstance) {
                     AppState.chartInstance.destroy();
