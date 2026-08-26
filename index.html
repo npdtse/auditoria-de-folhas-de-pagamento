@@ -40,22 +40,22 @@
             </div>
 
             <nav class="sidebar__menu" aria-label="Menu SPA">
-                <div class="sidebar__menu-item sidebar__menu-item--active" id="tab-dashboard" role="button" tabindex="0" aria-label="Carregar nova folha de pagamento">
+                <div class="sidebar__menu-item sidebar__menu-item--active" id="tab-dashboard" role="button" tabindex="0" aria-label="Carregar folha de pagamento">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
                     <span class="sidebar__menu-label">Carregar Folha</span>
                 </div>
-                <div class="sidebar__menu-item" id="tab-auditoria" role="button" tabindex="0" aria-label="Acessar painel de auditoria ativa">
+                <div class="sidebar__menu-item" id="tab-auditoria" role="button" tabindex="0" aria-label="Relatório de inconsistências">
                     <i class="fa-solid fa-table-list"></i>
                     <span class="sidebar__menu-label">Relatório de Desvios</span>
                 </div>
-                <div class="sidebar__menu-item" id="tab-criterios" role="button" tabindex="0" aria-label="Acessar manual de critérios de avaliação">
+                <div class="sidebar__menu-item" id="tab-criterios" role="button" tabindex="0" aria-label="Manual de critérios de avaliação">
                     <i class="fa-solid fa-scale-balanced"></i>
                     <span class="sidebar__menu-label">Critérios de Avaliação</span>
                 </div>
             </nav>
 
             <div class="sidebar__footer">
-                <div class="sidebar__toggle-theme" id="theme-toggle-btn" role="button" tabindex="0" aria-label="Alternar esquema de cores escuro e claro">
+                <div class="sidebar__toggle-theme" id="theme-toggle-btn" role="button" tabindex="0" aria-label="Alternar esquema de cores">
                     <i class="fa-solid fa-moon"></i>
                     <span class="sidebar__menu-label">Modo Escuro</span>
                 </div>
@@ -68,12 +68,10 @@
             <!-- === [Cabeçalho] CABEÇALHO DINÂMICO DA SPA === -->
             <header class="main-header">
                 <div class="main-header__identity">
-                    <!-- Logotipo e Textos Institucionais Ativos na Inicialização -->
                     <div class="main-header__meta-box" id="header-brand-box">
                         <h1 class="main-header__institution">Secretaria de Auditoria — TSE</h1>
-                        <p class="main-header__sub-institution">Sandbox Local Analítica — Seguro e Isento de Conexão Externa</p>
+                        <p class="main-header__sub-institution">Processamento local de dados em memória</p>
                     </div>
-                    <!-- Cabeçalho de Navegação Ativa Pós-Importação -->
                     <div class="main-header__active-box" id="header-active-box" style="display: none;">
                         <span class="main-header__badge">Diagnóstico Ativo</span>
                         <h2 class="main-header__active-title" id="active-flow-title">Processamento de Lançamentos Salariais</h2>
@@ -81,7 +79,7 @@
                 </div>
 
                 <div class="main-header__actions">
-                    <button class="btn btn--secondary" id="btn-reset-process" style="display: none;" aria-label="Mudar de folha e reiniciar o processo">
+                    <button class="btn btn--secondary" id="btn-reset-process" style="display: none;" aria-label="Reiniciar e carregar outra folha">
                         <i class="fa-solid fa-rotate-left"></i>
                         <span class="btn__text">Mudar Folha</span>
                     </button>
@@ -91,7 +89,7 @@
                         </div>
                         <div class="user-profile__info">
                             <span class="user-profile__name">Auditor da SAU</span>
-                            <span class="user-profile__role">Sandbox offline</span>
+                            <span class="user-profile__role">Execução Local</span>
                         </div>
                     </div>
                 </div>
@@ -100,45 +98,45 @@
             <!-- === [Área de Visualização] CONTEÚDO PRINCIPAL === -->
             <main class="main-area" id="main-scroll-area">
                 
-                <!-- ==================== TELA 1: INGESTÃO DE DADOS (UPLOAD IMEDIATO) ==================== -->
+                <!-- ==================== TELA 1: INGESTÃO DE DADOS ==================== -->
                 <section class="spa-view spa-view--active" id="view-dashboard" aria-labelledby="view-dashboard-title">
                     <div class="upload-container">
                         <div class="section-title-box">
-                            <h2 class="section-title" id="view-dashboard-title">Carregar Folha Salarial do Mês</h2>
-                            <p class="section-subtitle">Arraste ou selecione o arquivo gerado pelo sistema de folha de pagamento do TSE (.xlsx, .txt ou .csv)</p>
+                            <h2 class="section-title" id="view-dashboard-title">Carregar Folha Salarial</h2>
+                            <p class="section-subtitle">Selecione o arquivo de folha de pagamento (.xlsx, .txt ou .csv)</p>
                         </div>
                         
-                        <div class="dropzone" id="file-dropzone" tabindex="0" role="button" aria-label="Área de upload de arquivos. Arraste ou selecione o arquivo de folha de pagamento">
+                        <div class="dropzone" id="file-dropzone" tabindex="0" role="button" aria-label="Área de envio de arquivos">
                             <input type="file" id="file-input-raw" class="dropzone__input" accept=".xlsx,.xls,.csv,.txt">
                             <div class="dropzone__icon">
                                 <i class="fa-solid fa-file-arrow-up"></i>
                             </div>
                             <h4 class="dropzone__title">Arraste o arquivo de folha de pagamento aqui</h4>
-                            <p class="dropzone__limits">Suporta planilhas Excel (XLSX) e textos tabulados/hashtag (#) de até 50MB</p>
+                            <p class="dropzone__limits">Formatos suportados: planilhas Excel (XLSX) e arquivos de texto delimitados (até 50MB)</p>
                             <button class="btn btn--primary dropzone__btn" tabindex="-1">Selecionar Arquivo</button>
                         </div>
 
-                        <!-- Painel de Carregamento Assíncrono Dinâmico -->
+                        <!-- Painel de Carregamento Assíncrono -->
                         <div class="upload-loading" id="upload-loading-panel" style="display: none; padding: 40px; text-align: center;">
                             <div class="upload-loading__spinner" style="margin-bottom: 20px;">
                                 <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 48px; color: var(--primary);"></i>
                             </div>
-                            <h4 class="upload-loading__title" style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Processando Informações da Folha...</h4>
-                            <p class="upload-loading__status" id="loading-status-text" style="font-size: 13px; color: var(--text3); font-weight: 500;">Iniciando pivotagem e agrupamento de registros...</p>
+                            <h4 class="upload-loading__title" style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Processando Registros da Folha...</h4>
+                            <p class="upload-loading__status" id="loading-status-text" style="font-size: 13px; color: var(--text3); font-weight: 500;">Agrupando rubricas por matrícula...</p>
                         </div>
 
-                        <!-- Painel de Pré-visualização pós Ingestão em Memória -->
+                        <!-- Painel de Pré-visualização pós Ingestão -->
                         <div class="upload-preview" id="upload-preview-panel" style="display: none;">
                             <div class="upload-preview__header">
-                                <h4 class="upload-preview__title"><i class="fa-solid fa-circle-check"></i> Dados Estruturados em Memória do Navegador</h4>
+                                <h4 class="upload-preview__title"><i class="fa-solid fa-circle-check"></i> Dados Estruturados em Memória</h4>
                             </div>
                             <div class="upload-preview__meta-grid">
                                 <div class="preview-meta-card">
-                                    <span class="preview-meta-card__label">Servidores do Escopo Detectados (Ativos)</span>
+                                    <span class="preview-meta-card__label">Servidores do Escopo (Ativos)</span>
                                     <strong class="preview-meta-card__value" id="preview-server-count">0</strong>
                                 </div>
                                 <div class="preview-meta-card">
-                                    <span class="preview-meta-card__label">Lançamentos Individuais Mapeados</span>
+                                    <span class="preview-meta-card__label">Lançamentos Individuais</span>
                                     <strong class="preview-meta-card__value" id="preview-row-count">0</strong>
                                 </div>
                             </div>
@@ -151,19 +149,18 @@
                     </div>
                 </section>
 
-                <!-- ==================== TELA 2: AUDITORIA AUTOMATIZADA (PAINEL DE DESVIOS) ==================== -->
+                <!-- ==================== TELA 2: AUDITORIA (PAINEL DE DESVIOS) ==================== -->
                 <section class="spa-view" id="view-auditoria" aria-labelledby="view-auditoria-title">
                     <div class="view-header">
                         <div class="view-header__title-box">
                             <h3 class="view-header__title" id="view-auditoria-title">Resultados do Diagnóstico</h3>
-                            <p class="view-header__subtitle">Este painel cruza o Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001), o Teto Constitucional Ordinário (R$ 46.366,19) e o Limite de Horas Extras do TSE (R$ 17.000,00) pagos contra a legislação e as Tabelas Remuneratórias vigentes do TSE para mapear inconsistências cadastrais ou de enquadramento.</p>
+                            <p class="view-header__subtitle">Confronto de Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001), Teto Constitucional Ordinário (R$ 46.366,19) e Limite de Horas Extras (R$ 17.000,00) contra as tabelas e normas vigentes do TSE.</p>
                             <br>
                         </div>
                     </div>
 
-                    <!-- === SEÇÃO DE RESUMO DO TOPO (KPIs + Gráfico de Conformidade Integrados) === -->
+                    <!-- === Resumo do Topo (KPIs + Gráfico) === -->
                     <div class="summary-layout">
-                        <!-- Coluna da Esquerda: KPIs Compactados e Empilhados -->
                         <div class="summary-layout__kpis">
                             <div class="kpi-card">
                                 <span class="kpi-card__label">Servidores Ativos Analisados</span>
@@ -173,31 +170,30 @@
                                 </div>
                             </div>
                             <div class="kpi-card">
-                                <span class="kpi-card__label">Valores Corretos / Não Analisados</span>
+                                <span class="kpi-card__label">Valores Conformes / Não Analisados</span>
                                 <strong class="kpi-card__value kpi-card__value--success" id="kpi-conforming">0</strong>
                                 <div class="kpi-card__footer">
                                     <span class="kpi-card__badge kpi-card__badge--success" id="kpi-conforming-pct">0% da folha ativa</span>
                                 </div>
                             </div>
                             <div class="kpi-card">
-                                <span class="kpi-card__label">Valores Divergentes (Suspeita de Erro)</span>
+                                <span class="kpi-card__label">Valores com Divergência</span>
                                 <strong class="kpi-card__value kpi-card__value--error" id="kpi-discrepancies">0</strong>
                                 <div class="kpi-card__footer">
-                                    <span class="kpi-card__badge kpi-card__badge--error" id="kpi-discrepancies-pct">0% desvios cadastrais</span>
+                                    <span class="kpi-card__badge kpi-card__badge--error" id="kpi-discrepancies-pct">0% divergências</span>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Coluna da Direita: Gráfico de Conformidade -->
                         <div class="card card--paddings summary-layout__chart">
-                            <h4 class="card-title">Distribuição de Status de Conformidade</h4>
+                            <h4 class="card-title">Distribuição de Conformidade</h4>
                             <div class="chart-container">
                                 <canvas id="compliance-chart"></canvas>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tabela de Divergências Identificadas -->
+                    <!-- Tabela de Divergências -->
                     <div class="card">
                         <div class="table-header">
                             <h4 class="table-header__title">Relatório de Inconsistências Identificadas</h4>
@@ -239,111 +235,130 @@
                             </table>
                         </div>
                         
-                        <!-- Contêiner de Paginação Dinâmica (Injetada via JS) -->
                         <div id="table-pagination-controls"></div>
                     </div>
                 </section>
 
-                <!-- ==================== TELA 3: CRITÉRIOS DE AUDITORIA (SEM BLOQUEIO) ==================== -->
+                <!-- ==================== TELA 3: CRITÉRIOS DE AVALIAÇÃO ==================== -->
                 <section class="spa-view" id="view-criterios" aria-labelledby="view-criterios-title">
                     <div class="view-header">
                         <div class="view-header__title-box">
-                            <h3 class="view-header__title" id="view-criterios-title">Critérios de Avaliação e Regras de Negócio</h3>
+                            <h3 class="view-header__title" id="view-criterios-title">Critérios de Avaliação e Regras de Cálculo</h3>
                             <br>
-                            <p class="view-header__subtitle">Esta página descreve a fundamentação jurídica, as fórmulas de cálculo e as premissas de auditoria que governam a análise em lote das folhas de pagamento mensais do TSE.</p>
+                            <p class="view-header__subtitle">Relação de parâmetros normativos e fórmulas de cálculo aplicadas na triagem automatizada da folha de pagamento do TSE.</p>
                             <br>
                         </div>
                     </div>
 
-                    <!-- Cartão 1: Enquadramento Geral e Rubricas de Base -->
+                    <!-- Cartão 1: Vencimento Básico e GAJ -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-money-bill-wave" style="color: var(--primary); margin-right: 8px;"></i>
-                            1. Rubricas de Base (Vencimento e GAJ)
+                            1. Vencimento Básico e GAJ (Vigências Salariais)
                         </h4>
                         
                         <ul class="parameter-list">
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Vencimento Básico (Rubrica 1001)</span>
-                                    <p class="parameter-item__desc">Serve como a âncora contratual do servidor. O sistema busca o casamento exato deste valor pago contra os limites das Classes A, B ou C e Padrões 1 a 13 das Tabelas Oficiais vigentes para os cargos de Analista e Técnico Judiciário.</p>
+                                    <p class="parameter-item__desc">Confronto do valor pago contra as tabelas salariais nas Classes A a C e Padrões 1 a 13 para Analista e Técnico Judiciário.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Gratificação de Atividade Judiciária - GAJ (Rubrica 2001)</span>
-                                    <p class="parameter-item__desc">Obrigatória e devida a todos os servidores ativos da carreira. É calculada aplicando-se estritamente o percentual compulsório de <strong>140% sobre o Vencimento Básico</strong> correspondente ao padrão enquadrado (Artigo 13 da Lei nº 11.416/2006).</p>
+                                    <p class="parameter-item__desc">Cálculo de 140% incidente sobre o Vencimento Básico do padrão enquadrado (Art. 13 da Lei nº 11.416/2006).</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Vigências Temporais (Janeiro vs. Julho de 2026)</span>
+                                    <p class="parameter-item__desc">Aplicação da Tabela de Janeiro/2026 (Lei nº 15.292/2025) para competências de 01/2026 a 06/2026, e da Tabela de Julho/2026 (Lei nº 15.293/2025) a partir de 07/2026.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                         </ul>
 
-                        <!-- Prateleira Normativa do Cartão 1 -->
                         <div class="normative-shelf">
                             <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Tabelas de Apoio</span>
                             <div class="normative-shelf__list">
-                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/arquivos/2026/tse-anexo-iii-tabela-remuneratoria-transparencia-tse/@@display-file/file/ANEXO-III-RES-102-CNJ-VIGENCIA-01-01-2026.pdf" target="_blank" class="normative-shelf__link" aria-label="Abrir Tabela Remuneratória de Cargos Efetivos do TSE vigente em Janeiro de 2026">
+                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/arquivos/2026/tse-anexo-iii-tabela-remuneratoria-transparencia-tse/@@display-file/file/ANEXO-III-RES-102-CNJ-VIGENCIA-01-01-2026.pdf" target="_blank" class="normative-shelf__link" aria-label="Tabela TSE Janeiro de 2026">
                                     <i class="fa-solid fa-file-pdf"></i> Tabela Efetivos TSE (Vigência 01/01/2026)
                                 </a>
-                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/arquivos/2026/tse-anexo-iii-tabela-remuneratoria-transparencia-tse/@@display-file/file/ANEXO-III-RES-102-CNJ-VIGENCIA-01-07-2026.pdf" target="_blank" class="normative-shelf__link" aria-label="Abrir Tabela Remuneratória de Cargos Efetivos do TSE vigente em Julho de 2026">
+                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/arquivos/2026/tse-anexo-iii-tabela-remuneratoria-transparencia-tse/@@display-file/file/ANEXO-III-RES-102-CNJ-VIGENCIA-01-07-2026.pdf" target="_blank" class="normative-shelf__link" aria-label="Tabela TSE Julho de 2026">
                                     <i class="fa-solid fa-file-pdf"></i> Tabela Efetivos TSE (Vigência 01/07/2026)
                                 </a>
-                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" class="normative-shelf__link" aria-label="Acessar Lei 11416 de 2006 no Planalto">
-                                    <i class="fa-solid fa-scale-balanced"></i> Lei nº 11.416/2006 (Planalto)
+                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" class="normative-shelf__link" aria-label="Lei 11416 de 2006">
+                                    <i class="fa-solid fa-scale-balanced"></i> Lei nº 11.416/2006
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Cartão 2: Adicional de Qualificação (AQ) - Modelo VR -->
+                    <!-- Cartão 2: Adicional de Qualificação -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 8px;"></i>
-                            2. Adicional de Qualificação (AQ) - Modelo de Valor de Referência
+                            2. Adicional de Qualificação (AQ)
                         </h4>
-                        
-                        <p class="section-subtitle" style="margin-bottom: 16px;">O AQ é fixado em múltiplos do <strong>Valor de Referência (VR) nacional unificado</strong> (R$ 714,40 até Jun/2026 e R$ 771,55 a partir de Jul/2026), obedecendo às seguintes regras estritas de concessão:</p>
                         
                         <ul class="parameter-list">
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Regra de Absorção e Exclusão Mútua (Mestrado/Doutorado)</span>
-                                    <p class="parameter-item__desc">O título de Doutor (5,0 VR) ou Mestre (3,5 VR) absorve automaticamente qualquer adicional de nível inferior (Especialização, Segunda Graduação ou Certificação). Eles <strong>não se acumulam sob nenhuma hipótese</strong>, exceto com as Ações de Capacitação (Artigo 15, § 1º-B).</p>
+                                    <span class="parameter-item__label">Valor de Referência (VR)</span>
+                                    <p class="parameter-item__desc">Base de cálculo fixada em R$ 714,40 (01/01/2026 a 30/06/2026) e R$ 771,55 (a partir de 01/07/2026).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Teto de Acúmulo de Títulos Menores (Especialização/Graduação/Certificação)</span>
-                                    <p class="parameter-item__desc">A soma de Especializações (1,0 VR cada), Segunda Graduação (1,0 VR) e Certificações Profissionais (0,5 VR cada) é <strong>estritamente limitada ao teto máximo de 2,0 VR</strong> para servidores sem Mestrado ou Doutorado (Artigo 15, § 1º-C).</p>
+                                    <span class="parameter-item__label">Absorção de Títulos (Art. 15, § 1º-B da Lei nº 15.292/2025)</span>
+                                    <p class="parameter-item__desc">Doutorado (5,0 VR) e Mestrado (3,5 VR) absorvem adicionais de especialização, segunda graduação e certificação.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Ações de Capacitação/Treinamento (Rubrica 23001)</span>
-                                    <p class="parameter-item__desc">Devido à razão de 0,2 VR para cada conjunto de ações que some 120 horas. É cumulativo com qualquer outro título (Artigo 15, § 1º-D) e limitado ao <strong>teto de 3 conjuntos (0,6 VR)</strong> (Artigo 15, V).</p>
+                                    <span class="parameter-item__label">Teto de Títulos Menores (Art. 15, § 1º-C da Lei nº 15.292/2025)</span>
+                                    <p class="parameter-item__desc">Soma de especializações (1,0 VR), segunda graduação (1,0 VR) e certificações (0,5 VR) limitada a 2,0 VR.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Treinamento e Teto Geral (Art. 15, V da Lei nº 15.292/2025)</span>
+                                    <p class="parameter-item__desc">Módulos de 120h a 0,20 VR limitados a 3 conjuntos (0,60 VR). Teto máximo acumulado de AQ fixado em 5,60 VR.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Pisos de Enquadramento</span>
+                                    <p class="parameter-item__desc">Reconhecimento do patamar legal atingido (0,20 VR, 0,40 VR, 0,60 VR) e apuração do valor residual excedente.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                         </ul>
 
-                        <!-- Prateleira Normativa do Cartão 2 -->
                         <div class="normative-shelf">
-                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Portarias de Apoio</span>
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação de Apoio</span>
                             <div class="normative-shelf__list">
-                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15292.htm" target="_blank" class="normative-shelf__link" aria-label="Abrir Lei 15292 de 2025 no Planalto">
+                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15292.htm" target="_blank" class="normative-shelf__link" aria-label="Lei 15292 de 2025">
                                     <i class="fa-solid fa-scale-balanced"></i> Lei nº 15.292/2025
                                 </a>
-                                <a href="https://www.tse.jus.br/legislacao/compilada/prtc/2026/portaria-conjunta-no-1-de-8-de-janeiro-de-2026" target="_blank" class="normative-shelf__link" aria-label="Abrir Portaria Conjunta número 1 de 2026 no TSE">
+                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15293.htm" target="_blank" class="normative-shelf__link" aria-label="Lei 15293 de 2025">
+                                    <i class="fa-solid fa-scale-balanced"></i> Lei nº 15.293/2025
+                                </a>
+                                <a href="https://www.tse.jus.br/legislacao/compilada/prtc/2026/portaria-conjunta-no-1-de-8-de-janeiro-de-2026" target="_blank" class="normative-shelf__link" aria-label="Portaria Conjunta 1 de 2026">
                                     <i class="fa-solid fa-bookmark"></i> Portaria Conjunta nº 1/2026
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Cartão 3: Gratificação de Segurança (GAS) -->
+                    <!-- Cartão 3: Gratificação de Segurança -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-shield-halved" style="color: var(--primary); margin-right: 8px;"></i>
@@ -353,118 +368,166 @@
                         <ul class="parameter-list">
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Adicional de Risco (Rubrica 2002)</span>
-                                    <p class="parameter-item__desc">Devida exclusivamente a Técnicos e Analistas Judiciários na especialidade de Polícia Judicial (atividades de segurança ativa). Corresponde a <strong>35% sobre o Vencimento Básico</strong> esperado do padrão do servidor (Artigo 17 da Lei nº 11.416/2006).</p>
+                                    <span class="parameter-item__label">Cálculo da GAS (Rubrica 2002)</span>
+                                    <p class="parameter-item__desc">Percentual de 35% incidente sobre o Vencimento Básico do padrão (Art. 17 da Lei nº 11.416/2006).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Regra de Exclusão da Reciclagem de GAS para Horas de AQ</span>
-                                    <p class="parameter-item__desc">As horas correspondentes à reciclagem anual obrigatória para manutenção da GAS não podem ser computadas como ações de treinamento para concessão do Adicional de Qualificação (Artigo 8º, § 2º, IV da Resolução TSE nº 23.380/2012).</p>
+                                    <span class="parameter-item__label">Destinação Funcional</span>
+                                    <p class="parameter-item__desc">Restrita a ocupantes de cargos da Polícia Judicial em exercício de atribuições de segurança.</p>
                                 </div>
-                                <span class="badge badge--neutral">Não Verificado</span>
+                                <span class="badge badge--success">Análise Ativa</span>
                             </li>
                         </ul>
 
-                        <!-- Prateleira Normativa do Cartão 3 -->
                         <div class="normative-shelf">
-                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Resoluções de Apoio</span>
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Resoluções</span>
                             <div class="normative-shelf__list">
-                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" class="normative-shelf__link" aria-label="Acessar Lei 11416 de 2006 no Planalto">
+                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" class="normative-shelf__link" aria-label="Lei 11416 de 2006">
                                     <i class="fa-solid fa-scale-balanced"></i> Lei nº 11.416/2006 (Art. 17)
                                 </a>
-                                <a href="https://www.tse.jus.br/legislacao/compilada/res/2012/resolucao-no-23-380-de-8-de-maio-de-2012" target="_blank" class="normative-shelf__link" aria-label="Abrir Resolução TSE 23380 de 2012">
+                                <a href="https://www.tse.jus.br/legislacao/compilada/res/2012/resolucao-no-23-380-de-8-de-maio-de-2012" target="_blank" class="normative-shelf__link" aria-label="Resolução TSE 23380 de 2012">
                                     <i class="fa-solid fa-bookmark"></i> Resolução TSE nº 23.380/2012
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Cartão 4: Teto Constitucional Ordinário e Limite de Horas Extras -->
+                    <!-- Cartão 4: Teto Remuneratório Ordinário -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-gavel" style="color: var(--primary); margin-right: 8px;"></i>
-                            4. Teto Constitucional Ordinário e Limite de Horas Extras (Dois Tetos Independentes)
+                            4. Teto Remuneratório Ordinário (STF - R$ 46.366,19)
                         </h4>
                         
                         <ul class="parameter-list">
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Teto Remuneratório Ordinário (STF - R$ 46.366,19)</span>
-                                    <p class="parameter-item__desc">Soma todas as verbas remuneratórias regulares (`Código Rendimento Desconto = 1`: Vencimento, GAJ, GAS, AQ, Funções FC/CJ e VPNI). <strong>Exclui expressamente</strong> férias, 13º salário, horas extras e auxílios indenizatórios conforme o Art. 3º da Resolução CNJ nº 14/2006.</p>
+                                    <span class="parameter-item__label">Limite Constitucional (Art. 37, XI da CF/88)</span>
+                                    <p class="parameter-item__desc">Valor de R$ 46.366,19 correspondente ao subsídio de Ministro do STF (Lei nº 14.520/2023).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Limite Específico de Trabalho Extraordinário (TSE - R$ 17.000,00)</span>
-                                    <p class="parameter-item__desc">Apura isoladamente o total pago a título de Horas Extras / Serviço Extraordinário no mês (regular ou suplementar). Se a soma das horas extras ultrapassar o teto administrativo de <strong>R$ 17.000,00</strong>, o excesso é apontado como divergência (Art. 3º, IV da Resolução CNJ nº 14/2006).</p>
+                                    <span class="parameter-item__label">Base de Incidência Bruta</span>
+                                    <p class="parameter-item__desc">Soma de parcelas remuneratórias (`Código Rendimento Desconto = 1`: Vencimento, GAJ, GAS, AQ, FC/CJ e VPNI).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Isenção das Verbas de Caráter Indenizatório</span>
-                                    <p class="parameter-item__desc">Auxílios assistenciais e indenizações (Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte) são <strong>excluídos da soma de ambos os tetos</strong> por expressa determinação constitucional (Art. 37, § 11 da CF/88).</p>
+                                    <span class="parameter-item__label">Exclusões de Verbas (Art. 3º da Resolução CNJ nº 14/2006)</span>
+                                    <p class="parameter-item__desc">Férias, 1/3 de férias, gratificação natalina (13º) e horas extras não integram a soma do teto ordinário.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Isenção de Verbas Indenizatórias (Art. 37, § 11 da CF/88)</span>
+                                    <p class="parameter-item__desc">Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte não integram o cálculo.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                         </ul>
 
-                        <!-- Prateleira Normativa do Cartão 4 -->
                         <div class="normative-shelf">
-                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Resoluções do CNJ e TSE</span>
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Resoluções</span>
                             <div class="normative-shelf__list">
-                                <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm" target="_blank" class="normative-shelf__link" aria-label="Acessar Constituição Federal no Planalto">
-                                    <i class="fa-solid fa-scale-balanced"></i> Artigo 37, XI e § 11 da CF/88
+                                <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm" target="_blank" class="normative-shelf__link" aria-label="Constituição Federal">
+                                    <i class="fa-solid fa-scale-balanced"></i> Artigo 37 da CF/88
                                 </a>
-                                <a href="https://atos.cnj.jus.br/atos/detalhar/88" target="_blank" class="normative-shelf__link" aria-label="Abrir Resolução CNJ 14 de 2006">
-                                    <i class="fa-solid fa-bookmark"></i> Resolução CNJ nº 14/2006 (Art. 3º)
+                                <a href="https://atos.cnj.jus.br/atos/detalhar/88" target="_blank" class="normative-shelf__link" aria-label="Resolução CNJ 14 de 2006">
+                                    <i class="fa-solid fa-bookmark"></i> Resolução CNJ nº 14/2006
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Cartão 5: Regras Cadastrais e Ingestão Multi-Competência -->
+                    <!-- Cartão 5: Limite de Horas Extras -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
-                            <i class="fa-solid fa-user-check" style="color: var(--primary); margin-right: 8px;"></i>
-                            5. Consistência Cadastral e Ingestão Multi-Competência
+                            <i class="fa-solid fa-clock" style="color: var(--primary); margin-right: 8px;"></i>
+                            5. Limite de Trabalho Extraordinário (TSE - R$ 17.000,00)
                         </h4>
                         
                         <ul class="parameter-list">
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Atribuição de FC ou CJ (Coerência de Designação)</span>
-                                    <p class="parameter-item__desc">Verifica se o nível de "Atribuição" (1, 2 ou 3) cadastrado condiz com a Sigla da função designada (ex: FC 6 exige Atribuição = 1; FC 4/3/1 exigem Atribuição = 3; cargos CJ não admitem Atribuição = 3), disparando avisos de erro de digitação do sistema.</p>
+                                    <span class="parameter-item__label">Limite Administrativo de Horas Extras</span>
+                                    <p class="parameter-item__desc">Teto fixado em R$ 17.000,00 para a soma de serviço extraordinário pago no mês.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Ingestão de Folhas Regulares e Suplementares</span>
-                                    <p class="parameter-item__desc">O sistema analisa o Vencimento Básico e a GAJ na folha regular (`Tipo Competência = 0`), permitindo capturar horas extras, férias e 13º lançados na folha suplementar (`Tipo Competência = 1`), preservando a acurácia de períodos eleitorais.</p>
+                                    <span class="parameter-item__label">Apuração Autônoma (Art. 3º, IV da Resolução CNJ nº 14/2006)</span>
+                                    <p class="parameter-item__desc">Horas extras apuradas separadamente da remuneração ordinária.</p>
                                 </div>
-                                <span class="badge badge--success">Filtro Aplicado</span>
+                                <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Validade Quadrienal de AQ (Capacitações e Certificações)</span>
-                                    <p class="parameter-item__desc">Os adicionais correspondentes a Certificações Profissionais (0,5 VR) e Ações de Capacitação (múltiplos de 0,2 VR) possuem prazo de validade de exatamente 4 anos (48 meses) da conclusão (Portaria Conjunta nº 1/2026). Não há dados suficientes nas planilhas de origem para a verificação automatizada dessa validade temporal.</p>
+                                    <span class="parameter-item__label">Ingestão de Folha Regular e Suplementar</span>
+                                    <p class="parameter-item__desc">Leitura de valores de serviço extraordinário em `Tipo Competência = 0` e `Tipo Competência = 1`.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                        </ul>
+
+                        <div class="normative-shelf">
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Regulamentos</span>
+                            <div class="normative-shelf__list">
+                                <a href="https://atos.cnj.jus.br/atos/detalhar/88" target="_blank" class="normative-shelf__link" aria-label="Resolução CNJ 14 de 2006">
+                                    <i class="fa-solid fa-bookmark"></i> Resolução CNJ nº 14/2006 (Art. 3º)
+                                </a>
+                                <a href="https://www.tse.jus.br/legislacao" target="_blank" class="normative-shelf__link" aria-label="Regulamentos do TSE">
+                                    <i class="fa-solid fa-globe"></i> Regulamentos de Serviço Extraordinário (TSE)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cartão 6: Consistência Cadastral e Filtros de Ingestão -->
+                    <div class="card card--paddings">
+                        <h4 class="card-title">
+                            <i class="fa-solid fa-user-check" style="color: var(--primary); margin-right: 8px;"></i>
+                            6. Consistência Cadastral e Filtros de Ingestão
+                        </h4>
+                        
+                        <ul class="parameter-list">
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Atribuições de FC e CJ (Portaria Conjunta nº 1/2026)</span>
+                                    <p class="parameter-item__desc">FC 6 associada à Atribuição 1; FC 4, 3 e 1 associadas à Atribuição 3; cargos CJ não admitem Atribuição 3.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Filtro de Salário Base</span>
+                                    <p class="parameter-item__desc">Enquadramento de Vencimento e GAJ avaliado exclusivamente na folha regular (`Tipo Competência = 0`).</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Validade Quadrienal de AQ</span>
+                                    <p class="parameter-item__desc">Validade de 4 anos de certificados de treinamento e capacitação não verificada por ausência de dados na planilha de origem.</p>
                                 </div>
                                 <span class="badge badge--neutral">Não Verificado</span>
                             </li>
                         </ul>
 
-                        <!-- Prateleira Normativa do Cartão 5 -->
                         <div class="normative-shelf">
                             <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Tabelas de Apoio</span>
                             <div class="normative-shelf__list">
-                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/cargos-em-comissao-e-funcoes-de-confianca" target="_blank" class="normative-shelf__link" aria-label="Abrir Tabela de Cargos em Comissão e Funções de Confiança do TSE">
+                                <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/cargos-em-comissao-e-funcoes-de-confianca" target="_blank" class="normative-shelf__link" aria-label="Tabela de Cargos em Comissão do TSE">
                                     <i class="fa-solid fa-globe"></i> Cargos em Comissão e Funções (TSE)
                                 </a>
-                                <a href="https://www.tse.jus.br/legislacao/compilada/prtc/2026/portaria-conjunta-no-1-de-8-de-janeiro-de-2026" target="_blank" class="normative-shelf__link" aria-label="Abrir Portaria Conjunta número 1 de 2026 no TSE">
+                                <a href="https://www.tse.jus.br/legislacao/compilada/prtc/2026/portaria-conjunta-no-1-de-8-de-janeiro-de-2026" target="_blank" class="normative-shelf__link" aria-label="Portaria Conjunta 1 de 2026">
                                     <i class="fa-solid fa-bookmark"></i> Portaria Conjunta nº 1/2026
                                 </a>
                             </div>
@@ -477,7 +540,7 @@
             <!-- === [Rodapé] RODAPÉ INSTITUCIONAL === -->
             <footer class="app-footer">
                 <span class="app-footer__text">© 2026 Secretaria de Auditoria — TSE</span>
-                <span class="app-footer__badge"><i class="fa-solid fa-lock"></i> Zero-Knowledge (Nenhum dado trafega fora de sua máquina)</span>
+                <span class="app-footer__badge"><i class="fa-solid fa-lock"></i> Processamento em memória local</span>
             </footer>
 
         </div>
