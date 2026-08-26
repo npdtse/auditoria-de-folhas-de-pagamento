@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Especificações Técnicas — Pré-Auditoria de Folhas de Pagamento</title>
+    
+    <!-- === IMPORTAÇÃO DE FONTES E ÍCONES === -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- === CDN TAILWIND CSS === -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Source Sans 3', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            faded: '#E6F0FA',
+                            light: '#4D9FFF',
+                            primary: '#0073E6',
+                            dark: '#005BB5',
+                        },
+                        surface: {
+                            base: '#F0F4F8',
+                            card: '#FFFFFF',
+                            card2: '#F8FAFC',
+                            border: '#CDE0F5'
+                        },
+                        text: {
+                            main: '#1A2733',
+                            muted: '#4A5B6E',
+                            sub: '#7D8FA3'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background-color: #F0F4F8;
+            color: #1A2733;
+        }
+        .font-heading {
+            font-family: 'Poppins', sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #CDE0F5;
+            padding: 10px 14px;
+            text-align: left;
+        }
+        th {
+            background-color: #F8FAFC;
+            font-weight: 700;
+            color: #1A2733;
+        }
+    </style>
+</head>
+<body class="antialiased text-base leading-relaxed">
+
+    <!-- === CABEÇALHO === -->
+    <header class="bg-white border-b border-surface-border sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-brand-faded text-brand-primary rounded-lg flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-code"></i>
+                </div>
+                <div>
+                    <h1 class="font-heading font-bold text-lg text-text-main leading-tight">Especificação Técnica - Pré-Auditoria de Folhas de Pagamento</h1>
+                    <span class="text-xs font-semibold text-text-sub uppercase">Secretaria de Auditoria — TSE</span>
+                </div>
+            </div>
+            <span class="text-xs font-bold bg-slate-100 border border-surface-border text-text-muted px-3 py-1.5 rounded-md">
+                Versão Documental: 2026.1
+            </span>
+        </div>
+    </header>
+
+    <!-- === CONTEÚDO PRINCIPAL === -->
+    <main class="max-w-6xl mx-auto px-6 py-10 space-y-12">
+
+        <!-- ==================== SEÇÃO 1: ORGANIZAÇÃO DOS ARQUIVOS ==================== -->
+        <section id="arquivos" class="bg-white border border-surface-border rounded-xl p-8 shadow-sm">
+            <h2 class="font-heading font-bold text-2xl text-text-main mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-folder-tree text-brand-primary"></i> 1. Organização dos Arquivos
+            </h2>
+            <p class="text-text-muted mb-6">
+                A aplicação é estruturada no modelo de aplicação de página única (Single Page Application — SPA) estática, composto por cinco arquivos principais sem dependência de etapa de compilação (build).
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th class="w-1/4">Arquivo</th>
+                        <th class="w-1/4">Tipo</th>
+                        <th>Função Técnica</th>
+                    </tr>
+                </thead>
+                <tbody class="text-text-muted text-sm divide-y divide-surface-border">
+                    <tr>
+                        <td class="font-mono font-bold text-text-main">index.html</td>
+                        <td>HTML5</td>
+                        <td>Interface principal da SPA. Contém as visões de carregamento de arquivo, painel de desvios auditados, manual de critérios e inclusão das CDNs.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-mono font-bold text-text-main">style.css</td>
+                        <td>CSS3</td>
+                        <td>Design system da aplicação. Define tokens de cores, modo claro/escuro, leiautes em Grid/Flexbox e responsividade para dispositivos móveis.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-mono font-bold text-text-main">script.js</td>
+                        <td>JavaScript (ES6+)</td>
+                        <td>Motor da aplicação. Executa a leitura de arquivos, normalização de registros, agregação por matrícula, aplicação de regras de auditoria e exportação XLSX.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ==================== SEÇÃO 2: ORGANIZAÇÃO DO CÓDIGO ==================== -->
+        <section id="codigo" class="bg-white border border-surface-border rounded-xl p-8 shadow-sm">
+            <h2 class="font-heading font-bold text-2xl text-text-main mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-file-lines text-brand-primary"></i> 2. Organização do Código
+            </h2>
+            <p class="text-text-muted mb-6">
+                Estruturação e padrões adotados para manutenção e legibilidade:
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="p-5 bg-surface-card2 border border-surface-border rounded-lg">
+                    <h3 class="font-heading font-bold text-base text-text-main mb-2">Estrutura em Capítulos</h3>
+                    <p class="text-text-muted text-sm">
+                        Os arquivos são segmentados por blocos comentados no formato padronizado:<br>
+                        <code class="font-mono text-xs text-brand-dark font-bold">/* === [CAPÍTULO] NOME === */</code> e<br>
+                        <code class="font-mono text-xs text-brand-dark font-bold">/* --- [Seção] Descrição --- */</code>.
+                    </p>
+                </div>
+
+                <div class="p-5 bg-surface-card2 border border-surface-border rounded-lg">
+                    <h3 class="font-heading font-bold text-base text-text-main mb-2">Padrão CSS e Design Tokens</h3>
+                    <p class="text-text-muted text-sm">
+                        Uso da metodologia BEM (Block-Element-Modifier) para classes. Definição de tokens de cores, raios e sombras em variáveis CSS no seletor <code class="font-mono text-xs font-bold">:root</code> com suporte a tema escuro via <code class="font-mono text-xs font-bold">[data-theme="dark"]</code>.
+                    </p>
+                </div>
+
+                <div class="p-5 bg-surface-card2 border border-surface-border rounded-lg">
+                    <h3 class="font-heading font-bold text-base text-text-main mb-2">Armazenamento de Estado (AppState)</h3>
+                    <p class="text-text-muted text-sm">
+                        A aplicação utiliza um objeto JavaScript único (<code class="font-mono text-xs font-bold">AppState</code>) para manter em memória: registros brutos lidos, servidores agrupados, resultados da auditoria, filtros ativos, competência identificada e tabela salarial em uso.
+                    </p>
+                </div>
+
+                <div class="p-5 bg-surface-card2 border border-surface-border rounded-lg">
+                    <h3 class="font-heading font-bold text-base text-text-main mb-2">Modularização Lógica</h3>
+                    <p class="text-text-muted text-sm">
+                        Separação entre funções de interface (DOM/eventos), funções de ingestão de dados (parsing/pivoteamento) e motor de regras determinísticas (cálculo de Vencimento, GAJ, GAS, AQ, Teto STF e Limite de Horas Extras).
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SEÇÃO 3: USO DE DADOS E PRIVACIDADE ==================== -->
+        <section id="dados" class="bg-white border border-surface-border rounded-xl p-8 shadow-sm">
+            <h2 class="font-heading font-bold text-2xl text-text-main mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-brand-primary"></i> 3. Uso de Dados e Privacidade
+            </h2>
+            <p class="text-text-muted mb-6">
+                Regras e diretrizes técnicas sobre o ciclo de vida e o tratamento dos dados importados para a aplicação.
+            </p>
+
+            <div class="space-y-4 mb-8">
+                <div class="p-4 bg-slate-50 border border-surface-border rounded-lg">
+                    <strong class="text-text-main block mb-1">Processamento Local em Memória Volátil (RAM)</strong>
+                    <p class="text-sm text-text-muted">
+                        A leitura de arquivos (.xlsx, .csv, .txt) ocorre via <code class="font-mono text-xs font-bold">FileReader API</code> do navegador. Os dados são convertidos em estruturas de dados em memória JavaScript e processados localmente na máquina do usuário.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-slate-50 border border-surface-border rounded-lg">
+                    <strong class="text-text-main block mb-1">Ausência de Armazenamento Local Persistente</strong>
+                    <p class="text-sm text-text-muted">
+                        A aplicação <strong>não utiliza</strong> <code class="font-mono text-xs font-bold">localStorage</code>, <code class="font-mono text-xs font-bold">sessionStorage</code>, <code class="font-mono text-xs font-bold">IndexedDB</code> nem cookies para armazenar registros de folha de pagamento, dados cadastrais ou valores financeiros.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-slate-50 border border-surface-border rounded-lg">
+                    <strong class="text-text-main block mb-1">Exclusão dos Dados ao Fechar o Navegador</strong>
+                    <p class="text-sm text-text-muted">
+                        O encerramento da aba, fechamento do navegador ou recarregamento da página (F5) destrói o contexto de execução JavaScript. Todos os dados mantidos no <code class="font-mono text-xs font-bold">AppState</code> são liberados da memória RAM pelo gerenciador de processos do sistema operacional. Nenhum dado residual permanece gravado em disco.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-slate-50 border border-surface-border rounded-lg">
+                    <strong class="text-text-main block mb-1">Reinicialização Manual em Memória ("Mudar Folha")</strong>
+                    <p class="text-sm text-text-muted">
+                        A função <code class="font-mono text-xs font-bold">initProcessReset</code> redefine explicitamente todas as propriedades do <code class="font-mono text-xs font-bold">AppState</code> para valores nulos/vazios, limpando a memória antes do carregamento de um novo arquivo.
+                    </p>
+                </div>
+
+                <div class="p-4 bg-slate-50 border border-surface-border rounded-lg">
+                    <strong class="text-text-main block mb-1">Isolamento de Rede e Ausência de Compartilhamento com IA</strong>
+                    <p class="text-sm text-text-muted">
+                        Nenhum dado processado é enviado para servidores externos, bancos de dados em nuvem, serviços de telemetria ou ferramentas de Inteligência Artificial. A ferramenta não realiza requisições HTTP de saída (Fetch/XHR) contendo dados de pessoal.
+                    </p>
+                </div>
+            </div>
+
+            <!-- FAQ Técnico sobre Dados -->
+            <h3 class="font-heading font-bold text-lg text-text-main mb-4">FAQ — Governança dos Dados</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="w-1/3">Pergunta Técnica</th>
+                        <th>Resposta Direta</th>
+                    </tr>
+                </thead>
+                <tbody class="text-text-muted text-sm divide-y divide-surface-border">
+                    <tr>
+                        <td class="font-bold text-text-main">Os dados da folha ficam salvos no navegador?</td>
+                        <td>Não. Os dados existem apenas enquanto a aba estiver aberta na memória RAM.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">O que ocorre se a página for recarregada (F5)?</td>
+                        <td>Todos os dados são apagados da memória e a aplicação retorna ao estado inicial de upload.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">Algum dado é transmitido para serviços de IA?</td>
+                        <td>Não. Não há integração, conexão ou transmissão para APIs de IA ou servidores em nuvem.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">Como funciona o mascaramento de dados no modal?</td>
+                        <td>O identificador padrão exibido é a Matrícula. Nome e CPF são renderizados ocultos por padrão e exibidos sob demanda mediante clique no botão correspondente.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ==================== SEÇÃO 4: TECNOLOGIAS USADAS ==================== -->
+        <section id="tecnologias" class="bg-white border border-surface-border rounded-xl p-8 shadow-sm">
+            <h2 class="font-heading font-bold text-2xl text-text-main mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-microchip text-brand-primary"></i> 4. Tecnologias Usadas
+            </h2>
+            <p class="text-text-muted mb-6">
+                Tecnologias base utilizadas na construção da aplicação:
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th class="w-1/4">Tecnologia</th>
+                        <th class="w-1/4">Padrão / Especificação</th>
+                        <th>Finalidade</th>
+                    </tr>
+                </thead>
+                <tbody class="text-text-muted text-sm divide-y divide-surface-border">
+                    <tr>
+                        <td class="font-bold text-text-main">HTML5</td>
+                        <td>W3C Semantic Standard</td>
+                        <td>Estruturação semântica da aplicação, acessibilidade via atributos ARIA e tags de interface SPA.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">CSS3</td>
+                        <td>W3C Standard (Variables, Flexbox, Grid)</td>
+                        <td>Estilização, controle de layout responsivo, definição de tokens e regras de transição visual.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">JavaScript</td>
+                        <td>ECMAScript 2020+ (ES6+)</td>
+                        <td>Lógica de aplicação cliente, processamento de matrizes de dados, manipulação do DOM e controle de fluxo.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">FileReader API</td>
+                        <td>W3C File API</td>
+                        <td>Leitura assíncrona local de arquivos em formato binário (ArrayBuffer) e texto.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ==================== SEÇÃO 5: DEPENDÊNCIAS ==================== -->
+        <section id="dependencias" class="bg-white border border-surface-border rounded-xl p-8 shadow-sm">
+            <h2 class="font-heading font-bold text-2xl text-text-main mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-boxes-stacked text-brand-primary"></i> 5. Dependências
+            </h2>
+            <p class="text-text-muted mb-6">
+                Bibliotecas externas carregadas via CDN no <code class="font-mono text-xs font-bold">index.html</code> e suas respectivas finalidades técnicas:
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Biblioteca</th>
+                        <th>Versão / Origem</th>
+                        <th>Finalidade Técnica</th>
+                    </tr>
+                </thead>
+                <tbody class="text-text-muted text-sm divide-y divide-surface-border">
+                    <tr>
+                        <td class="font-bold text-text-main">SheetJS (xlsx)</td>
+                        <td class="font-mono text-xs">0.18.5 (CDN jsDelivr)</td>
+                        <td>Parsing binário e conversão de planilhas (.xlsx e .xls) em matrizes JSON em memória; geração do arquivo de relatório final em .xlsx.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">PapaParse</td>
+                        <td class="font-mono text-xs">5.4.1 (CDN Cloudflare)</td>
+                        <td>Parsing estruturado de arquivos delimitados de texto (.csv e .txt) com seleção dinâmica de delimitadores (#, ;, \t, ,).</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">Chart.js</td>
+                        <td class="font-mono text-xs">Latest (CDN jsDelivr)</td>
+                        <td>Renderização do gráfico de rosca (Doughnut) de conformidade da folha via Canvas HTML5.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">SweetAlert2</td>
+                        <td class="font-mono text-xs">11 (CDN jsDelivr)</td>
+                        <td>Exibição de caixas de diálogo, confirmação de reinicialização e modal de detalhamento individual de cálculo.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">GSAP</td>
+                        <td class="font-mono text-xs">3.12.2 (CDN Cloudflare)</td>
+                        <td>Gerenciamento de transições de opacidade e deslocamento entre as telas da SPA e nos painéis de carregamento.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">Font Awesome</td>
+                        <td class="font-mono text-xs">6.4.0 (CDN Cloudflare)</td>
+                        <td>Biblioteca de ícones vetoriais de interface.</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-text-main">Google Fonts</td>
+                        <td class="font-mono text-xs">Google CDN</td>
+                        <td>Fontes tipográficas: <em>Source Sans 3</em> (corpo de texto) e <em>Poppins</em> (títulos).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <!-- === RODAPÉ === -->
+    <footer class="border-t border-surface-border bg-white py-6 mt-12 text-center text-xs text-text-sub">
+        <p>Tribunal Superior Eleitoral — Secretaria de Auditoria (SAU)</p>
+        <p class="mt-1">Documentação Técnica de Especificação e Governança de Dados</p>
+    </footer>
+
+</body>
+</html>
