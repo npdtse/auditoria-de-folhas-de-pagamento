@@ -156,7 +156,7 @@
                     <div class="view-header">
                         <div class="view-header__title-box">
                             <h3 class="view-header__title" id="view-auditoria-title">Resultados do Diagnóstico</h3>
-                            <p class="view-header__subtitle">Este painel cruza o Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001) e o Teto Constitucional (STF - R$ 46.366,19) pagos contra a legislação e as Tabelas Remuneratórias vigentes do TSE para mapear inconsistências cadastrais ou de enquadramento.</p>
+                            <p class="view-header__subtitle">Este painel cruza o Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001), o Teto Constitucional Ordinário (R$ 46.366,19) e o Limite de Horas Extras do TSE (R$ 17.000,00) pagos contra a legislação e as Tabelas Remuneratórias vigentes do TSE para mapear inconsistências cadastrais ou de enquadramento.</p>
                             <br>
                         </div>
                     </div>
@@ -381,25 +381,32 @@
                         </div>
                     </div>
 
-                    <!-- Cartão 4: Teto Remuneratório Constitucional -->
+                    <!-- Cartão 4: Teto Constitucional Ordinário e Limite de Horas Extras -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-gavel" style="color: var(--primary); margin-right: 8px;"></i>
-                            4. Teto Remuneratório Constitucional (STF - R$ 46.366,19)
+                            4. Teto Constitucional Ordinário e Limite de Horas Extras (Dois Tetos Independentes)
                         </h4>
                         
                         <ul class="parameter-list">
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Abate-Teto sobre Remuneração Bruta Total</span>
-                                    <p class="parameter-item__desc">Soma todas as verbas de natureza remuneratória do mês (`Código Rendimento Desconto = 1`: Vencimento, GAJ, GAS, AQ, Funções FC/CJ e VPNI). Caso a soma bruta ultrapasse o subsídio de Ministro do STF (<strong>R$ 46.366,19</strong>), o sistema aponta a necessidade do desconto de corte de retenção na fonte.</p>
+                                    <span class="parameter-item__label">Teto Remuneratório Ordinário (STF - R$ 46.366,19)</span>
+                                    <p class="parameter-item__desc">Soma todas as verbas remuneratórias regulares (`Código Rendimento Desconto = 1`: Vencimento, GAJ, GAS, AQ, Funções FC/CJ e VPNI). <strong>Exclui expressamente</strong> férias, 13º salário, horas extras e auxílios indenizatórios conforme o Art. 3º da Resolução CNJ nº 14/2006.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Limite Específico de Trabalho Extraordinário (TSE - R$ 17.000,00)</span>
+                                    <p class="parameter-item__desc">Apura isoladamente o total pago a título de Horas Extras / Serviço Extraordinário no mês (regular ou suplementar). Se a soma das horas extras ultrapassar o teto administrativo de <strong>R$ 17.000,00</strong>, o excesso é apontado como divergência (Art. 3º, IV da Resolução CNJ nº 14/2006).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Isenção das Verbas de Caráter Indenizatório</span>
-                                    <p class="parameter-item__desc">Auxílios assistenciais e indenizações (Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte) são <strong>excluídos da soma do teto</strong> por expressa determinação constitutional (Art. 37, § 11).</p>
+                                    <p class="parameter-item__desc">Auxílios assistenciais e indenizações (Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte) são <strong>excluídos da soma de ambos os tetos</strong> por expressa determinação constitucional (Art. 37, § 11 da CF/88).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -407,23 +414,23 @@
 
                         <!-- Prateleira Normativa do Cartão 4 -->
                         <div class="normative-shelf">
-                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Resoluções do CNJ</span>
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Resoluções do CNJ e TSE</span>
                             <div class="normative-shelf__list">
                                 <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm" target="_blank" class="normative-shelf__link" aria-label="Acessar Constituição Federal no Planalto">
                                     <i class="fa-solid fa-scale-balanced"></i> Artigo 37, XI e § 11 da CF/88
                                 </a>
                                 <a href="https://atos.cnj.jus.br/atos/detalhar/88" target="_blank" class="normative-shelf__link" aria-label="Abrir Resolução CNJ 14 de 2006">
-                                    <i class="fa-solid fa-bookmark"></i> Resolução CNJ nº 14/2006 (Teto)
+                                    <i class="fa-solid fa-bookmark"></i> Resolução CNJ nº 14/2006 (Art. 3º)
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Cartão 5: Regras Cadastrais e Profilaxia de Falsos Positivos -->
+                    <!-- Cartão 5: Regras Cadastrais e Ingestão Multi-Competência -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-user-check" style="color: var(--primary); margin-right: 8px;"></i>
-                            5. Consistência Cadastral e Filtros de Ingestão
+                            5. Consistência Cadastral e Ingestão Multi-Competência
                         </h4>
                         
                         <ul class="parameter-list">
@@ -436,8 +443,8 @@
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Filtro Seletivo de Folha Normal (Não Suplementar ou Retroativa)</span>
-                                    <p class="parameter-item__desc">Registros de acertos suplementares ou retroativos com `Tipo Competência !== 0` ainda não estão sob análise. Por isso, esses registros são descartados automaticamente na leitura da planilha.</p>
+                                    <span class="parameter-item__label">Ingestão de Folhas Regulares e Suplementares</span>
+                                    <p class="parameter-item__desc">O sistema analisa o Vencimento Básico e a GAJ na folha regular (`Tipo Competência = 0`), permitindo capturar horas extras, férias e 13º lançados na folha suplementar (`Tipo Competência = 1`), preservando a acurácia de períodos eleitorais.</p>
                                 </div>
                                 <span class="badge badge--success">Filtro Aplicado</span>
                             </li>

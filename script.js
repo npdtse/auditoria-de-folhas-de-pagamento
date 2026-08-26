@@ -83,8 +83,10 @@ const RUBRICA_VENCIMENTO = "1001";
 const RUBRICA_GAJ = "2001";
 const RUBRICA_GAS = "2002"; 
 
-/* --- [Seção] Constantes do Teto Constitucional --- */
-const TETO_CONSTITUCIONAL_STF = 46366.19; // Subsídio mensal de Ministro do STF (Lei nº 14.520/2023)
+/* --- [Seção] Constantes de Tetos e Limites --- */
+const TETO_CONSTITUCIONAL_STF = 46366.19; // Subsídio mensal de Ministro do STF (Art. 37, XI da CF/88)
+const LIMITE_HORAS_EXTRAS_TSE = 17000.00; // Limite Administrativo de Trabalho Extraordinário (TSE / Art. 3º, IV da Res. CNJ 14/2006)
+const VALOR_REFERENCIA_AQ = 714.40;       // Base padrão de VR
 
 /* --- [Seção] Rol de Rubricas Indenizatórias e Benefícios Excluídos do Teto --- */
 const RUBRICAS_EXCLUIDAS_TETO = [
@@ -96,6 +98,30 @@ const RUBRICAS_EXCLUIDAS_TETO = [
     "85006", // Ajuda de Custo
     "85007"  // Diárias
 ];
+
+/* --- [Seção] Funções de Categorização Textual de Rubricas --- */
+function isHorasExtras(desc) {
+    const d = (desc || "").toString().toUpperCase();
+    return d.includes("EXTRAORDINARIO") || d.includes("SERV EXTRA") || d.includes("PLEITOS") || d.includes("HORA EXTRA");
+}
+
+function isFerias(desc) {
+    const d = (desc || "").toString().toUpperCase();
+    return d.includes("FERIAS");
+}
+
+function isGratificacaoNatalina(desc) {
+    const d = (desc || "").toString().toUpperCase();
+    return d.includes("NATALINA") || d.includes("13º") || d.includes("13 SALARIO") || d.includes("DECIMO TERCEIRO");
+}
+
+function isBeneficioIndenizatorio(cod, desc) {
+    if (RUBRICAS_EXCLUIDAS_TETO.includes(cod)) return true;
+    const d = (desc || "").toString().toUpperCase();
+    return d.includes("ALIMENTACAO") || d.includes("PRE ESCOLAR") || d.includes("PRE-ESCOLAR") || 
+           d.includes("AUXILIO SAUDE") || d.includes("AUXILIO-SAUDE") || d.includes("NATALIDADE") || 
+           d.includes("TRANSPORTE") || d.includes("DIARIA") || d.includes("AJUDA DE CUSTO");
+}
 
 /* --- [Seção] Armazenamento de Estado Local (App Store) --- */
 const AppState = {
@@ -129,7 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initProcessControl();
     initProcessReset();
 
-    // Redirecionamento forçado para a aba de carga de dados na inicialização
     switchView("tab-dashboard");
 });
 
@@ -283,7 +308,6 @@ function resolveActiveTableConfig(competenciaStr) {
     let month = 1;
     let year = 2026;
 
-    // CONVERSOR DE NÚMERO DE SÉRIE DO EXCEL (Ex: 44713 para 01/06/2022 ou 45566 para 01/10/2024)
     const numericComp = Number(cleanComp);
     if (!isNaN(numericComp) && numericComp > 30000 && numericComp < 60000) {
         const excelEpoch = new Date(1899, 11, 30);
@@ -292,7 +316,6 @@ function resolveActiveTableConfig(competenciaStr) {
         year = jsDate.getFullYear();
         cleanComp = `${month.toString().padStart(2, '0')}/${year}`;
     } else {
-        // Leitura de texto normal (Ex: "01/06/2022", "06/2022", "2022-06-01")
         const parts = cleanComp.split(/[\/\.\-]/);
         if (parts.length >= 3) {
             if (parts[0].length === 4) {
@@ -331,7 +354,6 @@ function resolveActiveTableConfig(competenciaStr) {
             formattedDate: cleanComp
         };
     } else {
-        // Folha histórica anterior a 2026 (Ex: Junho/2022 ou Outubro/2024)
         return { 
             key: "2026_JAN", 
             vr: TABELAS_HISTORICAS["2026_JAN"].vr, 
@@ -374,7 +396,7 @@ function runVisualLoadingProgress(callback) {
     const steps = [
         { delay: 300, text: "Lendo linhas locais em memória temporária..." },
         { delay: 800, text: "Identificando competência e selecionando Tabela Salarial..." },
-        { delay: 1400, text: "Normalizando rubricas por servidor (Pivotagem local)..." },
+        { delay: 1400, text: "Mapeando e agregando rubricas regulares e suplementares..." },
         { delay: 1900, text: "Pivotagem estrutural concluída na Sandbox!" }
     ];
 
@@ -488,7 +510,7 @@ function parseMatrixData(matrix) {
     pivotAndNormalizeData();
 }
 
-/* --- [Seção] Pivoteamento com Mapeamento de Rendimento e Resolução de Vigência --- */
+/* --- [Seção] Pivoteamento com Mapeamento Multi-Competência de HE e Férias --- */
 function pivotAndNormalizeData() {
     const servers = {};
     let matchedCompetence = "N/A";
@@ -510,7 +532,7 @@ function pivotAndNormalizeData() {
         competencia: ["mes_ano", "competencia", "mes", "compet"]
     };
 
-    // PASSAGEM ANTECIPADA DEDICADA DE CAPTURA DA COMPETÊNCIA (Garante extração antes de qualquer return)
+    // Extração antecipada da competência
     for (const rec of AppState.rawRecords) {
         const keys = Object.keys(rec);
         const findCompKey = keys.find(k => fuzzyMap.competencia.some(pat => k.includes(pat)) && !k.includes("tipo"));
@@ -555,9 +577,6 @@ function pivotAndNormalizeData() {
             parsedTipoComp = parseInt(tipoCompRaw);
             if (isNaN(parsedTipoComp)) parsedTipoComp = 0;
         }
-        if (parsedTipoComp !== 0) {
-            return; 
-        }
 
         const cleanId = idRaw.toString().trim();
 
@@ -571,7 +590,7 @@ function pivotAndNormalizeData() {
                 atribuicao: atribuicaoRaw !== undefined ? parseInt(atribuicaoRaw) : 0,
                 situacao: situacaoRaw ? situacaoRaw.toString().trim().toUpperCase() : "EFETIVO",
                 categoria: categoriaRaw !== undefined && categoriaRaw !== "" ? parseInt(categoriaRaw) : 1,
-                tipo_competencia: 0,
+                tipo_competencia: parsedTipoComp,
                 rubricas: {},
                 detalheRubricas: []
             };
@@ -597,15 +616,20 @@ function pivotAndNormalizeData() {
                 cleanRubrica = cleanRubrica.slice(0, -2);
             }
 
-            if (cleanRendDesc === 1) {
+            const descStr = descRubricaRaw ? descRubricaRaw.toString().trim() : "Sem descrição";
+
+            if (parsedTipoComp === 0 && cleanRendDesc === 1) {
+                servers[cleanId].rubricas[cleanRubrica] = (servers[cleanId].rubricas[cleanRubrica] || 0) + valorParsed;
+            } else if (cleanRendDesc === 1 && (isHorasExtras(descStr) || isFerias(descStr) || isGratificacaoNatalina(descStr))) {
                 servers[cleanId].rubricas[cleanRubrica] = (servers[cleanId].rubricas[cleanRubrica] || 0) + valorParsed;
             }
 
             servers[cleanId].detalheRubricas.push({
                 codigo: cleanRubrica,
-                descricao: descRubricaRaw ? descRubricaRaw.toString().trim() : "Sem descrição",
+                descricao: descStr,
                 valor: valorParsed,
-                tipoRD: cleanRendDesc
+                tipoRD: cleanRendDesc,
+                tipoComp: parsedTipoComp
             });
         }
     });
@@ -613,9 +637,8 @@ function pivotAndNormalizeData() {
     AppState.pivotedServers = servers;
     AppState.isProcessing = false;
 
-    // RESOLUÇÃO DINÂMICA DA TABELA TEMPORAL
     const tableConfig = resolveActiveTableConfig(matchedCompetence);
-    AppState.matchedCompetence = tableConfig.formattedDate; // Armazena a data limpa formatada
+    AppState.matchedCompetence = tableConfig.formattedDate; 
     AppState.activeTableKey = tableConfig.key;
     AppState.activeVR = tableConfig.vr;
     AppState.isIncompatibleCompetence = tableConfig.isIncompatible;
@@ -634,7 +657,6 @@ function pivotAndNormalizeData() {
     if (rowCountText) rowCountText.textContent = `${AppState.rawRecords.length} lançamentos`;
     if (serverCountText) serverCountText.textContent = activeServerCount;
 
-    // BANNER NÍVEL 1: Exibe notificação de incompatibilidade de tabela na prévia de upload (Passo 1)
     let previewBanner = document.getElementById("preview-incompatible-banner");
     const previewPanel = document.getElementById("upload-preview-panel");
 
@@ -682,13 +704,12 @@ async function runDeterministicAudit() {
         return;
     }
 
-    // NÍVEL 2: POP-UP DE ALERTA COM PAUSA OBRIGATÓRIA (AWAIT)
     if (AppState.isIncompatibleCompetence) {
         await Swal.fire({
             icon: "warning",
             title: "Aviso de Inadequação de Tabela",
             html: `A competência desta folha (<strong>${AppState.matchedCompetence}</strong>) é anterior a 2026.<br><br>Não existe tabela salarial histórica cadastrada para este período no aplicativo. O diagnóstico será executado utilizando a <strong>Tabela de Janeiro/2026</strong> como referência estática de apoio.`,
-            confirmButtonText: "Entendi, continuar mesmo assim",
+            confirmButtonText: "Entendi, Continuar Auditoria",
             confirmButtonColor: "var(--primary)"
         });
     }
@@ -731,16 +752,38 @@ async function runDeterministicAudit() {
                        (server.rubricas["463001"] || 0) + 
                        (server.rubricas["23001"] || 0);
 
-        // CÁLCULO DA SOMA REMUNERATÓRIA BRUTA PARA O TETO CONSTITUCIONAL (STF)
-        let somaRemuneratoriaBruta = 0;
+        // =========================================================================
+        // SEGREGAÇÃO DE TETOS CONFORME RESOLUÇÃO CNJ Nº 14/2006 (ART. 3º)
+        // =========================================================================
+        let somaRemuneratoriaOrdinaria = 0;
+        let somaHorasExtras = 0;
+        let somaFerias = 0;
+        let somaGratNatalina = 0;
+
         server.detalheRubricas.forEach(rub => {
-            if (rub.tipoRD === 1 && !RUBRICAS_EXCLUIDAS_TETO.includes(rub.codigo)) {
-                somaRemuneratoriaBruta += rub.valor;
+            if (rub.tipoRD === 1) {
+                const desc = rub.descricao;
+                const cod = rub.codigo;
+
+                if (isHorasExtras(desc)) {
+                    somaHorasExtras += rub.valor;
+                } else if (isFerias(desc)) {
+                    somaFerias += rub.valor;
+                } else if (isGratificacaoNatalina(desc)) {
+                    somaGratNatalina += rub.valor;
+                } else if (!isBeneficioIndenizatorio(cod, desc)) {
+                    somaRemuneratoriaOrdinaria += rub.valor;
+                }
             }
         });
 
-        const excessoTetoBruto = Math.max(0, somaRemuneratoriaBruta - TETO_CONSTITUCIONAL_STF);
-        const possuiExcessoTeto = excessoTetoBruto > 0.01;
+        // 1. Teto Constitucional Ordinário (R$ 46.366,19)
+        const excessoTetoOrdinario = Math.max(0, somaRemuneratoriaOrdinaria - TETO_CONSTITUCIONAL_STF);
+        const possuiExcessoTetoOrdinario = excessoTetoOrdinario > 0.01;
+
+        // 2. Limite Específico de Horas Extras do TSE (R$ 17.000,00)
+        const excessoLimiteHE = Math.max(0, somaHorasExtras - LIMITE_HORAS_EXTRAS_TSE);
+        const possuiExcessoHE = excessoLimiteHE > 0.01;
 
         // Isolamento de Inativos e Pensionistas
         const isInactiveOrPensioner = server.categoria === 5 || server.categoria === 6 || server.categoria === 7 ||
@@ -764,13 +807,13 @@ async function runDeterministicAudit() {
                 gas_paga: paidGas,
                 aq_esperado: 0,
                 aq_pago: paidAq,
-                soma_remuneratoria: somaRemuneratoriaBruta,
-                excesso_teto: 0,
+                soma_ordinaria: somaRemuneratoriaOrdinaria,
+                excesso_teto_ordinario: 0,
+                soma_he: somaHorasExtras,
+                excesso_he: 0,
                 detalhe: `
                     <div class="audit-issue">
                         <span class="audit-issue__badge badge badge--neutral"><i class="fa-solid fa-user-slash"></i> Não Analisado</span>
-                        <div class="audit-issue__rule">Servidor identificado como aposentado ou pensionista fora do escopo.</div>
-                        <div class="audit-issue__law">Base Legal: Limitação de escopo da Portaria Conjunta nº 1/2026.</div>
                     </div>
                 `,
                 desvio: 0
@@ -807,7 +850,7 @@ async function runDeterministicAudit() {
             }
             const isGasConforming = Math.abs(expectedGas - paidGas) < 0.1;
 
-            // Recálculo por Faixas de Piso de Direito do AQ com o VR Ativo
+            // Recálculo por Faixas de Piso de Direito do AQ
             let expectedAq = 0;
             let expectedT = 0; 
             let expectedQ = 0; 
@@ -847,27 +890,6 @@ async function runDeterministicAudit() {
             expectedAq = expectedT + expectedQ;
 
             const isAqConforming = Math.abs(expectedAq - paidAq) < 0.1;
-            let aqErrorReason = "";
-
-            if (!isAqConforming) {
-                const calculatedCoefficient = paidAq / activeVR;
-                const expectedCoefficient = expectedAq / activeVR;
-                const diffAqValue = paidAq - expectedAq;
-
-                if (calculatedCoefficient > 5.6) {
-                    aqErrorReason = `O valor pago de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) extrapola o teto máximo de 5,6 VR. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
-                } else if (calculatedCoefficient > 2.6 && calculatedCoefficient < 3.5) {
-                    aqErrorReason = `A soma de títulos excede o teto de 2,0 VR (R$ ${(2.0 * activeVR).toFixed(2)}). O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
-                } else if (calculatedCoefficient > 3.5 && calculatedCoefficient < 4.1) {
-                    aqErrorReason = `O Mestrado (3,5 VR) absorve títulos menores. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
-                } else if (calculatedCoefficient > 5.0 && calculatedCoefficient < 5.6) {
-                    aqErrorReason = `O Doutorado (5,0 VR) absorve títulos menores. O direito reconhecido é de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}), gerando excesso de R$ ${diffAqValue.toFixed(2)}.`;
-                } else if (calculatedCoefficient < 0.2) {
-                    aqErrorReason = `O valor de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) é inferior ao módulo mínimo de 0,20 VR (R$ ${(0.20 * activeVR).toFixed(2)}). O valor legal esperado é de R$ 0,00, gerando divergência de R$ ${paidAq.toFixed(2)}.`;
-                } else {
-                    aqErrorReason = `O valor de R$ ${paidAq.toFixed(2)} (${calculatedCoefficient.toFixed(2)} VR) possui resíduo excedente em relação ao direito reconhecido de ${expectedCoefficient.toFixed(2)} VR (R$ ${expectedAq.toFixed(2)}). Diferença calculada de R$ ${diffAqValue.toFixed(2)}.`;
-                }
-            }
 
             // Validação Cadastral de FC/CJ
             let cadastralIssue = "";
@@ -889,7 +911,7 @@ async function runDeterministicAudit() {
             const isVencConforming = Math.abs(expectedVenc - paidVenc) < 0.1;
             const isGajConforming = Math.abs(expectedGaj - paidGaj) < 0.1;
 
-            if (isVencConforming && isGajConforming && isGasConforming && isAqConforming && !cadastralIssue && !possuiExcessoTeto) {
+            if (isVencConforming && isGajConforming && isGasConforming && isAqConforming && !cadastralIssue && !possuiExcessoTetoOrdinario && !possuiExcessoHE) {
                 findings.push({
                     id: server.id,
                     nome: server.nome,
@@ -906,27 +928,36 @@ async function runDeterministicAudit() {
                     gas_paga: paidGas,
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
-                    soma_remuneratoria: somaRemuneratoriaBruta,
-                    excesso_teto: 0,
+                    soma_ordinaria: somaRemuneratoriaOrdinaria,
+                    excesso_teto_ordinario: 0,
+                    soma_he: somaHorasExtras,
+                    excesso_he: 0,
                     detalhe: `
                         <div class="audit-issue">
                             <span class="audit-issue__badge badge badge--success"><i class="fa-solid fa-circle-check"></i> Conforme</span>
-                            <div class="audit-issue__rule">Enquadramento e rubricas em conformidade com as diretrizes da vigência.</div>
                         </div>
                     `,
                     desvio: 0
                 });
                 conformingCount++;
             } else {
+                // SÍNTESE COMPACTA EXCLUSIVA PARA A TABELA (Sem textos longos nem citações de lei)
                 let errorDetails = [];
 
-                if (possuiExcessoTeto) {
+                if (possuiExcessoTetoOrdinario) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-gavel"></i> Teto Constitucional STF</span>
-                            <div class="audit-issue__math">Remuneração Bruta: <strong>R$ ${somaRemuneratoriaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Teto STF: <strong>R$ 46.366,19</strong></div>
-                            <div class="audit-issue__rule">A soma das verbas remuneratórias ultrapassa o teto constitucional em R$ ${excessoTetoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.</div>
-                            <div class="audit-issue__law">Base Legal: Artigo 37, XI e § 11 da Constituição Federal e Resolução CNJ nº 14/2006.</div>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-gavel"></i> TETO ORDINÁRIO (STF)</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${somaRemuneratoriaOrdinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Teto: <strong>R$ 46.366,19</strong></div>
+                        </div>
+                    `);
+                }
+
+                if (possuiExcessoHE) {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-clock"></i> LIMITE HORAS EXTRAS (TSE)</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${somaHorasExtras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Limite: <strong>R$ 17.000,00</strong></div>
                         </div>
                     `);
                 }
@@ -934,10 +965,8 @@ async function runDeterministicAudit() {
                 if (!isVencConforming) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> Vencimento</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> VENCIMENTO</span>
                             <div class="audit-issue__math">Pago: <strong>R$ ${paidVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                            <div class="audit-issue__rule">O valor do vencimento básico difere da tabela salarial oficial da vigência.</div>
-                            <div class="audit-issue__law">Base Legal: Tabela de Vencimentos do TSE.</div>
                         </div>
                     `);
                 }
@@ -945,43 +974,26 @@ async function runDeterministicAudit() {
                 if (!isGajConforming) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-coins"></i> Gratificação Judiciária (GAJ)</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-coins"></i> GAJ (140%)</span>
                             <div class="audit-issue__math">Paga: <strong>R$ ${paidGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                            <div class="audit-issue__rule">A Gratificação de Atividade Judiciária deve equivaler estritamente a 140% do vencimento básico.</div>
-                            <div class="audit-issue__law">Base Legal: Artigo 13 da Lei nº 11.416/2006.</div>
                         </div>
                     `);
                 }
                 
                 if (!isGasConforming) {
-                    if (expectedGas === 0 && paidGas > 0) {
-                        errorDetails.push(`
-                            <div class="audit-issue">
-                                <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-shield-halved"></i> Gratificação de Segurança (GAS)</span>
-                                <div class="audit-issue__math">Paga: <strong>R$ ${paidGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ 0,00</strong></div>
-                                <div class="audit-issue__rule">Recebimento indevido de Adicional de Segurança para cargo sem atribuições policiais ativas.</div>
-                                <div class="audit-issue__law">Base Legal: Artigo 17 da Lei nº 11.416/2006.</div>
-                            </div>
-                        `);
-                    } else {
-                        errorDetails.push(`
-                            <div class="audit-issue">
-                                <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-shield-halved"></i> Gratificação de Segurança (GAS)</span>
-                                <div class="audit-issue__math">Paga: <strong>R$ ${paidGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                                <div class="audit-issue__rule">O adicional de segurança diverge do limite legal de 35% sobre o vencimento básico.</div>
-                                <div class="audit-issue__law">Base Legal: Artigo 17 da Lei nº 11.416/2006.</div>
-                            </div>
-                        `);
-                    }
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-shield-halved"></i> GAS (35%)</span>
+                            <div class="audit-issue__math">Paga: <strong>R$ ${paidGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                        </div>
+                    `);
                 }
                 
                 if (!isAqConforming) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-graduation-cap"></i> Adicional de Qualificação (AQ)</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-graduation-cap"></i> ADICIONAL QUALIFICAÇÃO</span>
                             <div class="audit-issue__math">Pago: <strong>R$ ${paidAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                            <div class="audit-issue__rule">${aqErrorReason}</div>
-                            <div class="audit-issue__law">Base Legal: Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026.</div>
                         </div>
                     `);
                 }
@@ -989,14 +1001,13 @@ async function runDeterministicAudit() {
                 if (cadastralIssue) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-circle-exclamation"></i> Atribuição de FC ou CJ</span>
-                            <div class="audit-issue__rule">${cadastralIssue}</div>
-                            <div class="audit-issue__law">Base Legal: Regramento de Atribuições da Portaria Conjunta nº 1/2026.</div>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-circle-exclamation"></i> ATRIBUIÇÃO FC/CJ</span>
+                            <div class="audit-issue__math">${cadastralIssue}</div>
                         </div>
                     `);
                 }
 
-                const desvioFinanceiro = (paidVenc - expectedVenc) + (paidGaj - expectedGaj) + (paidGas - expectedGas) + (paidAq - expectedAq) + excessoTetoBruto;
+                const desvioFinanceiro = (paidVenc - expectedVenc) + (paidGaj - expectedGaj) + (paidGas - expectedGas) + (paidAq - expectedAq) + excessoTetoOrdinario + excessoLimiteHE;
                 const detailHtml = errorDetails.join('<div class="audit-issue-divider"></div>');
 
                 findings.push({
@@ -1015,8 +1026,10 @@ async function runDeterministicAudit() {
                     gas_paga: paidGas,
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
-                    soma_remuneratoria: somaRemuneratoriaBruta,
-                    excesso_teto: excessoTetoBruto,
+                    soma_ordinaria: somaRemuneratoriaOrdinaria,
+                    excesso_teto_ordinario: excessoTetoOrdinario,
+                    soma_he: somaHorasExtras,
+                    excesso_he: excessoLimiteHE,
                     detalhe: detailHtml,
                     desvio: desvioFinanceiro
                 });
@@ -1024,7 +1037,7 @@ async function runDeterministicAudit() {
             }
 
         } else {
-            const desvioTotal = paidVenc + paidGaj + excessoTetoBruto;
+            const desvioTotal = paidVenc + paidGaj + excessoTetoOrdinario + excessoLimiteHE;
             findings.push({
                 id: server.id,
                 nome: server.nome,
@@ -1041,13 +1054,14 @@ async function runDeterministicAudit() {
                 gas_paga: paidGas,
                 aq_esperado: 0,
                 aq_pago: paidAq,
-                soma_remuneratoria: somaRemuneratoriaBruta,
-                excesso_teto: excessoTetoBruto,
+                soma_ordinaria: somaRemuneratoriaOrdinaria,
+                excesso_teto_ordinario: excessoTetoOrdinario,
+                soma_he: somaHorasExtras,
+                excesso_he: excessoLimiteHE,
                 detalhe: `
                     <div class="audit-issue">
-                        <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> Vencimento</span>
-                        <div class="audit-issue__rule">Vencimentos ordinários pagos não correspondem a nenhuma classe salarial de referência.</div>
-                        <div class="audit-issue__law">Base Legal: Tabela Remuneratória do TSE.</div>
+                        <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> VENCIMENTO</span>
+                        <div class="audit-issue__math">Pago: <strong>R$ ${paidVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Não consta na tabela</div>
                     </div>
                 `,
                 desvio: desvioTotal
@@ -1062,9 +1076,7 @@ async function runDeterministicAudit() {
     filterAndPaginateFindings();
     renderComplianceChart(conformingCount, discrepancies = AppState.auditFindings.filter(f => f.status === "DIVERGENTE").length);
 
-    // FECHAMENTO INCONDICIONAL DO SPINNER DE CARREGAMENTO
     Swal.close();
-    
     switchView("tab-auditoria");
 }
 
@@ -1089,7 +1101,6 @@ function updateAuditDashboardUI(total, conforming, errors) {
     if (kpiConformingPct) kpiConformingPct.textContent = `${conformingPct}% da folha ativa`;
     if (kpiDiscrepanciesPct) kpiDiscrepanciesPct.textContent = `${errorsPct}% desvios cadastrais`;
 
-    // BANNER NÍVEL 3: Exibe o banner de alerta de incompatibilidade no topo do relatório de desvios
     let auditBanner = document.getElementById("audit-incompatible-banner");
     const auditViewHeader = document.querySelector("#view-auditoria .view-header");
 
@@ -1251,7 +1262,7 @@ function openAuditDetailModal(serverId) {
 
     let rubricsHtml = "";
     server.detalheRubricas.forEach(rub => {
-        const isAudited = [RUBRICA_VENCIMENTO, RUBRICA_GAJ, "2002", "23001", "462001", "463001"].includes(rub.codigo);
+        const isAudited = [RUBRICA_VENCIMENTO, RUBRICA_GAJ, "2002", "23001", "462001", "463001"].includes(rub.codigo) || isHorasExtras(rub.descricao);
         const tagAudited = isAudited 
             ? `<span class="badge badge--success" style="font-size: 11px; padding: 2px 6px;">Auditada</span>` 
             : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px;">Não Auditada</span>`;
@@ -1260,11 +1271,15 @@ function openAuditDetailModal(serverId) {
             ? `<span class="badge badge--success" style="font-size: 11px; padding: 2px 6px; margin-left: 4px;">Rendimento</span>` 
             : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; margin-left: 4px;">Desconto</span>`;
 
+        const folhaTag = rub.tipoComp === 1
+            ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; margin-left: 4px; background: #E0E7FF; color: #3730A3;">Suplementar</span>`
+            : ``;
+
         rubricsHtml += `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px;">
                 <div style="text-align: left;">
                     <strong style="color: var(--text);">${rub.codigo}</strong> - <span style="color: var(--text2);">${rub.descricao}</span>
-                    <div style="margin-top: 3px; display: flex; gap: 4px;">${tagAudited}${tagRD}</div>
+                    <div style="margin-top: 3px; display: flex; gap: 4px; flex-wrap: wrap;">${tagAudited}${tagRD}${folhaTag}</div>
                 </div>
                 <strong style="color: ${rub.tipoRD === 1 ? 'var(--text)' : 'var(--color-conclusion)'}; white-space: nowrap;">
                     ${rub.tipoRD === 1 ? '' : '- '}R$ ${rub.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -1277,7 +1292,9 @@ function openAuditDetailModal(serverId) {
     const isGajConforming = Math.abs(finding.gaj_paga - finding.gaj_esperada) < 0.1;
     const isGasConforming = Math.abs(finding.gas_paga - finding.gas_esperada) < 0.1;
     const isAqConforming = Math.abs(finding.aq_pago - finding.aq_esperado) < 0.1;
-    const isTetoConforming = finding.excesso_teto <= 0.01;
+    
+    const isTetoOrdConforming = finding.excesso_teto_ordinario <= 0.01;
+    const isHeConforming = finding.excesso_he <= 0.01;
 
     const diffVenc = finding.venc_pago - finding.venc_esperado;
     const noteVenc = isVencConforming ? "" : `
@@ -1327,11 +1344,19 @@ function openAuditDetailModal(serverId) {
         }
     }
 
-    let noteTeto = "";
-    if (!isTetoConforming) {
-        noteTeto = `
-            A soma das verbas remuneratórias pagas no mês (<strong>R$ ${finding.soma_remuneratoria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) ultrapassa o teto constitucional do funcionalismo (<strong>R$ 46.366,19</strong>). 
-            Excesso bruto sujeito a corte: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_teto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 37, XI da CF/88 e Resolução CNJ nº 14/2006).
+    let noteTetoOrd = "";
+    if (!isTetoOrdConforming) {
+        noteTetoOrd = `
+            A remuneração ordinária bruta mensal (<strong>R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) — excluídas horas extras, férias e 13º — ultrapassa o teto constitucional geral do funcionalismo (<strong>R$ 46.366,19</strong>). 
+            Excesso bruto sujeito a corte: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_teto_ordinario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 37, XI da CF/88 e Art. 3º da Resolução CNJ nº 14/2006).
+        `;
+    }
+
+    let noteHe = "";
+    if (!isHeConforming) {
+        noteHe = `
+            O total pago de serviço extraordinário / horas extras no mês (<strong>R$ ${finding.soma_he.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) ultrapassa o limite máximo administrativo fixado pelo TSE (<strong>R$ 17.000,00</strong>). 
+            Excesso a ser glosado: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_he.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 3º, IV da Resolução CNJ nº 14/2006 e Regulamento Interno do TSE).
         `;
     }
 
@@ -1365,7 +1390,8 @@ function openAuditDetailModal(serverId) {
         ${compRow("Gratificação Judiciária (GAJ)", finding.gaj_paga, finding.gaj_esperada, isGajConforming, "fa-solid fa-coins", noteGaj)}
         ${compRow("Gratificação de Segurança (GAS)", finding.gas_paga, finding.gas_esperada, isGasConforming, "fa-solid fa-shield-halved", noteGas)}
         ${compRow("Adicional de Qualificação (AQ)", finding.aq_pago, finding.aq_esperado, isAqConforming, "fa-solid fa-graduation-cap", noteAq)}
-        ${compRow("Teto Constitucional STF", finding.soma_remuneratoria, TETO_CONSTITUCIONAL_STF, isTetoConforming, "fa-solid fa-gavel", noteTeto)}
+        ${compRow("Teto Constitucional Ordinário", finding.soma_ordinaria, TETO_CONSTITUCIONAL_STF, isTetoOrdConforming, "fa-solid fa-gavel", noteTetoOrd)}
+        ${compRow("Limite de Horas Extras (TSE)", finding.soma_he, LIMITE_HORAS_EXTRAS_TSE, isHeConforming, "fa-solid fa-clock", noteHe)}
     `;
 
     const tableBadgeLabel = AppState.isIncompatibleCompetence 
@@ -1406,7 +1432,7 @@ function openAuditDetailModal(serverId) {
 
                 <!-- SEÇÃO 3: CONCILIAÇÃO LEGAL -->
                 <div style="margin-bottom: 16px;">
-                    <h4 style="font-size: 15.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">2. Conciliação contra Tabela Vigente e Teto</h4>
+                    <h4 style="font-size: 15.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">2. Conciliação contra Tabelas e Limites Legais</h4>
                     <div style="display: flex; flex-direction: column;">
                         ${reconciliaHtml}
                     </div>
@@ -1415,8 +1441,8 @@ function openAuditDetailModal(serverId) {
                 <!-- PAINEL DE SALDO -->
                 <div style="padding: 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
                     <div>
-                        <span style="font-size: 12.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; display: block;">Saldo do Desvio Financeiro</span>
-                        <span style="font-size: 13.5px; color: var(--text2); display: block; margin-top: 2px;">Fundamentação: Art. 37, XI da CF/88, Lei nº 15.292/2025 e Portaria Conjunta nº 1/2026</span>
+                        <span style="font-size: 12.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; display: block;">Saldo do Desvio Financeiro Consolidado</span>
+                        <span style="font-size: 13.5px; color: var(--text2); display: block; margin-top: 2px;">Fundamentação: Art. 37, XI da CF/88, Res. CNJ nº 14/2006 e Regulamentos do TSE</span>
                     </div>
                     <strong style="font-size: 22px; color: ${finding.desvio === 0 ? 'var(--color-start)' : 'var(--color-conclusion)'}">R$ ${finding.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
                 </div>
@@ -1529,10 +1555,12 @@ function exportAuditToXLSX() {
             "GAS Paga (R$)": item.gas_paga,
             "AQ Esperado (R$)": item.aq_esperado,
             "AQ Pago (R$)": item.aq_pago,
-            "Remuneração Bruta Sujeita ao Teto (R$)": item.soma_remuneratoria,
-            "Excesso de Teto Constitucional (R$)": item.excesso_teto,
-            "Resultado do Diagnóstico": item.detalhe ? item.detalhe.replace(/<[^>]*>/g, " | ").replace(/\s+/g, " ").trim() : "Sem inconsistências",
-            "Desvio Financeiro Geral (R$)": item.desvio
+            "Remuneração Ordinária Sujeita ao Teto (R$)": item.soma_ordinaria,
+            "Excesso de Teto Ordinário (R$)": item.excesso_teto_ordinario,
+            "Total Horas Extras no Mês (R$)": item.soma_he,
+            "Excesso Limite Horas Extras (R$)": item.excesso_he,
+            "Resultado do Diagnóstico": item.detalhe ? item.detalhe.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() : "Sem inconsistências",
+            "Desvio Financeiro Geral Consolidado (R$)": item.desvio
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(exportData);

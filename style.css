@@ -36,7 +36,7 @@
 
     /* Tipografia */
     --font-main: 'Source Sans 3', sans-serif;
-    --font-display: 'Montserrat', sans-serif;
+    --font-display: 'Poppins', sans-serif;
 
     /* Raio de Arredondamento */
     --radius: 12px;
@@ -265,10 +265,10 @@ body {
 
 .main-header__active-title {
     font-family: var(--font-display);
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--text);
-    line-height: 1.1;
+    line-height: 1.15;
     white-space: normal !important;
     word-wrap: break-word;
 }
@@ -444,7 +444,7 @@ body {
     transform: translateY(0px) !important;
 }
 
-/* --- [Seção] Cartões Base (Bordas Laterais Removidas) --- */
+/* --- [Seção] Cartões Base --- */
 .card {
     background-color: var(--surface);
     border: 1px solid var(--border);
@@ -712,33 +712,7 @@ body {
     color: var(--color-conclusion);
 }
 
-/* --- [Seção] Prevenção Ativa de Grid Blowout --- */
-.grid-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) !important;
-    gap: 24px;
-    margin-bottom: 32px;
-}
-
-.grid-layout > * {
-    min-width: 0;
-    width: 100%;
-}
-
-.chart-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 260px;
-    position: relative;
-}
-
-.chart-container canvas {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 100% !important;
-}
-
-/* --- [Seção] Novo Leiaute Integrado de Topo --- */
+/* --- [Seção] Layout Integrado de Topo (KPIs + Gráfico) --- */
 .summary-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) !important;
@@ -776,7 +750,20 @@ body {
     justify-content: center;
 }
 
-/* --- [Seção] Otimizações para a Página de Critérios (Prateleira Normativa Integrada) --- */
+.chart-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 260px;
+    position: relative;
+}
+
+.chart-container canvas {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+}
+
+/* --- [Seção] Otimizações para a Página de Critérios --- */
 #view-criterios {
     max-width: 800px;
     margin: 0 auto;
@@ -824,7 +811,7 @@ body {
     margin-top: 6px;
 }
 
-/* --- [Componente Novo] Prateleira Normativa (Normative Shelf) --- */
+/* --- [Seção] Prateleira Normativa --- */
 .normative-shelf {
     margin-top: 24px;
     padding-top: 20px;
@@ -884,19 +871,6 @@ body {
     font-size: 14px;
 }
 
-@media (max-width: 850px) {
-    .summary-layout {
-        grid-template-columns: 1fr !important;
-        gap: 16px;
-    }
-    .summary-layout__kpis {
-        gap: 12px;
-    }
-    .summary-layout__chart {
-        max-width: 100%;
-    }
-}
-
 /* --- [Seção] Parâmetros de Validação Cruzada --- */
 .parameter-list {
     display: flex;
@@ -935,7 +909,7 @@ body {
     line-height: 1.3;
 }
 
-/* --- [Seção] Tabelas Modernas --- */
+/* --- [Seção] Tabelas Modernas e Altura Ampla Desafogada --- */
 .table-header {
     display: flex;
     justify-content: space-between;
@@ -959,11 +933,13 @@ body {
     align-items: center;
 }
 
+/* AMPLIAÇÃO DA ALTURA DA TABELA: Elimina o achatamento vertical */
 .table-scroll-container {
     overflow-x: auto;
     overflow-y: auto;
     width: 100%;
-    max-height: calc(100vh - 420px);
+    min-height: 480px;
+    max-height: calc(100vh - 300px);
 }
 
 .data-table {
@@ -990,7 +966,7 @@ body {
 }
 
 .data-table td {
-    padding: 14px 18px;
+    padding: 12px 18px;
     border-bottom: 1px solid var(--border);
     color: var(--text2);
     white-space: nowrap;
@@ -1013,51 +989,41 @@ body {
     font-weight: 500;
 }
 
-/* --- [Seção] Estilização de Inconsistências Detalhadas Ricas --- */
+/* --- [Seção] Estilização Compacta de Inconsistências na Tabela --- */
 .data-table__cell--detail {
     white-space: normal !important;
-    max-width: 320px;
-    padding: 12px !important;
+    max-width: 360px;
+    padding: 8px 18px !important;
 }
 
 .audit-issue {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     text-align: left;
 }
 
 .audit-issue__badge {
     align-self: flex-start;
     margin-bottom: 2px;
+    font-size: 10.5px !important;
+    padding: 2px 7px !important;
 }
 
 .audit-issue__math {
     font-size: 12px;
     color: var(--text);
+    line-height: 1.3;
 }
 
 .audit-issue__math strong {
     font-weight: 700;
 }
 
-.audit-issue__rule {
-    font-size: 12px;
-    color: var(--text2);
-    line-height: 1.35;
-}
-
-.audit-issue__law {
-    font-size: 11px;
-    color: var(--text3);
-    font-style: italic;
-    margin-top: 1px;
-}
-
 .audit-issue-divider {
     height: 1px;
     background-color: var(--border);
-    margin: 10px 0;
+    margin: 6px 0;
     width: 100%;
 }
 
@@ -1165,7 +1131,6 @@ body {
    ========================================================================== */
 
 @media (max-width: 850px) {
-    /* --- [Seção] Reconfiguração Estrutural Geral --- */
     .app-layout {
         flex-direction: column;
     }
@@ -1175,7 +1140,6 @@ body {
         overflow-y: auto;
     }
 
-    /* --- [Seção] Menu Fixo no Rodapé (Estilo Barra Inferior Nativa) --- */
     .sidebar {
         position: fixed;
         bottom: 0;
@@ -1233,7 +1197,6 @@ body {
         display: none !important;
     }
 
-    /* --- [Seção] Adaptação do Cabeçalho SPA --- */
     .main-header {
         height: 60px;
         padding: 0 16px;
@@ -1271,7 +1234,6 @@ body {
         display: none !important;
     }
 
-    /* --- [Seção] Cards KPI Verticalizados --- */
     .kpi-grid {
         grid-template-columns: 1fr;
         gap: 16px;
@@ -1286,7 +1248,6 @@ body {
         font-size: 24px;
     }
 
-    /* --- [Seção] Conversão de Tabela para Cards --- */
     .table-header {
         flex-direction: column;
         align-items: flex-start;
@@ -1356,18 +1317,22 @@ body {
         padding: 32px 0 !important;
     }
 
-    /* --- [Seção] Layout do Painel de Gráficos e Parâmetros --- */
-    .grid-layout {
+    .table-scroll-container {
+        min-height: auto !important;
+        max-height: none !important;
+    }
+
+    .summary-layout {
         grid-template-columns: 1fr !important;
-        gap: 20px;
+        gap: 16px;
     }
-
-    .chart-card {
+    .summary-layout__kpis {
+        gap: 12px;
+    }
+    .summary-layout__chart {
         max-width: 100%;
-        margin: 0 0 24px 0;
     }
 
-    /* --- [Seção] Paginação Móvel Compacta --- */
     .table-pagination-container {
         padding: 16px;
     }
@@ -1399,7 +1364,6 @@ body {
         text-align: center;
     }
 
-    /* --- [Seção] Ajuste Móvel de Alta Ergonomia para a Prateleira Normativa --- */
     .normative-shelf__list {
         flex-direction: column;
         gap: 8px;
@@ -1408,6 +1372,6 @@ body {
     .normative-shelf__link {
         width: 100%;
         justify-content: flex-start;
-        padding: 12px 16px; /* Aumento sutil de preenchimento para toque ergonômico */
+        padding: 12px 16px;
     }
 }
