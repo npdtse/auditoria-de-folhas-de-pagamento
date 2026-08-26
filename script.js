@@ -81,46 +81,56 @@ const TABELAS_HISTORICAS = {
 /* --- [Seção] Códigos de Rubricas Mapeados --- */
 const RUBRICA_VENCIMENTO = "1001";
 const RUBRICA_GAJ = "2001";
-const RUBRICA_GAS = "2002"; 
+const RUBRICA_GAS = "2002";
 
 /* --- [Seção] Constantes de Tetos e Limites --- */
 const TETO_CONSTITUCIONAL_STF = 46366.19; // Subsídio mensal de Ministro do STF (Art. 37, XI da CF/88)
 const LIMITE_HORAS_EXTRAS_TSE = 17000.00; // Limite Administrativo de Trabalho Extraordinário (TSE / Art. 3º, IV da Res. CNJ 14/2006)
 const VALOR_REFERENCIA_AQ = 714.40;       // Base padrão de VR
 
-/* --- [Seção] Rol de Rubricas Indenizatórias e Benefícios Excluídos do Teto --- */
+/* --- [Seção] Rol de Rubricas Indenizatórias, Benefícios e Abonos Excluídos do Teto --- */
 const RUBRICAS_EXCLUIDAS_TETO = [
-    "85001", // Auxílio-Alimentação
-    "85002", // Auxílio-Saúde
-    "85003", // Assistência Pré-Escolar
-    "85004", // Auxílio-Natalidade
-    "85005", // Auxílio-Transporte
-    "85006", // Ajuda de Custo
-    "85007"  // Diárias
+    "85001",   // Auxílio-Alimentação
+    "85002",   // Auxílio-Saúde
+    "85003",   // Assistência Pré-Escolar
+    "85004",   // Auxílio-Natalidade
+    "85005",   // Auxílio-Transporte
+    "85006",   // Ajuda de Custo
+    "85007",   // Diárias
+    "27001",   // Abono de Permanência Ativo EC
+    "8027001"  // Abono de Permanência EC nº 41/2003 RPPS
 ];
 
 /* --- [Seção] Funções de Categorização Textual de Rubricas --- */
 function isHorasExtras(desc) {
     const d = (desc || "").toString().toUpperCase();
-    return d.includes("EXTRAORDINARIO") || d.includes("SERV EXTRA") || d.includes("PLEITOS") || d.includes("HORA EXTRA");
+    return d.includes("EXTRAORDINARIO") || d.includes("EXTRAORDINÁRIO") || d.includes("SERV EXTRA") || d.includes("PLEITOS") || d.includes("HORA EXTRA");
 }
 
 function isFerias(desc) {
     const d = (desc || "").toString().toUpperCase();
-    return d.includes("FERIAS");
+    return d.includes("FERIAS") || d.includes("FÉRIAS") || d.includes("TERCO") || d.includes("TERÇO") || d.includes("1/3");
 }
 
 function isGratificacaoNatalina(desc) {
     const d = (desc || "").toString().toUpperCase();
-    return d.includes("NATALINA") || d.includes("13º") || d.includes("13 SALARIO") || d.includes("DECIMO TERCEIRO");
+    return d.includes("NATALINA") || d.includes("13º") || d.includes("13 SALARIO") || d.includes("DECIMO TERCEIRO") || d.includes("DÉCIMO TERCEIRO");
+}
+
+function isAbonoPermanencia(cod, desc) {
+    if (cod === "27001" || cod === "8027001") return true;
+    const d = (desc || "").toString().toUpperCase();
+    return d.includes("ABONO DE PERMANENCIA") || d.includes("ABONO DE PERMANÊNCIA") || d.includes("ABONO PERMANENCIA") || d.includes("ABONO PERMANÊNCIA") || d.includes("PERMANENCIA ATIVO");
 }
 
 function isBeneficioIndenizatorio(cod, desc) {
     if (RUBRICAS_EXCLUIDAS_TETO.includes(cod)) return true;
+    if (isAbonoPermanencia(cod, desc)) return true;
     const d = (desc || "").toString().toUpperCase();
-    return d.includes("ALIMENTACAO") || d.includes("PRE ESCOLAR") || d.includes("PRE-ESCOLAR") || 
-           d.includes("AUXILIO SAUDE") || d.includes("AUXILIO-SAUDE") || d.includes("NATALIDADE") || 
-           d.includes("TRANSPORTE") || d.includes("DIARIA") || d.includes("AJUDA DE CUSTO");
+    return d.includes("ALIMENTACAO") || d.includes("ALIMENTAÇÃO") || d.includes("PRE ESCOLAR") || 
+           d.includes("PRÉ-ESCOLAR") || d.includes("AUXILIO SAUDE") || d.includes("AUXÍLIO SAÚDE") || 
+           d.includes("NATALIDADE") || d.includes("TRANSPORTE") || d.includes("DIARIA") || 
+           d.includes("DIÁRIA") || d.includes("AJUDA DE CUSTO");
 }
 
 /* --- [Seção] Armazenamento de Estado Local (App Store) --- */
@@ -646,7 +656,9 @@ function pivotAndNormalizeData() {
     let activeServerCount = 0;
     for (const id in servers) {
         const s = servers[id];
-        if (s.carreira.includes("ANALISTA") || s.carreira.includes("TECNICO")) {
+        if (s.carreira.includes("ANALISTA")) {
+            activeServerCount++;
+        } else if (s.carreira.includes("TECNICO") || s.carreira.includes("TÉCNICO")) {
             activeServerCount++;
         }
     }
@@ -708,7 +720,7 @@ async function runDeterministicAudit() {
         await Swal.fire({
             icon: "warning",
             title: "Aviso de Inadequação de Tabela",
-            html: `A competência desta folha (<strong>${AppState.matchedCompetence}</strong>) é anterior a 2026.<br><br>Não existe tabela salarial histórica cadastrada para este período no aplicativo. O diagnóstico será executado utilizando a <strong>Tabela de Janeiro/2026</strong> como referência estática de apoio.`,
+            html: `Competência da folha (<strong>${AppState.matchedCompetence}</strong>) anterior a 2026.<br><br>Não há tabela histórica cadastrada para este período no aplicativo. O diagnóstico será executado utilizando a <strong>Tabela de Janeiro/2026</strong> como referência estática de apoio.`,
             confirmButtonText: "Entendi, Continuar Auditoria",
             confirmButtonColor: "var(--primary)"
         });
@@ -736,7 +748,7 @@ async function runDeterministicAudit() {
         let normalizedCareer = "";
         if (server.carreira.includes("ANALISTA")) {
             normalizedCareer = "ANALISTA JUDICIARIO";
-        } else if (server.carreira.includes("TECNICO")) {
+        } else if (server.carreira.includes("TECNICO") || server.carreira.includes("TÉCNICO")) {
             normalizedCareer = "TECNICO JUDICIARIO";
         } else {
             continue; 
@@ -753,12 +765,13 @@ async function runDeterministicAudit() {
                        (server.rubricas["23001"] || 0);
 
         // =========================================================================
-        // SEGREGAÇÃO DE TETOS CONFORME RESOLUÇÃO CNJ Nº 14/2006 (ART. 3º)
+        // SEGREGAÇÃO DE TETOS CONFORME RESOLUÇÃO CNJ Nº 14/2006 (ARTS. 3º E 4º)
         // =========================================================================
         let somaRemuneratoriaOrdinaria = 0;
         let somaHorasExtras = 0;
         let somaFerias = 0;
         let somaGratNatalina = 0;
+        const rubricasTetoOrdinario = [];
 
         server.detalheRubricas.forEach(rub => {
             if (rub.tipoRD === 1) {
@@ -773,6 +786,7 @@ async function runDeterministicAudit() {
                     somaGratNatalina += rub.valor;
                 } else if (!isBeneficioIndenizatorio(cod, desc)) {
                     somaRemuneratoriaOrdinaria += rub.valor;
+                    rubricasTetoOrdinario.push(rub);
                 }
             }
         });
@@ -808,6 +822,7 @@ async function runDeterministicAudit() {
                 aq_esperado: 0,
                 aq_pago: paidAq,
                 soma_ordinaria: somaRemuneratoriaOrdinaria,
+                rubricas_teto_ordinario: rubricasTetoOrdinario,
                 excesso_teto_ordinario: 0,
                 soma_he: somaHorasExtras,
                 excesso_he: 0,
@@ -929,6 +944,7 @@ async function runDeterministicAudit() {
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
                     soma_ordinaria: somaRemuneratoriaOrdinaria,
+                    rubricas_teto_ordinario: rubricasTetoOrdinario,
                     excesso_teto_ordinario: 0,
                     soma_he: somaHorasExtras,
                     excesso_he: 0,
@@ -941,7 +957,7 @@ async function runDeterministicAudit() {
                 });
                 conformingCount++;
             } else {
-                // SÍNTESE COMPACTA EXCLUSIVA PARA A TABELA (Sem textos longos nem citações de lei)
+                // Síntese compacta para a tabela
                 let errorDetails = [];
 
                 if (possuiExcessoTetoOrdinario) {
@@ -1027,6 +1043,7 @@ async function runDeterministicAudit() {
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
                     soma_ordinaria: somaRemuneratoriaOrdinaria,
+                    rubricas_teto_ordinario: rubricasTetoOrdinario,
                     excesso_teto_ordinario: excessoTetoOrdinario,
                     soma_he: somaHorasExtras,
                     excesso_he: excessoLimiteHE,
@@ -1055,6 +1072,7 @@ async function runDeterministicAudit() {
                 aq_esperado: 0,
                 aq_pago: paidAq,
                 soma_ordinaria: somaRemuneratoriaOrdinaria,
+                rubricas_teto_ordinario: rubricasTetoOrdinario,
                 excesso_teto_ordinario: excessoTetoOrdinario,
                 soma_he: somaHorasExtras,
                 excesso_he: excessoLimiteHE,
@@ -1245,43 +1263,57 @@ function openAuditDetailModal(serverId) {
     let normalizedCareer = "";
     if (server.carreira.includes("ANALISTA")) {
         normalizedCareer = "ANALISTA JUDICIÁRIO";
-    } else if (server.carreira.includes("TECNICO")) {
+    } else if (server.carreira.includes("TECNICO") || server.carreira.includes("TÉCNICO")) {
         normalizedCareer = "TÉCNICO JUDICIÁRIO";
     } else {
         normalizedCareer = server.carreira;
     }
 
     const formattedCpf = server.cpf ? server.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "Não Informado";
+    const maskedCpf = server.cpf ? server.cpf.replace(/(\d{3})\d{3}\d{3}(\d{2})/, "$1.***.***-$2") : "***.***.***-**";
     const gradeStr = finding.classe !== "N/A" && finding.classe !== "Incompatível" ? `${finding.classe}-${finding.padrao}` : "Não enquadrado";
     
     const statusBadgeHtml = finding.status === "CONFORME" 
-        ? `<span class="badge badge--success" style="font-size: 13px; padding: 6px 12px; margin-top: 8px;">Conforme</span>` 
+        ? `<span class="badge badge--success" style="font-size: 13px; padding: 6px 12px;">Conforme</span>` 
         : (finding.status === "SUPLEMENTAR" 
-            ? `<span class="badge badge--neutral" style="font-size: 13px; padding: 6px 12px; margin-top: 8px;">Suplementar</span>`
-            : `<span class="badge badge--error" style="font-size: 13px; padding: 6px 12px; margin-top: 8px;">Divergente</span>`);
+            ? `<span class="badge badge--neutral" style="font-size: 13px; padding: 6px 12px;">Suplementar</span>`
+            : `<span class="badge badge--error" style="font-size: 13px; padding: 6px 12px;">Divergente</span>`);
 
+    // Geração do Bloco 1: Detalhamento de Lançamentos em Folha (Limpo, sem tags redundantes)
     let rubricsHtml = "";
-    server.detalheRubricas.forEach(rub => {
-        const isAudited = [RUBRICA_VENCIMENTO, RUBRICA_GAJ, "2002", "23001", "462001", "463001"].includes(rub.codigo) || isHorasExtras(rub.descricao);
-        const tagAudited = isAudited 
-            ? `<span class="badge badge--success" style="font-size: 11px; padding: 2px 6px;">Auditada</span>` 
-            : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px;">Não Auditada</span>`;
-        
-        const tagRD = rub.tipoRD === 1 
-            ? `<span class="badge badge--success" style="font-size: 11px; padding: 2px 6px; margin-left: 4px;">Rendimento</span>` 
-            : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; margin-left: 4px;">Desconto</span>`;
+    server.detalheRubricas.forEach((rub, rIdx) => {
+        // Etiqueta Padronizada de Folha Regular vs. Folha Suplementar
+        const tagFolha = rub.tipoComp === 1
+            ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #E0E7FF; color: #3730A3;">Folha Suplementar</span>`
+            : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #475569;">Folha Regular</span>`;
 
-        const folhaTag = rub.tipoComp === 1
-            ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; margin-left: 4px; background: #E0E7FF; color: #3730A3;">Suplementar</span>`
-            : ``;
+        // Microetiquetas de Enquadramento no Teto Constitucional
+        let tagTetoClass = "";
+        let tagTetoHtml = "";
+        if (rub.tipoRD === 1) {
+            if (isHorasExtras(rub.descricao)) {
+                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #FEF3C7; color: #92400E;"><i class="fa-solid fa-clock" style="font-size: 9px; margin-right: 3px;"></i>Teto HE</span>`;
+            } else if (isFerias(rub.descricao)) {
+                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (Férias)</span>`;
+            } else if (isGratificacaoNatalina(rub.descricao)) {
+                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (13º Salário)</span>`;
+            } else if (isAbonoPermanencia(rub.codigo, rub.descricao)) {
+                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #ECFDF5; color: #065F46;">Fora do Teto (Abono Perm.)</span>`;
+            } else if (isBeneficioIndenizatorio(rub.codigo, rub.descricao)) {
+                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (Indenizatória)</span>`;
+            } else {
+                tagTetoClass = "rubric-item-teto-ordinario";
+                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #DBEAFE; color: #1E40AF; font-weight: 700;"><i class="fa-solid fa-calculator" style="font-size: 9px; margin-right: 3px;"></i>Teto Ordinário</span>`;
+            }
+        }
 
         rubricsHtml += `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 15px;">
+            <div class="modal-rubric-row ${tagTetoClass}" id="rubric-row-${rIdx}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14.5px; border-radius: 6px; transition: background 0.15s ease, border-color 0.15s ease;">
                 <div style="text-align: left;">
                     <strong style="color: var(--text);">${rub.codigo}</strong> - <span style="color: var(--text2);">${rub.descricao}</span>
-                    <div style="margin-top: 3px; display: flex; gap: 4px; flex-wrap: wrap;">${tagAudited}${tagRD}${folhaTag}</div>
+                    <div style="margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap;">${tagFolha}${tagTetoHtml}</div>
                 </div>
-                <strong style="color: ${rub.tipoRD === 1 ? 'var(--text)' : 'var(--color-conclusion)'}; white-space: nowrap;">
+                <strong style="color: ${rub.tipoRD === 1 ? 'var(--text)' : 'var(--color-conclusion)'}; white-space: nowrap; margin-left: 12px;">
                     ${rub.tipoRD === 1 ? '' : '- '}R$ ${rub.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </strong>
             </div>
@@ -1292,7 +1324,6 @@ function openAuditDetailModal(serverId) {
     const isGajConforming = Math.abs(finding.gaj_paga - finding.gaj_esperada) < 0.1;
     const isGasConforming = Math.abs(finding.gas_paga - finding.gas_esperada) < 0.1;
     const isAqConforming = Math.abs(finding.aq_pago - finding.aq_esperado) < 0.1;
-    
     const isTetoOrdConforming = finding.excesso_teto_ordinario <= 0.01;
     const isHeConforming = finding.excesso_he <= 0.01;
 
@@ -1344,13 +1375,45 @@ function openAuditDetailModal(serverId) {
         }
     }
 
-    let noteTetoOrd = "";
-    if (!isTetoOrdConforming) {
-        noteTetoOrd = `
-            A remuneração ordinária bruta mensal (<strong>R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) — excluídas horas extras, férias e 13º — ultrapassa o teto constitucional geral do funcionalismo (<strong>R$ 46.366,19</strong>). 
-            Excesso bruto sujeito a corte: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_teto_ordinario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 37, XI da CF/88 e Art. 3º da Resolução CNJ nº 14/2006).
+    // Memória de Cálculo Discriminada para o Teto Constitucional Ordinário
+    let tetoCompositionRows = "";
+    (finding.rubricas_teto_ordinario || []).forEach(r => {
+        tetoCompositionRows += `
+            <div style="display: flex; justify-content: space-between; font-size: 13.5px; padding: 4px 0; border-bottom: 1px dashed var(--border);">
+                <span><i class="fa-solid fa-angle-right" style="color: var(--primary); margin-right: 6px; font-size: 11px;"></i><strong>${r.codigo}</strong> - ${r.descricao}</span>
+                <strong style="color: var(--text);">R$ ${r.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+            </div>
         `;
-    }
+    });
+
+    const noteTetoOrd = `
+        <div style="margin-bottom: 10px;">
+            A remuneração ordinária bruta mensal apurada (<strong>R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) — excluídas horas extras, férias, 13º salário, abono de permanência e auxílios indenizatórios — ${isTetoOrdConforming ? 'está <strong>em conformidade</strong> com o teto constitucional' : 'ultrapassa o teto constitucional geral do funcionalismo'} (<strong>R$ 46.366,19</strong>).
+            ${!isTetoOrdConforming ? `Excesso bruto sujeito a corte: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_teto_ordinario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 37, XI da CF/88 e Arts. 3º e 4º da Resolução CNJ nº 14/2006).` : ''}
+        </div>
+        <div style="background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 10px;" id="teto-breakdown-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-list-check" style="margin-right: 4px;"></i> Memória de Cálculo — Composição da Base Ordinária
+                </span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+                ${tetoCompositionRows}
+                <div style="display: flex; justify-content: space-between; font-size: 14px; padding-top: 8px; margin-top: 4px; border-top: 1.5px solid var(--border);">
+                    <strong style="color: var(--text);">Total da Base Ordinária Apurada:</strong>
+                    <strong style="color: var(--primary);">R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13.5px; padding-top: 4px; color: var(--text2);">
+                    <span>(-) Teto Constitucional (STF):</span>
+                    <span>R$ ${TETO_CONSTITUCIONAL_STF.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; padding-top: 4px; border-top: 1px solid var(--border);">
+                    <strong style="color: var(--text);">(=) Glosa / Excesso de Teto:</strong>
+                    <strong style="color: ${finding.excesso_teto_ordinario > 0.01 ? 'var(--color-conclusion)' : 'var(--color-start)'};">R$ ${finding.excesso_teto_ordinario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                </div>
+            </div>
+        </div>
+    `;
 
     let noteHe = "";
     if (!isHeConforming) {
@@ -1360,12 +1423,12 @@ function openAuditDetailModal(serverId) {
         `;
     }
 
-    const compRow = (label, paid, expected, conforms, icon, note = "") => {
+    const compRow = (label, paid, expected, conforms, icon, note = "", forceShowNote = false) => {
         const color = conforms ? "#10B981" : "#E11D48";
         const statusText = conforms ? "Conforme" : "Divergente";
         
-        const noteHtml = (!conforms && note) ? `
-            <div style="margin-top: 10px; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 14.5px; color: var(--text); line-height: 1.5;">
+        const noteHtml = ((!conforms && note) || forceShowNote) ? `
+            <div style="margin-top: 10px; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 14px; color: var(--text); line-height: 1.5;">
                 <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 6px;"></i> <strong>Nota Técnica:</strong> ${note}
             </div>
         ` : '';
@@ -1390,7 +1453,7 @@ function openAuditDetailModal(serverId) {
         ${compRow("Gratificação Judiciária (GAJ)", finding.gaj_paga, finding.gaj_esperada, isGajConforming, "fa-solid fa-coins", noteGaj)}
         ${compRow("Gratificação de Segurança (GAS)", finding.gas_paga, finding.gas_esperada, isGasConforming, "fa-solid fa-shield-halved", noteGas)}
         ${compRow("Adicional de Qualificação (AQ)", finding.aq_pago, finding.aq_esperado, isAqConforming, "fa-solid fa-graduation-cap", noteAq)}
-        ${compRow("Teto Constitucional Ordinário", finding.soma_ordinaria, TETO_CONSTITUCIONAL_STF, isTetoOrdConforming, "fa-solid fa-gavel", noteTetoOrd)}
+        ${compRow("Teto Constitucional Ordinário", finding.soma_ordinaria, TETO_CONSTITUCIONAL_STF, isTetoOrdConforming, "fa-solid fa-gavel", noteTetoOrd, true)}
         ${compRow("Limite de Horas Extras (TSE)", finding.soma_he, LIMITE_HORAS_EXTRAS_TSE, isHeConforming, "fa-solid fa-clock", noteHe)}
     `;
 
@@ -1399,46 +1462,72 @@ function openAuditDetailModal(serverId) {
         : `<span class="badge badge--success" style="font-size: 11px; padding: 4px 8px; margin-left: 8px;">Tabela ${activeConfig.label.split(' ')[0]}</span>`;
 
     Swal.fire({
-        width: '820px',
+        width: '840px',
         showConfirmButton: true,
         confirmButtonText: 'Fechar Diagnóstico',
         confirmButtonColor: 'var(--primary)',
         background: 'var(--surface)',
         color: 'var(--text)',
         html: `
-            <div style="font-family: var(--font-main); color: var(--text); padding-top: 10px; text-align: left;">
+            <div style="font-family: var(--font-main); color: var(--text); padding-top: 6px; text-align: left;">
                 
-                <!-- SEÇÃO 1: CABEÇALHO -->
+                <!-- SEÇÃO 1: CABEÇALHO COM MODO ANONIMIZADO / PRIVACIDADE -->
                 <div style="border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <h3 style="font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px;">${server.nome}</h3>
-                            <p style="font-size: 14.5px; color: var(--text3); margin-bottom: 4px;">CPF: <strong>${formattedCpf}</strong> | Matrícula: <strong>${server.id}</strong></p>
-                            <p style="font-size: 14.5px; color: var(--text2); font-weight: 600;">${normalizedCareer} • Padrão ${gradeStr} ${tableBadgeLabel}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <h3 style="font-size: 22px; font-weight: 800; color: var(--text); margin: 0;">
+                                    Matrícula: <span style="color: var(--primary);">${server.id}</span>
+                                </h3>
+                                <button class="btn btn--secondary btn--compact" id="btn-toggle-privacy-detail" style="font-size: 11.5px; height: 28px; padding: 4px 10px; gap: 6px;">
+                                    <i class="fa-solid fa-eye" id="privacy-eye-icon"></i>
+                                    <span id="privacy-btn-text">Revelar Dados Pessoais</span>
+                                </button>
+                            </div>
+
+                            <!-- Bloco de Dados Pessoais com Anonimização -->
+                            <div id="privacy-personal-box" style="margin-top: 6px; font-size: 14.5px; color: var(--text2);">
+                                <span id="label-server-name" style="font-weight: 700; color: var(--text3);">Nome: ••••••••••••••••••</span>
+                                <span style="margin: 0 6px; color: var(--border);">|</span>
+                                <span id="label-server-cpf" style="color: var(--text3);">CPF: ${maskedCpf}</span>
+                            </div>
+
+                            <p style="font-size: 14px; color: var(--text2); font-weight: 600; margin-top: 6px;">
+                                ${normalizedCareer} • Padrão ${gradeStr} ${tableBadgeLabel}
+                            </p>
                         </div>
-                        <div style="text-align: right;">
+                        <div style="text-align: right; flex-shrink: 0;">
                             ${statusBadgeHtml}
                         </div>
                     </div>
                 </div>
 
-                <!-- SEÇÃO 2: RAIO-X DE LANÇAMENTOS -->
+                <!-- SEÇÃO 2: RAIO-X DE LANÇAMENTOS COM ALTURA AMPLIADA -->
                 <div style="margin-bottom: 24px;">
-                    <h4 style="font-size: 15.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">1. Detalhamento de Lançamentos em Folha</h4>
-                    <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 0 14px; background: var(--surface2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">
+                            1. Detalhamento de Lançamentos em Folha
+                        </h4>
+                        <span style="font-size: 12px; color: var(--text3); font-weight: 600;">
+                            ${server.detalheRubricas.length} rubricas registradas
+                        </span>
+                    </div>
+                    <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; background: var(--surface2);" id="modal-rubrics-container">
                         ${rubricsHtml}
                     </div>
                 </div>
 
-                <!-- SEÇÃO 3: CONCILIAÇÃO LEGAL -->
+                <!-- SEÇÃO 3: CONCILIAÇÃO LEGAL E MEMÓRIA DE CÁLCULO -->
                 <div style="margin-bottom: 16px;">
-                    <h4 style="font-size: 15.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">2. Conciliação contra Tabelas e Limites Legais</h4>
+                    <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+                        2. Conciliação contra Tabelas e Limites Legais
+                    </h4>
                     <div style="display: flex; flex-direction: column;">
                         ${reconciliaHtml}
                     </div>
                 </div>
 
-                <!-- PAINEL DE SALDO -->
+                <!-- PAINEL DE SALDO CONSOLIDADO -->
                 <div style="padding: 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
                     <div>
                         <span style="font-size: 12.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; display: block;">Saldo do Desvio Financeiro Consolidado</span>
@@ -1447,7 +1536,37 @@ function openAuditDetailModal(serverId) {
                     <strong style="font-size: 22px; color: ${finding.desvio === 0 ? 'var(--color-start)' : 'var(--color-conclusion)'}">R$ ${finding.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
                 </div>
             </div>
-        `
+        `,
+        didOpen: () => {
+            // Controle de Anonimização / Revelação de Dados Pessoais
+            let isRevealed = false;
+            const privacyBtn = document.getElementById("btn-toggle-privacy-detail");
+            const eyeIcon = document.getElementById("privacy-eye-icon");
+            const btnText = document.getElementById("privacy-btn-text");
+            const nameLabel = document.getElementById("label-server-name");
+            const cpfLabel = document.getElementById("label-server-cpf");
+
+            if (privacyBtn) {
+                privacyBtn.addEventListener("click", () => {
+                    isRevealed = !isRevealed;
+                    if (isRevealed) {
+                        eyeIcon.className = "fa-solid fa-eye-slash";
+                        btnText.textContent = "Ocultar Dados Pessoais";
+                        nameLabel.textContent = `Nome: ${server.nome}`;
+                        nameLabel.style.color = "var(--text)";
+                        cpfLabel.textContent = `CPF: ${formattedCpf}`;
+                        cpfLabel.style.color = "var(--text)";
+                    } else {
+                        eyeIcon.className = "fa-solid fa-eye";
+                        btnText.textContent = "Revelar Dados Pessoais";
+                        nameLabel.textContent = "Nome: ••••••••••••••••••";
+                        nameLabel.style.color = "var(--text3)";
+                        cpfLabel.textContent = `CPF: ${maskedCpf}`;
+                        cpfLabel.style.color = "var(--text3)";
+                    }
+                });
+            }
+        }
     });
 }
 

@@ -73,7 +73,6 @@
                         <p class="main-header__sub-institution">Processamento local de dados em memória</p>
                     </div>
                     <div class="main-header__active-box" id="header-active-box" style="display: none;">
-                        <span class="main-header__badge">Diagnóstico Ativo</span>
                         <h2 class="main-header__active-title" id="active-flow-title">Processamento de Lançamentos Salariais</h2>
                     </div>
                 </div>
@@ -83,15 +82,6 @@
                         <i class="fa-solid fa-rotate-left"></i>
                         <span class="btn__text">Mudar Folha</span>
                     </button>
-                    <!--<div class="user-profile">
-                        <div class="user-profile__avatar">
-                            <i class="fa-solid fa-user-lock"></i>
-                        </div>
-                        <div class="user-profile__info">
-                            <span class="user-profile__name">Auditor da SAU</span>
-                            <span class="user-profile__role">Execução Local</span>
-                        </div>
-                    </div>-->
                 </div>
             </header>
 
@@ -154,7 +144,7 @@
                     <div class="view-header">
                         <div class="view-header__title-box">
                             <h3 class="view-header__title" id="view-auditoria-title">Resultados do Diagnóstico</h3>
-                            <p class="view-header__subtitle">Confronto de Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001), Teto Constitucional Ordinário (R$ 46.366,19) e Limite de Horas Extras (R$ 17.000,00) contra as tabelas e normas vigentes do TSE.</p>
+                            <p class="view-header__subtitle">Confronto de Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001), VPNI e Teto Constitucional Ordinário (R$ 46.366,19) e Limite de Horas Extras (R$ 17.000,00) contra as tabelas e normas vigentes do TSE.</p>
                             <br>
                         </div>
                     </div>
@@ -406,28 +396,28 @@
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Limite Constitucional (Art. 37, XI da CF/88)</span>
-                                    <p class="parameter-item__desc">Valor de R$ 46.366,19 correspondente ao subsídio de Ministro do STF (Lei nº 14.520/2023).</p>
+                                    <p class="parameter-item__desc">Valor de R$ 46.366,19 correspondente ao subsídio mensal de Ministro do STF (Lei nº 14.520/2023).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Base de Incidência Bruta</span>
-                                    <p class="parameter-item__desc">Soma de parcelas remuneratórias (`Código Rendimento Desconto = 1`: Vencimento, GAJ, GAS, AQ, FC/CJ e VPNI).</p>
+                                    <span class="parameter-item__label">Base de Incidência Ordinária (DENTRO)</span>
+                                    <p class="parameter-item__desc">Soma de parcelas remuneratórias (`Código Rendimento Desconto = 1`): Vencimento Básico, GAJ, GAS, Adicional de Qualificação (AQ), Funções de Confiança (FC), Cargos em Comissão (CJ), Gratificação por Encargo de Curso ou Concurso (GECC) e VPNI (Quintos/Décimos incorporados — rubricas 25001, 232001, 293001).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Exclusões de Verbas (Art. 3º da Resolução CNJ nº 14/2006)</span>
-                                    <p class="parameter-item__desc">Férias, 1/3 de férias, gratificação natalina (13º) e horas extras não integram a soma do teto ordinário.</p>
+                                    <span class="parameter-item__label">Abono de Permanência (FORA do Teto)</span>
+                                    <p class="parameter-item__desc">Exclusão expressa do Abono de Permanência (rubricas 27001 e 8027001 — Art. 40, § 19 da CF/88 e Art. 4º, IV da Resolução CNJ nº 14/2006) da base de cálculo sujeita a glosa.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Isenção de Verbas Indenizatórias (Art. 37, § 11 da CF/88)</span>
-                                    <p class="parameter-item__desc">Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte não integram o cálculo.</p>
+                                    <span class="parameter-item__label">Exclusões Legais e Verbas Indenizatórias (FORA do Teto)</span>
+                                    <p class="parameter-item__desc">Férias, 1/3 Constitucional de Férias, Gratificação Natalina (13º salário), Horas Extras (apuradas em limite próprio) e Benefícios Indenizatórios (Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte — Art. 37, § 11 da CF/88 e Art. 3º da Resolução CNJ nº 14/2006).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -437,10 +427,13 @@
                             <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Resoluções</span>
                             <div class="normative-shelf__list">
                                 <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm" target="_blank" class="normative-shelf__link" aria-label="Constituição Federal">
-                                    <i class="fa-solid fa-scale-balanced"></i> Artigo 37 da CF/88
+                                    <i class="fa-solid fa-scale-balanced"></i> Artigo 37, XI e Art. 40, § 19 da CF/88
                                 </a>
                                 <a href="https://atos.cnj.jus.br/atos/detalhar/88" target="_blank" class="normative-shelf__link" aria-label="Resolução CNJ 14 de 2006">
-                                    <i class="fa-solid fa-bookmark"></i> Resolução CNJ nº 14/2006
+                                    <i class="fa-solid fa-bookmark"></i> Resolução CNJ nº 14/2006 (Arts. 3º e 4º)
+                                </a>
+                                <a href="https://portal.stf.jus.br/jurisprudenciaRepercussao/tema.asp?num=257" target="_blank" class="normative-shelf__link" aria-label="Tema 257 STF">
+                                    <i class="fa-solid fa-gavel"></i> Tema 257/STF (VPNI no Teto)
                                 </a>
                             </div>
                         </div>
@@ -470,8 +463,8 @@
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Ingestão de Folha Regular e Suplementar</span>
-                                    <p class="parameter-item__desc">Leitura de valores de serviço extraordinário em `Tipo Competência = 0` e `Tipo Competência = 1`.</p>
+                                    <span class="parameter-item__label">Ingestão de Folha Regular e Folha Suplementar</span>
+                                    <p class="parameter-item__desc">Leitura e consolidação automática de lançamentos extraordinários em Folha Regular (`Tipo Competência = 0`) e Folha Suplementar (`Tipo Competência = 1`).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -507,8 +500,8 @@
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Filtro de Salário Base</span>
-                                    <p class="parameter-item__desc">Enquadramento de Vencimento e GAJ avaliado exclusivamente na folha regular (`Tipo Competência = 0`).</p>
+                                    <span class="parameter-item__label">Filtro de Salário Base na Folha Regular</span>
+                                    <p class="parameter-item__desc">Enquadramento de Vencimento e GAJ avaliado exclusivamente no processamento da Folha Regular (`Tipo Competência = 0`).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
