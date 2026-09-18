@@ -123,14 +123,59 @@ function isAbonoPermanencia(cod, desc) {
     return d.includes("ABONO DE PERMANENCIA") || d.includes("ABONO DE PERMANÊNCIA") || d.includes("ABONO PERMANENCIA") || d.includes("ABONO PERMANÊNCIA") || d.includes("PERMANENCIA ATIVO");
 }
 
+function isGECC(desc) {
+    const d = (desc || "").toString().toUpperCase();
+    return d.includes("CURSO/CONCURSO") || d.includes("CURSO E CONCURSO") || d.includes("ENCARGO DE CURSO") || d.includes("GECC") || d.includes("INSTRUTORIA");
+}
+
 function isBeneficioIndenizatorio(cod, desc) {
     if (RUBRICAS_EXCLUIDAS_TETO.includes(cod)) return true;
     if (isAbonoPermanencia(cod, desc)) return true;
+    if (isGECC(desc)) return true;
     const d = (desc || "").toString().toUpperCase();
     return d.includes("ALIMENTACAO") || d.includes("ALIMENTAÇÃO") || d.includes("PRE ESCOLAR") || 
            d.includes("PRÉ-ESCOLAR") || d.includes("AUXILIO SAUDE") || d.includes("AUXÍLIO SAÚDE") || 
            d.includes("NATALIDADE") || d.includes("TRANSPORTE") || d.includes("DIARIA") || 
            d.includes("DIÁRIA") || d.includes("AJUDA DE CUSTO");
+}
+
+/* --- [Seção] Detector de Pagamento Proporcional de AQ (Pro-Rata Die) --- */
+function checkAqProportionalAdjustment(paidAq, expectedAq, activeVR) {
+    if (paidAq <= 0) return { isProportional: false, days: 0 };
+    
+    const diff = paidAq - expectedAq;
+    const dailyUnits = [
+        (0.2 * activeVR) / 30, // Diária de 1 módulo de 120h (~R$ 4,7626)
+        (0.4 * activeVR) / 30, // Diária de 2 módulos (~R$ 9,5253)
+        (0.5 * activeVR) / 30, // Diária de Certificação (~R$ 11,9066)
+        (1.0 * activeVR) / 30  // Diária de Especialização (~R$ 23,8133)
+    ];
+
+    // Caso 1: Pagamento do mês somado aos dias proporcionais retroativos de averbação
+    if (diff > 0.5) {
+        for (const unit of dailyUnits) {
+            const days = Math.round(diff / unit);
+            if (days >= 1 && days <= 29) {
+                if (Math.abs(diff - days * unit) < 0.25) {
+                    return { isProportional: true, days: days };
+                }
+            }
+        }
+    }
+
+    // Caso 2: Pagamento referente apenas aos dias proporcionais do mês de ingresso/averbação
+    if (expectedAq > 0 && paidAq < expectedAq) {
+        for (const unit of dailyUnits) {
+            const days = Math.round(paidAq / unit);
+            if (days >= 1 && days <= 29) {
+                if (Math.abs(paidAq - days * unit) < 0.25) {
+                    return { isProportional: true, days: days };
+                }
+            }
+        }
+    }
+
+    return { isProportional: false, days: 0 };
 }
 
 /* --- [Seção] Armazenamento de Estado Local (App Store) --- */
@@ -148,10 +193,13 @@ const AppState = {
     activeVR: 714.40,
     isIncompatibleCompetence: false,
     
-    // Paginação
+    // Paginação, Filtros e Busca Rápida
     currentPage: 1,
     itemsPerPage: 25,
-    filterOnlyErrors: true   // Padrão de visualização
+    activeFilter: "alerts",   // 'all' | 'alerts'
+    searchQuery: "",
+    sortField: "id",
+    sortDirection: "asc"      // 'asc' | 'desc'
 };
 
 /* ==========================================================================
@@ -256,9 +304,27 @@ function initThemeManager() {
         }
 
         if (AppState.auditFindings.length > 0) {
-            const conforming = AppState.auditFindings.filter(f => f.status !== "DIVERGENTE").length;
-            const errors = AppState.auditFindings.filter(f => f.status === "DIVERGENTE").length;
-            renderComplianceChart(conforming, errors);
+            let totalActiveRubrics = 0;
+            let divergentRubricsCount = 0;
+            let proportionalRubricsCount = 0;
+
+            AppState.auditFindings.forEach(f => {
+                const s = AppState.pivotedServers[f.id];
+                if (s && (f.status === "CONFORME" || f.status === "PROPORCIONAL" || f.status === "DIVERGENTE")) {
+                    totalActiveRubrics += s.detalheRubricas.length;
+                }
+                if (f.has_venc_error) divergentRubricsCount++;
+                if (f.has_gaj_error) divergentRubricsCount++;
+                if (f.has_gas_error) divergentRubricsCount++;
+                if (f.aq_status === "DIVERGENTE") divergentRubricsCount++;
+                if (f.has_cadastral_error) divergentRubricsCount++;
+                if (f.has_teto_error) divergentRubricsCount++;
+                if (f.has_he_error) divergentRubricsCount++;
+                if (f.aq_status === "PROPORCIONAL") proportionalRubricsCount++;
+            });
+
+            const conformingRubricsCount = Math.max(0, totalActiveRubrics - divergentRubricsCount - proportionalRubricsCount);
+            renderComplianceChart(conformingRubricsCount, proportionalRubricsCount, divergentRubricsCount);
         }
     });
 }
@@ -447,49 +513,21 @@ function handleRawFileLoad(file) {
             reader.readAsArrayBuffer(file);
         });
     } else {
-        Swal.fire({
-            title: "Configuração do Arquivo",
-            html: `
-                <p style="font-size: 14.5px; color: var(--text2); margin-bottom: 24px; line-height: 1.4;">
-                    Como as colunas do seu arquivo de texto plano estão separadas? Selecione a opção correspondente:
-                </p>
-                <div style="display: flex; flex-direction: column; gap: 10px; max-width: 360px; margin: 0 auto;">
-                    <button class="btn btn--secondary btn-delim-choice" data-delim="#" style="justify-content: flex-start; padding: 12px 20px;"><i class="fa-solid fa-hashtag" style="color: var(--primary); margin-right: 12px;"></i> Hashtag (#)</button>
-                    <button class="btn btn--secondary btn-delim-choice" data-delim=";" style="justify-content: flex-start; padding: 12px 20px;"><i class="fa-solid fa-list-ol" style="color: var(--primary); margin-right: 12px;"></i> Ponto e Vírgula (;)</button>
-                    <button class="btn btn--secondary btn-delim-choice" data-delim="\t" style="justify-content: flex-start; padding: 12px 20px;"><i class="fa-solid fa-arrows-left-right" style="color: var(--primary); margin-right: 12px;"></i> Tabulação (Tab / Espaço)</button>
-                    <button class="btn btn--secondary btn-delim-choice" data-delim="," style="justify-content: flex-start; padding: 12px 20px;"><i class="fa-solid fa-comma" style="color: var(--primary); margin-right: 12px;"></i> Vírgula (,)</button>
-                </div>
-            `,
-            showConfirmButton: false,
-            showCancelButton: true,
-            cancelButtonText: "Cancelar",
-            cancelButtonColor: "var(--text3)",
-            didOpen: () => {
-                const buttons = document.querySelectorAll(".btn-delim-choice");
-                buttons.forEach(btn => {
-                    btn.addEventListener("click", (e) => {
-                        const delim = e.currentTarget.getAttribute("data-delim");
-                        Swal.close();
-                        
-                        AppState.isProcessing = true;
-                        runVisualLoadingProgress(() => {
-                            Papa.parse(file, {
-                                skipEmptyLines: true,
-                                header: false,
-                                delimiter: delim,
-                                encoding: "ISO-8859-1",
-                                complete: function(results) {
-                                    parseMatrixData(results.data);
-                                },
-                                error: function() {
-                                    Swal.fire("Erro", "Erro crítico de leitura local com PapaParse.", "error");
-                                    resetFileUIPanel();
-                                }
-                            });
-                        });
-                    });
-                });
-            }
+        AppState.isProcessing = true;
+        runVisualLoadingProgress(() => {
+            Papa.parse(file, {
+                skipEmptyLines: true,
+                header: false,
+                delimiter: "#",
+                encoding: "ISO-8859-1",
+                complete: function(results) {
+                    parseMatrixData(results.data);
+                },
+                error: function() {
+                    Swal.fire("Erro de Leitura", "Falha ao processar o arquivo de texto local.", "error");
+                    resetFileUIPanel();
+                }
+            });
         });
     }
 }
@@ -625,6 +663,7 @@ function pivotAndNormalizeData() {
             if (cleanRubrica.endsWith(".0")) {
                 cleanRubrica = cleanRubrica.slice(0, -2);
             }
+            cleanRubrica = cleanRubrica.replace(/^0+/, "") || "0";
 
             const descStr = descRubricaRaw ? descRubricaRaw.toString().trim() : "Sem descrição";
 
@@ -653,21 +692,40 @@ function pivotAndNormalizeData() {
     AppState.activeVR = tableConfig.vr;
     AppState.isIncompatibleCompetence = tableConfig.isIncompatible;
 
-    let activeServerCount = 0;
+    // Contagem harmonizada dos 4 quadrantes para a pré-visualização da Tela 1 (Opção A)
+    let countActiveServers = 0;
+    let countNonAuditedServers = 0;
+    let countAuditedRubrics = 0;
+    let countNonAuditedRubrics = 0;
+
     for (const id in servers) {
         const s = servers[id];
-        if (s.carreira.includes("ANALISTA")) {
-            activeServerCount++;
-        } else if (s.carreira.includes("TECNICO") || s.carreira.includes("TÉCNICO")) {
-            activeServerCount++;
+        const isAnalistaOrTecnico = s.carreira.includes("ANALISTA") || s.carreira.includes("TECNICO") || s.carreira.includes("TÉCNICO");
+        const paidVenc = s.rubricas[RUBRICA_VENCIMENTO] || 0;
+        const paidGaj = s.rubricas[RUBRICA_GAJ] || 0;
+
+        const isInactiveOrPensioner = s.categoria === 5 || s.categoria === 6 || s.categoria === 7 ||
+                                      s.situacao.includes("INATIVO") || s.situacao.includes("PENSIONISTA") ||
+                                      s.situacao.includes("PENSAO") || (paidVenc === 0 && paidGaj === 0);
+
+        if (isAnalistaOrTecnico && !isInactiveOrPensioner) {
+            countActiveServers++;
+            countAuditedRubrics += s.detalheRubricas.length;
+        } else {
+            countNonAuditedServers++;
+            countNonAuditedRubrics += s.detalheRubricas.length;
         }
     }
 
-    const rowCountText = document.getElementById("preview-row-count");
-    const serverCountText = document.getElementById("preview-server-count");
-    
-    if (rowCountText) rowCountText.textContent = `${AppState.rawRecords.length} lançamentos`;
-    if (serverCountText) serverCountText.textContent = activeServerCount;
+    const previewServersAudited = document.getElementById("preview-servers-audited");
+    const previewServersNonAudited = document.getElementById("preview-servers-nonaudited");
+    const previewRubricsAudited = document.getElementById("preview-rubrics-audited");
+    const previewRubricsNonAudited = document.getElementById("preview-rubrics-nonaudited");
+
+    if (previewServersAudited) previewServersAudited.textContent = countActiveServers.toLocaleString('pt-BR');
+    if (previewServersNonAudited) previewServersNonAudited.textContent = countNonAuditedServers.toLocaleString('pt-BR');
+    if (previewRubricsAudited) previewRubricsAudited.textContent = countAuditedRubrics.toLocaleString('pt-BR');
+    if (previewRubricsNonAudited) previewRubricsNonAudited.textContent = countNonAuditedRubrics.toLocaleString('pt-BR');
 
     let previewBanner = document.getElementById("preview-incompatible-banner");
     const previewPanel = document.getElementById("upload-preview-panel");
@@ -684,6 +742,11 @@ function pivotAndNormalizeData() {
     } else if (previewBanner) {
         previewBanner.style.display = "none";
     }
+
+    const dashboardTitle = document.getElementById("view-dashboard-title");
+    const dashboardSubtitle = document.querySelector("#view-dashboard .section-subtitle");
+    if (dashboardTitle) dashboardTitle.innerHTML = formatCompetenceHeader(AppState.matchedCompetence);
+    if (dashboardSubtitle) dashboardSubtitle.textContent = "Dados estruturados em memória local — prontos para execução do diagnóstico";
 
     const loader = document.getElementById("upload-loading-panel");
     if (loader) loader.style.display = "none";
@@ -707,7 +770,7 @@ function resetFileUIPanel() {
 }
 
 /* ==========================================================================
-   === [CAPÍTULO] MOTOR DE AUDITORIA DETERMINÍSTICA ===
+   === [CAPÍTULO] MOTOR DE AUDITORIA DETERMINÍSTICA (FOCO EM RUBRICAS) ===
    ========================================================================== */
 
 async function runDeterministicAudit() {
@@ -728,7 +791,7 @@ async function runDeterministicAudit() {
 
     Swal.fire({
         title: "Processando Auditoria",
-        text: `Comparando valores contra a Tabela do TSE (${TABELAS_HISTORICAS[AppState.activeTableKey].label})...`,
+        text: `Comparando lançamentos contra a Tabela do TSE (${TABELAS_HISTORICAS[AppState.activeTableKey].label})...`,
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
@@ -738,9 +801,17 @@ async function runDeterministicAudit() {
     const activeTables = activeConfig.tabelas;
 
     const findings = [];
-    let totalAudited = 0;
-    let conformingCount = 0;
-    let discrepancyCount = 0;
+    let countActiveServers = 0;
+    let countAfastadosServers = 0;
+    let countInactiveServers = 0;
+    let countOtherServers = 0;
+    const totalServersInFile = Object.keys(AppState.pivotedServers).length;
+    const totalRubricsInFile = AppState.rawRecords.length;
+
+    let totalActiveRubrics = 0;
+    let totalNonAuditedRubrics = 0;
+    let divergentRubricsCount = 0;
+    let proportionalRubricsCount = 0;
 
     for (const id in AppState.pivotedServers) {
         const server = AppState.pivotedServers[id];
@@ -751,10 +822,10 @@ async function runDeterministicAudit() {
         } else if (server.carreira.includes("TECNICO") || server.carreira.includes("TÉCNICO")) {
             normalizedCareer = "TECNICO JUDICIARIO";
         } else {
+            countOtherServers++;
+            totalNonAuditedRubrics += server.detalheRubricas.length;
             continue; 
         }
-
-        totalAudited++;
 
         const paidVenc = server.rubricas[RUBRICA_VENCIMENTO] || 0;
         const paidGaj = server.rubricas[RUBRICA_GAJ] || 0;
@@ -765,12 +836,12 @@ async function runDeterministicAudit() {
                        (server.rubricas["23001"] || 0);
 
         // =========================================================================
-        // SEGREGAÇÃO DE TETOS CONFORME RESOLUÇÃO CNJ Nº 14/2006 (ARTS. 3º E 4º)
+        // SEGREGAÇÃO DE MACROBLOCOS FINANCEIROS (TETO ORDINÁRIO, HE, OUTRAS E DESCONTOS)
         // =========================================================================
         let somaRemuneratoriaOrdinaria = 0;
         let somaHorasExtras = 0;
-        let somaFerias = 0;
-        let somaGratNatalina = 0;
+        let somaOutrasVerbas = 0;
+        let somaDescontos = 0;
         const rubricasTetoOrdinario = [];
 
         server.detalheRubricas.forEach(rub => {
@@ -780,14 +851,14 @@ async function runDeterministicAudit() {
 
                 if (isHorasExtras(desc)) {
                     somaHorasExtras += rub.valor;
-                } else if (isFerias(desc)) {
-                    somaFerias += rub.valor;
-                } else if (isGratificacaoNatalina(desc)) {
-                    somaGratNatalina += rub.valor;
-                } else if (!isBeneficioIndenizatorio(cod, desc)) {
+                } else if (isFerias(desc) || isGratificacaoNatalina(desc) || isGECC(desc) || isBeneficioIndenizatorio(cod, desc)) {
+                    somaOutrasVerbas += rub.valor;
+                } else {
                     somaRemuneratoriaOrdinaria += rub.valor;
                     rubricasTetoOrdinario.push(rub);
                 }
+            } else if (rub.tipoRD === 2) {
+                somaDescontos += rub.valor;
             }
         });
 
@@ -800,11 +871,15 @@ async function runDeterministicAudit() {
         const possuiExcessoHE = excessoLimiteHE > 0.01;
 
         // Isolamento de Inativos e Pensionistas
-        const isInactiveOrPensioner = server.categoria === 5 || server.categoria === 6 || server.categoria === 7 ||
-                                      server.situacao.includes("INATIVO") || server.situacao.includes("PENSIONISTA") ||
-                                      server.situacao.includes("PENSAO") || (paidVenc === 0 && paidGaj === 0);
+        const isPensionOrInactiveStrict = server.categoria === 5 || server.categoria === 6 || server.categoria === 7 ||
+                                          server.situacao.includes("INATIVO") || server.situacao.includes("PENSIONISTA") ||
+                                          server.situacao.includes("PENSAO");
 
-        if (isInactiveOrPensioner) {
+        const isAfastadoWithoutPay = !isPensionOrInactiveStrict && (paidVenc === 0 && paidGaj === 0);
+
+        if (isPensionOrInactiveStrict) {
+            countInactiveServers++;
+            totalNonAuditedRubrics += server.detalheRubricas.length;
             findings.push({
                 id: server.id,
                 nome: server.nome,
@@ -821,21 +896,76 @@ async function runDeterministicAudit() {
                 gas_paga: paidGas,
                 aq_esperado: 0,
                 aq_pago: paidAq,
+                aq_status: "CONFORME",
                 soma_ordinaria: somaRemuneratoriaOrdinaria,
+                soma_he: somaHorasExtras,
+                soma_outras: somaOutrasVerbas,
+                soma_descontos: somaDescontos,
                 rubricas_teto_ordinario: rubricasTetoOrdinario,
                 excesso_teto_ordinario: 0,
-                soma_he: somaHorasExtras,
                 excesso_he: 0,
+                has_venc_error: false,
+                has_gaj_error: false,
+                has_gas_error: false,
+                has_cadastral_error: false,
+                has_teto_error: false,
+                has_he_error: false,
                 detalhe: `
                     <div class="audit-issue">
-                        <span class="audit-issue__badge badge badge--neutral"><i class="fa-solid fa-user-slash"></i> Não Analisado</span>
+                        <span class="audit-issue__badge badge badge--neutral"><i class="fa-solid fa-user-slash"></i> Inativo / Pensionista</span>
                     </div>
                 `,
                 desvio: 0
             });
-            conformingCount++;
             continue;
         }
+
+        if (isAfastadoWithoutPay) {
+            countAfastadosServers++;
+            totalNonAuditedRubrics += server.detalheRubricas.length;
+            findings.push({
+                id: server.id,
+                nome: server.nome,
+                cpf: server.cpf,
+                carreira: normalizedCareer,
+                classe: "N/A",
+                padrao: "N/A",
+                status: "NAO_ANALISADO",
+                venc_esperado: 0,
+                venc_pago: paidVenc,
+                gaj_esperada: 0,
+                gaj_paga: paidGaj,
+                gas_esperada: 0,
+                gas_paga: paidGas,
+                aq_esperado: 0,
+                aq_pago: paidAq,
+                aq_status: "CONFORME",
+                soma_ordinaria: somaRemuneratoriaOrdinaria,
+                soma_he: somaHorasExtras,
+                soma_outras: somaOutrasVerbas,
+                soma_descontos: somaDescontos,
+                rubricas_teto_ordinario: rubricasTetoOrdinario,
+                excesso_teto_ordinario: 0,
+                excesso_he: 0,
+                has_venc_error: false,
+                has_gaj_error: false,
+                has_gas_error: false,
+                has_cadastral_error: false,
+                has_teto_error: false,
+                has_he_error: false,
+                detalhe: `
+                    <div class="audit-issue">
+                        <span class="audit-issue__badge badge badge--neutral"><i class="fa-solid fa-user-slash"></i> Cedido / Licenciado sem remuneração</span>
+                    </div>
+                `,
+                desvio: 0
+            });
+            continue;
+        }
+
+        // Incremento dos servidores ativos e de seus lançamentos sob auditoria
+        countActiveServers++;
+        totalActiveRubrics += server.detalheRubricas.length;
 
         const referenceTable = activeTables[normalizedCareer];
         let matchedGrade = null;
@@ -895,8 +1025,12 @@ async function runDeterministicAudit() {
                 matchedCoefQ = 3.5;
             } else if (coefQ >= 2.0 - 0.01) {
                 matchedCoefQ = 2.0;
+            } else if (coefQ >= 1.5 - 0.01) {
+                matchedCoefQ = 1.5;
             } else if (coefQ >= 1.0 - 0.01) {
                 matchedCoefQ = 1.0;
+            } else if (coefQ >= 0.5 - 0.01) {
+                matchedCoefQ = 0.5;
             } else {
                 matchedCoefQ = 0.0;
             }
@@ -904,7 +1038,17 @@ async function runDeterministicAudit() {
 
             expectedAq = expectedT + expectedQ;
 
-            const isAqConforming = Math.abs(expectedAq - paidAq) < 0.1;
+            const isAqExactMatch = Math.abs(expectedAq - paidAq) < 0.1;
+            const propCheck = !isAqExactMatch ? checkAqProportionalAdjustment(paidAq, expectedAq, activeVR) : { isProportional: false, days: 0 };
+            
+            let aqStatus = "CONFORME";
+            if (isAqExactMatch) {
+                aqStatus = "CONFORME";
+            } else if (propCheck.isProportional) {
+                aqStatus = "PROPORCIONAL";
+            } else {
+                aqStatus = "DIVERGENTE";
+            }
 
             // Validação Cadastral de FC/CJ
             let cadastralIssue = "";
@@ -925,8 +1069,29 @@ async function runDeterministicAudit() {
 
             const isVencConforming = Math.abs(expectedVenc - paidVenc) < 0.1;
             const isGajConforming = Math.abs(expectedGaj - paidGaj) < 0.1;
+            
+            // Flags de divergência individual por rubrica
+            const hasVencError = !isVencConforming;
+            const hasGajError = !isGajConforming;
+            const hasGasError = !isGasConforming;
+            const hasCadastralError = !!cadastralIssue;
+            const hasTetoError = possuiExcessoTetoOrdinario;
+            const hasHeError = possuiExcessoHE;
+            
+            const hasCriticalError = hasVencError || hasGajError || hasGasError || (aqStatus === "DIVERGENTE") || hasCadastralError || hasTetoError || hasHeError;
+            const hasProportionalOnly = !hasCriticalError && (aqStatus === "PROPORCIONAL");
 
-            if (isVencConforming && isGajConforming && isGasConforming && isAqConforming && !cadastralIssue && !possuiExcessoTetoOrdinario && !possuiExcessoHE) {
+            // Contabilização de Rubricas com problemas
+            if (hasVencError) divergentRubricsCount++;
+            if (hasGajError) divergentRubricsCount++;
+            if (hasGasError) divergentRubricsCount++;
+            if (aqStatus === "DIVERGENTE") divergentRubricsCount++;
+            if (hasCadastralError) divergentRubricsCount++;
+            if (hasTetoError) divergentRubricsCount++;
+            if (hasHeError) divergentRubricsCount++;
+            if (aqStatus === "PROPORCIONAL") proportionalRubricsCount++;
+
+            if (!hasCriticalError && !hasProportionalOnly) {
                 findings.push({
                     id: server.id,
                     nome: server.nome,
@@ -943,11 +1108,20 @@ async function runDeterministicAudit() {
                     gas_paga: paidGas,
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
+                    aq_status: "CONFORME",
                     soma_ordinaria: somaRemuneratoriaOrdinaria,
+                    soma_he: somaHorasExtras,
+                    soma_outras: somaOutrasVerbas,
+                    soma_descontos: somaDescontos,
                     rubricas_teto_ordinario: rubricasTetoOrdinario,
                     excesso_teto_ordinario: 0,
-                    soma_he: somaHorasExtras,
                     excesso_he: 0,
+                    has_venc_error: false,
+                    has_gaj_error: false,
+                    has_gas_error: false,
+                    has_cadastral_error: false,
+                    has_teto_error: false,
+                    has_he_error: false,
                     detalhe: `
                         <div class="audit-issue">
                             <span class="audit-issue__badge badge badge--success"><i class="fa-solid fa-circle-check"></i> Conforme</span>
@@ -955,15 +1129,13 @@ async function runDeterministicAudit() {
                     `,
                     desvio: 0
                 });
-                conformingCount++;
             } else {
-                // Síntese compacta para a tabela
                 let errorDetails = [];
 
                 if (possuiExcessoTetoOrdinario) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-gavel"></i> TETO ORDINÁRIO (STF)</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-gavel" style="margin-right: 6px;"></i> TETO ORDINÁRIO (STF)</span>
                             <div class="audit-issue__math">Pago: <strong>R$ ${somaRemuneratoriaOrdinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Teto: <strong>R$ 46.366,19</strong></div>
                         </div>
                     `);
@@ -972,7 +1144,7 @@ async function runDeterministicAudit() {
                 if (possuiExcessoHE) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-clock"></i> LIMITE HORAS EXTRAS (TSE)</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-clock" style="margin-right: 6px;"></i> LIMITE HORAS EXTRAS (TSE)</span>
                             <div class="audit-issue__math">Pago: <strong>R$ ${somaHorasExtras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Limite: <strong>R$ 17.000,00</strong></div>
                         </div>
                     `);
@@ -981,7 +1153,7 @@ async function runDeterministicAudit() {
                 if (!isVencConforming) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> VENCIMENTO</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave" style="margin-right: 6px;"></i> VENCIMENTO</span>
                             <div class="audit-issue__math">Pago: <strong>R$ ${paidVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                         </div>
                     `);
@@ -990,7 +1162,7 @@ async function runDeterministicAudit() {
                 if (!isGajConforming) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-coins"></i> GAJ (140%)</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-coins" style="margin-right: 6px;"></i> GAJ (140%)</span>
                             <div class="audit-issue__math">Paga: <strong>R$ ${paidGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                         </div>
                     `);
@@ -999,16 +1171,23 @@ async function runDeterministicAudit() {
                 if (!isGasConforming) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-shield-halved"></i> GAS (35%)</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-shield-halved" style="margin-right: 6px;"></i> GAS (35%)</span>
                             <div class="audit-issue__math">Paga: <strong>R$ ${paidGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                         </div>
                     `);
                 }
                 
-                if (!isAqConforming) {
+                if (aqStatus === "PROPORCIONAL") {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-graduation-cap"></i> ADICIONAL QUALIFICAÇÃO</span>
+                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-graduation-cap" style="margin-right: 6px;"></i> ADICIONAL QUALIFICAÇÃO</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${paidAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (Pagamento Proporcional)</div>
+                        </div>
+                    `);
+                } else if (aqStatus === "DIVERGENTE") {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-graduation-cap" style="margin-right: 6px;"></i> ADICIONAL QUALIFICAÇÃO</span>
                             <div class="audit-issue__math">Pago: <strong>R$ ${paidAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
                         </div>
                     `);
@@ -1017,14 +1196,16 @@ async function runDeterministicAudit() {
                 if (cadastralIssue) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-circle-exclamation"></i> ATRIBUIÇÃO FC/CJ</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-circle-exclamation" style="margin-right: 6px;"></i> ATRIBUIÇÃO FC/CJ</span>
                             <div class="audit-issue__math">${cadastralIssue}</div>
                         </div>
                     `);
                 }
 
-                const desvioFinanceiro = (paidVenc - expectedVenc) + (paidGaj - expectedGaj) + (paidGas - expectedGas) + (paidAq - expectedAq) + excessoTetoOrdinario + excessoLimiteHE;
+                const desvioAq = paidAq - expectedAq;
+                const desvioFinanceiro = (paidVenc - expectedVenc) + (paidGaj - expectedGaj) + (paidGas - expectedGas) + desvioAq + excessoTetoOrdinario + excessoLimiteHE;
                 const detailHtml = errorDetails.join('<div class="audit-issue-divider"></div>');
+                const rowStatus = hasCriticalError ? "DIVERGENTE" : "PROPORCIONAL";
 
                 findings.push({
                     id: server.id,
@@ -1033,7 +1214,7 @@ async function runDeterministicAudit() {
                     carreira: normalizedCareer,
                     classe: matchedGrade.classe,
                     padrao: matchedGrade.padrao,
-                    status: "DIVERGENTE",
+                    status: rowStatus,
                     venc_esperado: expectedVenc,
                     venc_pago: paidVenc,
                     gaj_esperada: expectedGaj,
@@ -1042,18 +1223,27 @@ async function runDeterministicAudit() {
                     gas_paga: paidGas,
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
+                    aq_status: aqStatus,
                     soma_ordinaria: somaRemuneratoriaOrdinaria,
-                    rubricas_teto_ordinario: rubricasTetoOrdinario,
-                    excesso_teto_ordinario: excessoTetoOrdinario,
                     soma_he: somaHorasExtras,
-                    excesso_he: excessoLimiteHE,
+                    soma_outras: somaOutrasVerbas,
+                    soma_descontos: somaDescontos,
+                    rubricas_teto_ordinario: rubricasTetoOrdinario,
+                    excesso_teto_ordinario: 0,
+                    excesso_he: 0,
+                    has_venc_error: hasVencError,
+                    has_gaj_error: hasGajError,
+                    has_gas_error: hasGasError,
+                    has_cadastral_error: hasCadastralError,
+                    has_teto_error: hasTetoError,
+                    has_he_error: hasHeError,
                     detalhe: detailHtml,
                     desvio: desvioFinanceiro
                 });
-                discrepancyCount++;
             }
 
         } else {
+            divergentRubricsCount++;
             const desvioTotal = paidVenc + paidGaj + excessoTetoOrdinario + excessoLimiteHE;
             findings.push({
                 id: server.id,
@@ -1071,28 +1261,38 @@ async function runDeterministicAudit() {
                 gas_paga: paidGas,
                 aq_esperado: 0,
                 aq_pago: paidAq,
+                aq_status: "DIVERGENTE",
                 soma_ordinaria: somaRemuneratoriaOrdinaria,
+                soma_he: somaHorasExtras,
+                soma_outras: somaOutrasVerbas,
+                soma_descontos: somaDescontos,
                 rubricas_teto_ordinario: rubricasTetoOrdinario,
                 excesso_teto_ordinario: excessoTetoOrdinario,
-                soma_he: somaHorasExtras,
                 excesso_he: excessoLimiteHE,
+                has_venc_error: true,
+                has_gaj_error: false,
+                has_gas_error: false,
+                has_cadastral_error: false,
+                has_teto_error: false,
+                has_he_error: false,
                 detalhe: `
                     <div class="audit-issue">
-                        <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> VENCIMENTO</span>
+                        <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave" style="margin-right: 6px;"></i> VENCIMENTO</span>
                         <div class="audit-issue__math">Pago: <strong>R$ ${paidVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Não consta na tabela</div>
                     </div>
                 `,
                 desvio: desvioTotal
             });
-            discrepancyCount++;
         }
     }
 
     AppState.auditFindings = findings;
     
-    updateAuditDashboardUI(totalAudited, conformingCount, discrepancyCount);
+    const conformingRubricsCount = Math.max(0, totalActiveRubrics - divergentRubricsCount - proportionalRubricsCount);
+
+    updateAuditDashboardUI(totalActiveRubrics, totalNonAuditedRubrics, totalRubricsInFile, countActiveServers, countAfastadosServers, countInactiveServers, countOtherServers, totalServersInFile, conformingRubricsCount, proportionalRubricsCount, divergentRubricsCount);
     filterAndPaginateFindings();
-    renderComplianceChart(conformingCount, discrepancies = AppState.auditFindings.filter(f => f.status === "DIVERGENTE").length);
+    renderComplianceChart(conformingRubricsCount, proportionalRubricsCount, divergentRubricsCount);
 
     Swal.close();
     switchView("tab-auditoria");
@@ -1102,22 +1302,46 @@ async function runDeterministicAudit() {
    === [CAPÍTULO] RENDERIZAÇÃO DE TELA, PAGINAÇÃO E EXPORTAÇÃO ===
    ========================================================================== */
 
-function updateAuditDashboardUI(total, conforming, errors) {
-    const kpiTotal = document.getElementById("kpi-total-audited");
-    const kpiConforming = document.getElementById("kpi-conforming");
-    const kpiDiscrepancies = document.getElementById("kpi-discrepancies");
-    const kpiConformingPct = document.getElementById("kpi-conforming-pct");
-    const kpiDiscrepanciesPct = document.getElementById("kpi-discrepancies-pct");
+function updateAuditDashboardUI(auditedRubrics, nonAuditedRubrics, totalRubricsAll, countActive, countAfastados, countInactive, countOthers, totalServersInFile, conformingRubrics, proportionalRubrics, discrepantRubrics) {
+    const kpiTotalRubricsAll = document.getElementById("kpi-total-rubrics-all");
+    const kpiAuditedRubrics = document.getElementById("kpi-audited-rubrics");
+    const kpiNonAuditedRubrics = document.getElementById("kpi-nonaudited-rubrics");
+    const kpiTotalServersRaw = document.getElementById("kpi-total-servers-raw");
+    
+    const kpiCountActive = document.getElementById("kpi-count-active");
+    const kpiCountAfastados = document.getElementById("kpi-count-afastados");
+    const kpiCountInactive = document.getElementById("kpi-count-inactive");
+    const kpiCountOthers = document.getElementById("kpi-count-others");
+    
+    const kpiConformingRubrics = document.getElementById("kpi-conforming-rubrics");
+    const kpiProportionalRubrics = document.getElementById("kpi-proportional-rubrics");
+    const kpiDiscrepantRubrics = document.getElementById("kpi-discrepant-rubrics");
+    
+    const kpiConformingPct = document.getElementById("kpi-conforming-rubrics-pct");
+    const kpiProportionalPct = document.getElementById("kpi-proportional-rubrics-pct");
+    const kpiDiscrepantPct = document.getElementById("kpi-discrepant-rubrics-pct");
 
-    if (kpiTotal) kpiTotal.textContent = total.toLocaleString('pt-BR');
-    if (kpiConforming) kpiConforming.textContent = conforming.toLocaleString('pt-BR');
-    if (kpiDiscrepancies) kpiDiscrepancies.textContent = errors.toLocaleString('pt-BR');
+    if (kpiTotalRubricsAll) kpiTotalRubricsAll.textContent = totalRubricsAll.toLocaleString('pt-BR');
+    if (kpiAuditedRubrics) kpiAuditedRubrics.textContent = auditedRubrics.toLocaleString('pt-BR');
+    if (kpiNonAuditedRubrics) kpiNonAuditedRubrics.textContent = nonAuditedRubrics.toLocaleString('pt-BR');
+    if (kpiTotalServersRaw) kpiTotalServersRaw.textContent = totalServersInFile.toLocaleString('pt-BR');
+    
+    if (kpiCountActive) kpiCountActive.textContent = countActive.toLocaleString('pt-BR');
+    if (kpiCountAfastados) kpiCountAfastados.textContent = countAfastados.toLocaleString('pt-BR');
+    if (kpiCountInactive) kpiCountInactive.textContent = countInactive.toLocaleString('pt-BR');
+    if (kpiCountOthers) kpiCountOthers.textContent = countOthers.toLocaleString('pt-BR');
 
-    const conformingPct = total > 0 ? Math.round((conforming / total) * 100) : 0;
-    const errorsPct = total > 0 ? Math.round((errors / total) * 100) : 0;
+    if (kpiConformingRubrics) kpiConformingRubrics.textContent = conformingRubrics.toLocaleString('pt-BR');
+    if (kpiProportionalRubrics) kpiProportionalRubrics.textContent = proportionalRubrics.toLocaleString('pt-BR');
+    if (kpiDiscrepantRubrics) kpiDiscrepantRubrics.textContent = discrepantRubrics.toLocaleString('pt-BR');
 
-    if (kpiConformingPct) kpiConformingPct.textContent = `${conformingPct}% da folha ativa`;
-    if (kpiDiscrepanciesPct) kpiDiscrepanciesPct.textContent = `${errorsPct}% desvios cadastrais`;
+    const conformingPct = auditedRubrics > 0 ? ((conformingRubrics / auditedRubrics) * 100).toFixed(1) : "0";
+    const proportionalPct = auditedRubrics > 0 ? ((proportionalRubrics / auditedRubrics) * 100).toFixed(1) : "0";
+    const discrepantPct = auditedRubrics > 0 ? ((discrepantRubrics / auditedRubrics) * 100).toFixed(1) : "0";
+
+    if (kpiConformingPct) kpiConformingPct.textContent = `${conformingPct}%`;
+    if (kpiProportionalPct) kpiProportionalPct.textContent = `${proportionalPct}%`;
+    if (kpiDiscrepantPct) kpiDiscrepantPct.textContent = `${discrepantPct}%`;
 
     let auditBanner = document.getElementById("audit-incompatible-banner");
     const auditViewHeader = document.querySelector("#view-auditoria .view-header");
@@ -1136,7 +1360,7 @@ function updateAuditDashboardUI(total, conforming, errors) {
     }
 }
 
-function renderComplianceChart(conforming, discrepancies) {
+function renderComplianceChart(conforming, proportional, discrepancies) {
     const canvas = document.getElementById("compliance-chart");
     if (!canvas) return;
 
@@ -1148,15 +1372,29 @@ function renderComplianceChart(conforming, discrepancies) {
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
     const labelColor = isDark ? "#CBD5E1" : "#1A2733";
 
+    const realData = [conforming, proportional, discrepancies];
+    const total = conforming + proportional + discrepancies;
+
+    // Ajuste de piso visual para garantir visibilidade de fatias inferiores a 1px
+    let displayData = [...realData];
+    if (total > 0) {
+        const minVisualFloor = Math.max(1, Math.round(total * 0.035));
+        let adjustedProp = (proportional > 0 && proportional < minVisualFloor) ? minVisualFloor : proportional;
+        let adjustedDisc = (discrepancies > 0 && discrepancies < minVisualFloor) ? minVisualFloor : discrepancies;
+        let adjustedConf = Math.max(0, total - (adjustedProp > 0 ? adjustedProp : 0) - (adjustedDisc > 0 ? adjustedDisc : 0));
+        
+        displayData = [adjustedConf, adjustedProp, adjustedDisc];
+    }
+
     AppState.chartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Valores Regulares / Outros', 'Valores Divergentes'],
+            labels: ['Em Conformidade', 'Alertas de Pagamento Proporcional', 'Alertas de Divergência'],
             datasets: [{
-                data: [conforming, discrepancies],
-                backgroundColor: ['#10B981', '#E11D48'],
-                borderWidth: 2,
-                borderColor: isDark ? "#1E293B" : "#FFFFFF"
+                data: displayData,
+                backgroundColor: ['#10B981', '#F59E0B', '#E11D48'],
+                borderWidth: 0,
+                hoverOffset: 5
             }]
         },
         options: {
@@ -1164,29 +1402,104 @@ function renderComplianceChart(conforming, discrepancies) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: labelColor,
-                        font: { family: 'Source Sans 3', size: 12, weight: 'bold' }
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function() {
+                            return "";
+                        },
+                        label: function(context) {
+                            const idx = context.dataIndex;
+                            const val = realData[idx];
+                            const pct = total > 0 ? ((val / total) * 100).toFixed(2) : "0";
+                            return ` ${context.label}: ${val.toLocaleString('pt-BR')} (${pct}%)`;
+                        }
                     }
                 }
             },
-            cutout: '72%'
+            cutout: '68%'
+        }
+    });
+}
+
+function updateSortIcons() {
+    document.querySelectorAll(".sortable-th").forEach(th => {
+        const field = th.getAttribute("data-sort");
+        const icon = th.querySelector(".sort-icon");
+        if (!icon) return;
+
+        if (field === AppState.sortField) {
+            th.classList.add("sorted");
+            icon.className = AppState.sortDirection === "asc" 
+                ? "fa-solid fa-sort-up sort-icon" 
+                : "fa-solid fa-sort-down sort-icon";
+        } else {
+            th.classList.remove("sorted");
+            icon.className = "fa-solid fa-sort sort-icon";
         }
     });
 }
 
 function filterAndPaginateFindings() {
-    if (AppState.filterOnlyErrors) {
-        AppState.filteredFindings = AppState.auditFindings.filter(f => f.status === "DIVERGENTE");
-    } else {
-        AppState.filteredFindings = [...AppState.auditFindings];
+    let result = [...AppState.auditFindings];
+
+    // 1. Filtro de Status
+    if (AppState.activeFilter === "alerts") {
+        result = result.filter(f => f.status === "DIVERGENTE" || f.status === "PROPORCIONAL" || f.aq_status === "PROPORCIONAL");
     }
+
+    // 2. Busca Rápida (Live Search)
+    const query = AppState.searchQuery.trim().toLowerCase();
+    if (query !== "") {
+        // Normaliza o texto da busca para aceitar tanto ponto quanto vírgula nas casas decimais
+        const queryNumerica = query.replace(".", ",");
+
+        result = result.filter(item => {
+            const idMatch = item.id.toLowerCase().includes(query);
+            const nomeMatch = (item.nome || "").toLowerCase().includes(query);
+            const cpfMatch = (item.cpf || "").includes(query);
+            const carreiraMatch = (item.carreira || "").toLowerCase().includes(query);
+            const padraoMatch = `${item.classe}-${item.padrao}`.toLowerCase().includes(query);
+            
+            // Converte o valor do desvio para o padrão visual brasileiro (ex: "9,22")
+            const desvioStr = item.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+            const desvioMatch = desvioStr.includes(queryNumerica) || item.desvio.toFixed(2).includes(query);
+            
+            return idMatch || nomeMatch || cpfMatch || carreiraMatch || padraoMatch || desvioMatch;
+        });
+    }
+
+    // 3. Ordenação
+    const field = AppState.sortField;
+    const direction = AppState.sortDirection === "asc" ? 1 : -1;
+
+    result.sort((a, b) => {
+        let valA = a[field];
+        let valB = b[field];
+
+        if (typeof valA === "number" && typeof valB === "number") {
+            return (valA - valB) * direction;
+        }
+
+        if (field === "id") {
+            const numA = parseInt(valA, 10) || 0;
+            const numB = parseInt(valB, 10) || 0;
+            if (numA !== numB) return (numA - numB) * direction;
+        }
+
+        const strA = (valA || "").toString().toLowerCase();
+        const strB = (valB || "").toString().toLowerCase();
+        return strA.localeCompare(strB, "pt-BR") * direction;
+    });
+
+    AppState.filteredFindings = result;
 
     const maxPage = AppState.itemsPerPage === "all" ? 1 : Math.ceil(AppState.filteredFindings.length / AppState.itemsPerPage);
     if (AppState.currentPage > maxPage) AppState.currentPage = maxPage || 1;
     if (AppState.currentPage < 1) AppState.currentPage = 1;
 
+    updateSortIcons();
     renderAuditTable();
 }
 
@@ -1203,7 +1516,7 @@ function renderAuditTable() {
             <tr>
                 <td colspan="9" class="td-placeholder">
                     <i class="fa-solid fa-circle-check" style="color: #10B981; font-size: 28px; display: block; margin-bottom: 12px;"></i>
-                    Excelente! Nenhuma inconsistência encontrada neste segmento da folha de pagamento.
+                    Excelente! Nenhum registro encontrado para os critérios de busca e filtro ativos.
                 </td>
             </tr>
         `;
@@ -1227,17 +1540,18 @@ function renderAuditTable() {
         const gradeStr = item.classe !== "N/A" && item.classe !== "Incompatível" ? `${item.classe}-${item.padrao}` : "N/A";
         
         let desvioStyleColor = "var(--text2)";
-        if (item.desvio > 0.1) desvioStyleColor = "var(--color-conclusion)";
-        if (item.desvio < -0.1) desvioStyleColor = "var(--color-start)";
+        if (item.status === "PROPORCIONAL") desvioStyleColor = "var(--color-warning)";
+        else if (item.desvio > 0.1) desvioStyleColor = "var(--color-conclusion)";
+        else if (item.desvio < -0.1) desvioStyleColor = "var(--color-start)";
 
         row.innerHTML = `
             <td data-label="Matrícula"><strong>${item.id}</strong></td>
             <td data-label="Cargo Folha">${item.carreira}</td>
             <td data-label="Classe / Padrão"><span class="badge badge--neutral">${gradeStr}</span></td>
-            <td data-label="Vencimento Pago">R$ ${item.venc_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td data-label="GAJ Paga">R$ ${item.gaj_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td data-label="GAS Paga">R$ ${item.gas_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td data-label="AQ Pago">R$ ${item.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+            <td data-label="Remuneração Ordinária">R$ ${item.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+            <td data-label="Horas Extras">R$ ${item.soma_he.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+            <td data-label="Outras Verbas">R$ ${item.soma_outras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+            <td data-label="Descontos">${item.soma_descontos > 0 ? '- ' : ''}R$ ${item.soma_descontos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
             <td data-label="Inconsistência Detalhada" class="data-table__cell--detail">${item.detalhe}</td>
             <td data-label="Desvio Financeiro"><strong style="color: ${desvioStyleColor}">R$ ${item.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
         `;
@@ -1273,21 +1587,22 @@ function openAuditDetailModal(serverId) {
     const maskedCpf = server.cpf ? server.cpf.replace(/(\d{3})\d{3}\d{3}(\d{2})/, "$1.***.***-$2") : "***.***.***-**";
     const gradeStr = finding.classe !== "N/A" && finding.classe !== "Incompatível" ? `${finding.classe}-${finding.padrao}` : "Não enquadrado";
     
-    const statusBadgeHtml = finding.status === "CONFORME" 
-        ? `<span class="badge badge--success" style="font-size: 13px; padding: 6px 12px;">Conforme</span>` 
-        : (finding.status === "SUPLEMENTAR" 
-            ? `<span class="badge badge--neutral" style="font-size: 13px; padding: 6px 12px;">Suplementar</span>`
-            : `<span class="badge badge--error" style="font-size: 13px; padding: 6px 12px;">Divergente</span>`);
+    let statusBadgeHtml = `<span class="badge badge--success" style="font-size: 13px; padding: 6px 12px;">Conforme</span>`;
+    if (finding.status === "PROPORCIONAL") {
+        statusBadgeHtml = `<span class="badge badge--warning" style="font-size: 13px; padding: 6px 12px;">Pagamento Proporcional</span>`;
+    } else if (finding.status === "DIVERGENTE") {
+        statusBadgeHtml = `<span class="badge badge--error" style="font-size: 13px; padding: 6px 12px;">Divergente</span>`;
+    } else if (finding.status === "NAO_ANALISADO") {
+        statusBadgeHtml = `<span class="badge badge--neutral" style="font-size: 13px; padding: 6px 12px;">Não Analisado</span>`;
+    }
 
-    // Geração do Bloco 1: Detalhamento de Lançamentos em Folha (Limpo, sem tags redundantes)
+    // Geração do Bloco 1: Detalhamento de Lançamentos em Folha (Borda Inferior Padronizada)
     let rubricsHtml = "";
     server.detalheRubricas.forEach((rub, rIdx) => {
-        // Etiqueta Padronizada de Folha Regular vs. Folha Suplementar
         const tagFolha = rub.tipoComp === 1
             ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #E0E7FF; color: #3730A3;">Folha Suplementar</span>`
-            : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #475569;">Folha Regular</span>`;
+            : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #E2E8F0; color: #1E293B;">Folha Regular</span>`;
 
-        // Microetiquetas de Enquadramento no Teto Constitucional
         let tagTetoClass = "";
         let tagTetoHtml = "";
         if (rub.tipoRD === 1) {
@@ -1299,6 +1614,8 @@ function openAuditDetailModal(serverId) {
                 tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (13º Salário)</span>`;
             } else if (isAbonoPermanencia(rub.codigo, rub.descricao)) {
                 tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #ECFDF5; color: #065F46;">Fora do Teto (Abono Perm.)</span>`;
+            } else if (isGECC(rub.descricao)) {
+                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (GECC)</span>`;
             } else if (isBeneficioIndenizatorio(rub.codigo, rub.descricao)) {
                 tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (Indenizatória)</span>`;
             } else {
@@ -1308,7 +1625,7 @@ function openAuditDetailModal(serverId) {
         }
 
         rubricsHtml += `
-            <div class="modal-rubric-row ${tagTetoClass}" id="rubric-row-${rIdx}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 14.5px; border-radius: 6px; transition: background 0.15s ease, border-color 0.15s ease;">
+            <div class="modal-rubric-row ${tagTetoClass}" id="rubric-row-${rIdx}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; font-size: 14.5px; border-bottom: 1px solid var(--border); transition: background 0.15s ease;">
                 <div style="text-align: left;">
                     <strong style="color: var(--text);">${rub.codigo}</strong> - <span style="color: var(--text2);">${rub.descricao}</span>
                     <div style="margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap;">${tagFolha}${tagTetoHtml}</div>
@@ -1323,7 +1640,6 @@ function openAuditDetailModal(serverId) {
     const isVencConforming = Math.abs(finding.venc_pago - finding.venc_esperado) < 0.1;
     const isGajConforming = Math.abs(finding.gaj_paga - finding.gaj_esperada) < 0.1;
     const isGasConforming = Math.abs(finding.gas_paga - finding.gas_esperada) < 0.1;
-    const isAqConforming = Math.abs(finding.aq_pago - finding.aq_esperado) < 0.1;
     const isTetoOrdConforming = finding.excesso_teto_ordinario <= 0.01;
     const isHeConforming = finding.excesso_he <= 0.01;
 
@@ -1355,61 +1671,65 @@ function openAuditDetailModal(serverId) {
         }
     }
 
+    // Redação Aprimorada e Direta para as Notas Técnicas de AQ
     let noteAq = "";
-    if (!isAqConforming) {
+    if (finding.aq_status === "PROPORCIONAL") {
+        const diffAq = finding.aq_pago - finding.aq_esperado;
+        const propCheck = checkAqProportionalAdjustment(finding.aq_pago, finding.aq_esperado, activeVR);
+        const daysText = propCheck.days > 0 ? `${propCheck.days} dias proporcionais` : `fração proporcional de dias`;
+
+        if (finding.aq_esperado === 0) {
+            noteAq = `Pagamento de <strong>R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> correspondente a <strong>${daysText}</strong> de nova averbação no decorrer do mês.`;
+        } else {
+            noteAq = `Pagamento composto pelo patamar regular de <strong>${(finding.aq_esperado / activeVR).toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong> acrescido de <strong>R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> correspondente a <strong>${daysText}</strong> de nova averbação no decorrer do mês.`;
+        }
+    } else if (finding.aq_status === "DIVERGENTE") {
         const calculatedCoefficient = finding.aq_pago / activeVR;
         const expectedCoefficient = finding.aq_esperado / activeVR;
         const diffAq = finding.aq_pago - finding.aq_esperado;
 
         if (calculatedCoefficient < 0.2) {
-            noteAq = `
-                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${calculatedCoefficient.toFixed(2)} VR). 
-                Este valor é inferior ao bloco mínimo de 120h para Capacitações (0,20 VR = R$ ${(0.20 * activeVR).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}). O direito esperado é de <strong>0,00 VR (R$ 0,00)</strong>, gerando divergência integral de <strong style="color: var(--color-conclusion);">R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>.
-            `;
+            noteAq = `O servidor recebeu <strong>R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${calculatedCoefficient.toFixed(2)} VR). Este valor é inferior ao bloco mínimo de 120h (0,20 VR = R$ ${(0.20 * activeVR).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) e <strong>não corresponde a frações de dias regulamentares (pro rata die)</strong>, configurando pagamento em desacordo com as tabelas legais.`;
         } else {
-            noteAq = `
-                O servidor recebeu R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${calculatedCoefficient.toFixed(2)} VR). 
-                Com base na faixa legal da tabela vigente, o direito reconhecido é de <strong>${expectedCoefficient.toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong>. 
-                Divergência residual em excesso a ser corrigida: <strong style="color: var(--color-conclusion);">R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${(calculatedCoefficient - expectedCoefficient).toFixed(2)} VR).
-            `;
+            noteAq = `O servidor recebeu <strong>R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${calculatedCoefficient.toFixed(2)} VR). O patamar legal reconhecido é de <strong>${expectedCoefficient.toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong>. A diferença em excesso de <strong>R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${(calculatedCoefficient - expectedCoefficient).toFixed(2)} VR) <strong>não corresponde a frações diárias regulamentares (pro rata die)</strong>, configurando divergência cadastral a ser verificada e ajustada.`;
         }
     }
 
-    // Memória de Cálculo Discriminada para o Teto Constitucional Ordinário
+    // Memória de Cálculo Discriminada para o Teto Constitucional Ordinário (Estilo Suavizado)
     let tetoCompositionRows = "";
     (finding.rubricas_teto_ordinario || []).forEach(r => {
         tetoCompositionRows += `
-            <div style="display: flex; justify-content: space-between; font-size: 13.5px; padding: 4px 0; border-bottom: 1px dashed var(--border);">
-                <span><i class="fa-solid fa-angle-right" style="color: var(--primary); margin-right: 6px; font-size: 11px;"></i><strong>${r.codigo}</strong> - ${r.descricao}</span>
-                <strong style="color: var(--text);">R$ ${r.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed var(--border); color: var(--text2);">
+                <span><i class="fa-solid fa-angle-right" style="color: var(--text3); margin-right: 6px; font-size: 10px; opacity: 0.6;"></i><span style="font-weight: 600; color: var(--text);">${r.codigo}</span> - ${r.descricao}</span>
+                <span style="font-weight: 600; color: var(--text);">R$ ${r.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
         `;
     });
 
     const noteTetoOrd = `
         <div style="margin-bottom: 10px;">
-            A remuneração ordinária bruta mensal apurada (<strong>R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) — excluídas horas extras, férias, 13º salário, abono de permanência e auxílios indenizatórios — ${isTetoOrdConforming ? 'está <strong>em conformidade</strong> com o teto constitucional' : 'ultrapassa o teto constitucional geral do funcionalismo'} (<strong>R$ 46.366,19</strong>).
+            A remuneração ordinária bruta mensal apurada (<strong>R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) — excluídas horas extras, férias, 13º salário, abono de permanência, GECC e auxílios indenizatórios — ${isTetoOrdConforming ? 'está <strong>em conformidade</strong> com o teto constitucional' : 'ultrapassa o teto constitucional geral do funcionalismo'} (<strong>R$ 46.366,19</strong>).
             ${!isTetoOrdConforming ? `Excesso bruto sujeito a corte: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_teto_ordinario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 37, XI da CF/88 e Arts. 3º e 4º da Resolução CNJ nº 14/2006).` : ''}
         </div>
         <div style="background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 10px;" id="teto-breakdown-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px;">
-                    <i class="fa-solid fa-list-check" style="margin-right: 4px;"></i> Memória de Cálculo — Composição da Base Ordinária
+            <div style="margin-bottom: 8px;">
+                <span style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: var(--primary); letter-spacing: 0.4px;">
+                    Composição da Base Ordinária
                 </span>
             </div>
             <div style="display: flex; flex-direction: column; gap: 2px;">
                 ${tetoCompositionRows}
-                <div style="display: flex; justify-content: space-between; font-size: 14px; padding-top: 8px; margin-top: 4px; border-top: 1.5px solid var(--border);">
-                    <strong style="color: var(--text);">Total da Base Ordinária Apurada:</strong>
-                    <strong style="color: var(--primary);">R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                <div style="display: flex; justify-content: space-between; font-size: 13.5px; padding-top: 8px; margin-top: 4px; border-top: 1.5px solid var(--border);">
+                    <strong style="color: var(--text); font-weight: 700;">Total da Base Ordinária Apurada:</strong>
+                    <strong style="color: var(--primary); font-weight: 800;">R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 13.5px; padding-top: 4px; color: var(--text2);">
+                <div style="display: flex; justify-content: space-between; font-size: 13px; padding-top: 4px; color: var(--text3);">
                     <span>(-) Teto Constitucional (STF):</span>
                     <span>R$ ${TETO_CONSTITUCIONAL_STF.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 14px; padding-top: 4px; border-top: 1px solid var(--border);">
-                    <strong style="color: var(--text);">(=) Glosa / Excesso de Teto:</strong>
-                    <strong style="color: ${finding.excesso_teto_ordinario > 0.01 ? 'var(--color-conclusion)' : 'var(--color-start)'};">R$ ${finding.excesso_teto_ordinario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                <div style="display: flex; justify-content: space-between; font-size: 13.5px; padding-top: 4px; border-top: 1px solid var(--border);">
+                    <strong style="color: var(--text); font-weight: 700;">(=) Glosa / Excesso de Teto:</strong>
+                    <strong style="color: ${finding.excesso_teto_ordinario > 0.01 ? 'var(--color-conclusion)' : 'var(--color-start)'}; font-weight: 800;">R$ ${finding.excesso_teto_ordinario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
                 </div>
             </div>
         </div>
@@ -1423,20 +1743,41 @@ function openAuditDetailModal(serverId) {
         `;
     }
 
-    const compRow = (label, paid, expected, conforms, icon, note = "", forceShowNote = false) => {
-        const color = conforms ? "#10B981" : "#E11D48";
-        const statusText = conforms ? "Conforme" : "Divergente";
+    const compRow = (label, paid, expected, statusType, iconClass, note = "", forceShowNote = false) => {
+        let color = "#10B981";
+        let statusText = "Conforme";
+        let cardBg = "var(--bg2)";
+        let cardBorder = "1px solid transparent";
+        let noteBorderColor = "var(--primary)";
+
+        if (statusType === "PROPORCIONAL") {
+            color = "#D97706";
+            statusText = "Pagamento proporcional";
+            cardBg = "rgba(217, 119, 6, 0.06)";
+            cardBorder = "1px solid rgba(217, 119, 6, 0.15)";
+            noteBorderColor = color;
+        } else if (statusType === "DIVERGENTE" || statusType === false) {
+            color = "#E11D48";
+            statusText = "Divergente";
+            cardBg = "rgba(225, 29, 72, 0.05)";
+            cardBorder = "1px solid rgba(225, 29, 72, 0.15)";
+            noteBorderColor = color;
+        }
         
-        const noteHtml = ((!conforms && note) || forceShowNote) ? `
-            <div style="margin-top: 10px; padding: 12px; background: var(--bg); border-radius: 8px; font-size: 14px; color: var(--text); line-height: 1.5;">
-                <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 6px;"></i> <strong>Nota Técnica:</strong> ${note}
+        // A nota técnica ganha fundo branco para contrastar com o card colorido e a linha lateral herda a cor do erro
+        const noteHtml = ((statusType !== "CONFORME" && statusType !== true && note) || forceShowNote) ? `
+            <div style="margin-top: 10px; padding: 12px 14px; background: var(--surface); border-left: 3px solid ${noteBorderColor}; border-radius: 0 8px 8px 0; font-size: 14px; color: var(--text); line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <strong>Nota Técnica:</strong> ${note}
             </div>
         ` : '';
 
         return `
-            <div style="padding: 14px; background: var(--bg2); border-radius: 10px; margin-bottom: 12px;">
+            <div style="padding: 14px 16px; background: ${cardBg}; border: ${cardBorder}; border-radius: 10px; margin-bottom: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700; color: var(--text);">
-                    <span><i class="${icon}" style="margin-right: 8px; color: ${color}; font-size: 16px;"></i> ${label}</span>
+                    <span style="display: flex; align-items: center;">
+                        <i class="${iconClass}" style="color: var(--text3); font-size: 14px; margin-right: 10px; opacity: 0.85;"></i>
+                        ${label}
+                    </span>
                     <span style="color: ${color}; font-size: 12px; font-weight: 800; text-transform: uppercase;">${statusText}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; margin-top: 8px; color: var(--text2);">
@@ -1452,14 +1793,14 @@ function openAuditDetailModal(serverId) {
         ${compRow("Vencimento Básico", finding.venc_pago, finding.venc_esperado, isVencConforming, "fa-solid fa-money-bill-wave", noteVenc)}
         ${compRow("Gratificação Judiciária (GAJ)", finding.gaj_paga, finding.gaj_esperada, isGajConforming, "fa-solid fa-coins", noteGaj)}
         ${compRow("Gratificação de Segurança (GAS)", finding.gas_paga, finding.gas_esperada, isGasConforming, "fa-solid fa-shield-halved", noteGas)}
-        ${compRow("Adicional de Qualificação (AQ)", finding.aq_pago, finding.aq_esperado, isAqConforming, "fa-solid fa-graduation-cap", noteAq)}
+        ${compRow("Adicional de Qualificação (AQ)", finding.aq_pago, finding.aq_esperado, finding.aq_status, "fa-solid fa-graduation-cap", noteAq)}
         ${compRow("Teto Constitucional Ordinário", finding.soma_ordinaria, TETO_CONSTITUCIONAL_STF, isTetoOrdConforming, "fa-solid fa-gavel", noteTetoOrd, true)}
         ${compRow("Limite de Horas Extras (TSE)", finding.soma_he, LIMITE_HORAS_EXTRAS_TSE, isHeConforming, "fa-solid fa-clock", noteHe)}
     `;
 
-    const tableBadgeLabel = AppState.isIncompatibleCompetence 
-        ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 4px 8px; margin-left: 8px; background: #FEF3C7; color: #D97706;">Tabela Espelho Jan/2026</span>`
-        : `<span class="badge badge--success" style="font-size: 11px; padding: 4px 8px; margin-left: 8px;">Tabela ${activeConfig.label.split(' ')[0]}</span>`;
+    const tableReferenceBadge = AppState.isIncompatibleCompetence 
+        ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 3px 8px; background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B;"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 4px;"></i>Referência: Tabela Espelho Jan/2026</span>`
+        : `<span class="badge badge--neutral" style="font-size: 11px; padding: 3px 8px; color: var(--text2); background: var(--bg2); border: 1px solid var(--border);"><i class="fa-solid fa-scale-balanced" style="margin-right: 5px; color: var(--primary);"></i>Parâmetro: ${activeConfig.label}</span>`;
 
     Swal.fire({
         width: '840px',
@@ -1493,7 +1834,7 @@ function openAuditDetailModal(serverId) {
                             </div>
 
                             <p style="font-size: 14px; color: var(--text2); font-weight: 600; margin-top: 6px;">
-                                ${normalizedCareer} • Padrão ${gradeStr} ${tableBadgeLabel}
+                                ${normalizedCareer} • Padrão ${gradeStr}
                             </p>
                         </div>
                         <div style="text-align: right; flex-shrink: 0;">
@@ -1503,6 +1844,7 @@ function openAuditDetailModal(serverId) {
                 </div>
 
                 <!-- SEÇÃO 2: RAIO-X DE LANÇAMENTOS COM ALTURA AMPLIADA -->
+                <br>
                 <div style="margin-bottom: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">
@@ -1518,10 +1860,14 @@ function openAuditDetailModal(serverId) {
                 </div>
 
                 <!-- SEÇÃO 3: CONCILIAÇÃO LEGAL E MEMÓRIA DE CÁLCULO -->
+                <br>
                 <div style="margin-bottom: 16px;">
-                    <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
-                        2. Conciliação contra Tabelas e Limites Legais
-                    </h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                        <h4 style="font-size: 14px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">
+                            2. Conciliação contra Tabelas e Limites Legais
+                        </h4>
+                        ${tableReferenceBadge}
+                    </div>
                     <div style="display: flex; flex-direction: column;">
                         ${reconciliaHtml}
                     </div>
@@ -1533,12 +1879,11 @@ function openAuditDetailModal(serverId) {
                         <span style="font-size: 12.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; display: block;">Saldo do Desvio Financeiro Consolidado</span>
                         <span style="font-size: 13.5px; color: var(--text2); display: block; margin-top: 2px;">Fundamentação: Art. 37, XI da CF/88, Res. CNJ nº 14/2006 e Regulamentos do TSE</span>
                     </div>
-                    <strong style="font-size: 22px; color: ${finding.desvio === 0 ? 'var(--color-start)' : 'var(--color-conclusion)'}">R$ ${finding.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                    <strong style="font-size: 22px; color: ${finding.desvio === 0 ? 'var(--color-start)' : (finding.status === 'PROPORCIONAL' ? 'var(--color-warning)' : 'var(--color-conclusion)')}">R$ ${finding.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
                 </div>
             </div>
         `,
         didOpen: () => {
-            // Controle de Anonimização / Revelação de Dados Pessoais
             let isRevealed = false;
             const privacyBtn = document.getElementById("btn-toggle-privacy-detail");
             const eyeIcon = document.getElementById("privacy-eye-icon");
@@ -1666,6 +2011,10 @@ function exportAuditToXLSX() {
             "CPF": item.cpf,
             "Carreira": item.carreira,
             "Enquadramento Mapeado": item.classe !== "N/A" ? `${item.classe}-${item.padrao}` : "Incompatível",
+            "Remuneração Ordinária (R$)": item.soma_ordinaria,
+            "Horas Extras no Mês (R$)": item.soma_he,
+            "Outras Verbas e Indenizações (R$)": item.soma_outras,
+            "Total Descontos (R$)": item.soma_descontos,
             "Vencimento Esperado (R$)": item.venc_esperado,
             "Vencimento Pago (R$)": item.venc_pago,
             "GAJ Esperada (R$)": item.gaj_esperada,
@@ -1674,12 +2023,11 @@ function exportAuditToXLSX() {
             "GAS Paga (R$)": item.gas_paga,
             "AQ Esperado (R$)": item.aq_esperado,
             "AQ Pago (R$)": item.aq_pago,
-            "Remuneração Ordinária Sujeita ao Teto (R$)": item.soma_ordinaria,
+            "Classificação do AQ": item.aq_status,
             "Excesso de Teto Ordinário (R$)": item.excesso_teto_ordinario,
-            "Total Horas Extras no Mês (R$)": item.soma_he,
             "Excesso Limite Horas Extras (R$)": item.excesso_he,
             "Resultado do Diagnóstico": item.detalhe ? item.detalhe.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() : "Sem inconsistências",
-            "Desvio Financeiro Geral Consolidado (R$)": item.desvio
+            "Desvio Financeiro Geral (R$)": item.desvio
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -1693,10 +2041,28 @@ function exportAuditToXLSX() {
 }
 
 /* --- [Seção] Orquestração Geral de Estados e Eventos --- */
+function formatCompetenceHeader(compStr) {
+    if (!compStr || compStr === "N/A") return `Folha Salarial — <span style="color: var(--primary); font-weight: 800;">TSE</span>`;
+    const months = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    const parts = compStr.split("/");
+    if (parts.length === 2) {
+        const m = parseInt(parts[0], 10);
+        const y = parts[1];
+        if (m >= 1 && m <= 12) {
+            return `Folha de <span style="color: var(--primary); font-weight: 800;">${months[m - 1]} de ${y}</span>`;
+        }
+    }
+    return `Folha de <span style="color: var(--primary); font-weight: 800;">${compStr}</span>`;
+}
+
 function initProcessControl() {
     const triggerBtn = document.getElementById("btn-trigger-direct-audit");
     const filterAllBtn = document.getElementById("btn-filter-all-audited");
-    const filterErrorsBtn = document.getElementById("btn-filter-only-errors");
+    const filterAlertsBtn = document.getElementById("btn-filter-only-alerts");
+    const searchInput = document.getElementById("table-search-input");
     const exportBtn = document.getElementById("btn-export-final-xlsx");
 
     if (triggerBtn) {
@@ -1704,10 +2070,12 @@ function initProcessControl() {
             const hBrandBox = document.getElementById("header-brand-box");
             const hActiveBox = document.getElementById("header-active-box");
             const btnReset = document.getElementById("btn-reset-process");
+            const activeFlowTitle = document.getElementById("active-flow-title");
 
             if (hBrandBox) hBrandBox.style.display = "none";
             if (hActiveBox) hActiveBox.style.display = "flex";
             if (btnReset) btnReset.style.display = "inline-flex";
+            if (activeFlowTitle) activeFlowTitle.innerHTML = formatCompetenceHeader(AppState.matchedCompetence);
             
             runDeterministicAudit();
         });
@@ -1715,23 +2083,45 @@ function initProcessControl() {
 
     if (filterAllBtn) {
         filterAllBtn.addEventListener("click", (e) => {
-            if (filterErrorsBtn) filterErrorsBtn.classList.remove("btn--active");
+            if (filterAlertsBtn) filterAlertsBtn.classList.remove("btn--active");
             e.currentTarget.classList.add("btn--active");
-            AppState.filterOnlyErrors = false;
+            AppState.activeFilter = "all";
             AppState.currentPage = 1;
             filterAndPaginateFindings();
         });
     }
 
-    if (filterErrorsBtn) {
-        filterErrorsBtn.addEventListener("click", (e) => {
+    if (filterAlertsBtn) {
+        filterAlertsBtn.addEventListener("click", (e) => {
             if (filterAllBtn) filterAllBtn.classList.remove("btn--active");
             e.currentTarget.classList.add("btn--active");
-            AppState.filterOnlyErrors = true;
+            AppState.activeFilter = "alerts";
             AppState.currentPage = 1;
             filterAndPaginateFindings();
         });
     }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            AppState.searchQuery = e.target.value;
+            AppState.currentPage = 1;
+            filterAndPaginateFindings();
+        });
+    }
+
+    // Ouvintes de clique para ordenação nos cabeçalhos
+    document.querySelectorAll(".sortable-th").forEach(th => {
+        th.addEventListener("click", () => {
+            const field = th.getAttribute("data-sort");
+            if (AppState.sortField === field) {
+                AppState.sortDirection = AppState.sortDirection === "asc" ? "desc" : "asc";
+            } else {
+                AppState.sortField = field;
+                AppState.sortDirection = "asc";
+            }
+            filterAndPaginateFindings();
+        });
+    });
 
     if (exportBtn) {
         exportBtn.addEventListener("click", exportAuditToXLSX);
@@ -1763,6 +2153,10 @@ function initProcessReset() {
                 AppState.matchedCompetence = "N/A";
                 AppState.activeTableKey = "2026_JAN";
                 AppState.isIncompatibleCompetence = false;
+                AppState.activeFilter = "alerts";
+                AppState.searchQuery = "";
+                AppState.sortField = "id";
+                AppState.sortDirection = "asc";
                 
                 if (AppState.chartInstance) {
                     AppState.chartInstance.destroy();
@@ -1773,11 +2167,18 @@ function initProcessReset() {
                 const hBrandBox = document.getElementById("header-brand-box");
                 const fInput = document.getElementById("file-input-raw");
                 const uPreviewPanel = document.getElementById("upload-preview-panel");
+                const dashboardTitle = document.getElementById("view-dashboard-title");
+                const dashboardSubtitle = document.querySelector("#view-dashboard .section-subtitle");
+                const searchInput = document.getElementById("table-search-input");
 
                 if (hActiveBox) hActiveBox.style.display = "none";
                 if (resetBtn) resetBtn.style.display = "none";
                 if (hBrandBox) hBrandBox.style.display = "block";
 
+                if (dashboardTitle) dashboardTitle.textContent = "Carregar Folha Salarial";
+                if (dashboardSubtitle) dashboardSubtitle.textContent = "Selecione o arquivo de folha de pagamento (.xlsx ou .txt)";
+
+                if (searchInput) searchInput.value = "";
                 if (uPreviewPanel) uPreviewPanel.style.display = "none";
                 if (fInput) fInput.value = "";
                 
@@ -1800,6 +2201,42 @@ function initProcessReset() {
 
                 const paginationContainer = document.getElementById("table-pagination-controls");
                 if (paginationContainer) paginationContainer.innerHTML = "";
+
+                // Reset dos 4 cartões de pré-visualização (Tela 1)
+                const previewServersAudited = document.getElementById("preview-servers-audited");
+                const previewServersNonAudited = document.getElementById("preview-servers-nonaudited");
+                const previewRubricsAudited = document.getElementById("preview-rubrics-audited");
+                const previewRubricsNonAudited = document.getElementById("preview-rubrics-nonaudited");
+
+                if (previewServersAudited) previewServersAudited.textContent = "0";
+                if (previewServersNonAudited) previewServersNonAudited.textContent = "0";
+                if (previewRubricsAudited) previewRubricsAudited.textContent = "0";
+                if (previewRubricsNonAudited) previewRubricsNonAudited.textContent = "0";
+
+                // Reset dos cartões do diagnóstico (Tela 2)
+                const kpiTotalRubricsAll = document.getElementById("kpi-total-rubrics-all");
+                const kpiAuditedRubrics = document.getElementById("kpi-audited-rubrics");
+                const kpiNonAuditedRubrics = document.getElementById("kpi-nonaudited-rubrics");
+                const kpiTotalServersRaw = document.getElementById("kpi-total-servers-raw");
+                const kpiCountActive = document.getElementById("kpi-count-active");
+                const kpiCountAfastados = document.getElementById("kpi-count-afastados");
+                const kpiCountInactive = document.getElementById("kpi-count-inactive");
+                const kpiCountOthers = document.getElementById("kpi-count-others");
+                const kpiConformingRubrics = document.getElementById("kpi-conforming-rubrics");
+                const kpiProportionalRubrics = document.getElementById("kpi-proportional-rubrics");
+                const kpiDiscrepantRubrics = document.getElementById("kpi-discrepant-rubrics");
+
+                if (kpiTotalRubricsAll) kpiTotalRubricsAll.textContent = "0";
+                if (kpiAuditedRubrics) kpiAuditedRubrics.textContent = "0";
+                if (kpiNonAuditedRubrics) kpiNonAuditedRubrics.textContent = "0";
+                if (kpiTotalServersRaw) kpiTotalServersRaw.textContent = "0";
+                if (kpiCountActive) kpiCountActive.textContent = "0";
+                if (kpiCountAfastados) kpiCountAfastados.textContent = "0";
+                if (kpiCountInactive) kpiCountInactive.textContent = "0";
+                if (kpiCountOthers) kpiCountOthers.textContent = "0";
+                if (kpiConformingRubrics) kpiConformingRubrics.textContent = "0";
+                if (kpiProportionalRubrics) kpiProportionalRubrics.textContent = "0";
+                if (kpiDiscrepantRubrics) kpiDiscrepantRubrics.textContent = "0";
 
                 switchView("tab-dashboard");
                 Swal.fire("Resetado", "Sandbox reiniciada em memória com sucesso.", "success");

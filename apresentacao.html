@@ -157,34 +157,94 @@
     </section>
 
     <!-- === SEÇÃO 3: ESCOPO OPERACIONAL === -->
-    <section class="py-12 px-6 md:px-12 max-w-5xl mx-auto">
-        <h2 class="font-heading font-bold text-2xl text-text-main text-center mb-8">Escopo Operacional</h2>
-        <div class="grid md:grid-cols-2 gap-6">
-            <div class="bg-white border border-emerald-300 rounded-xl p-6">
-                <h3 class="font-heading font-bold text-base text-text-main mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-check text-semantic-success"></i> O que o sistema avalia
-                </h3>
-                <ul class="text-sm text-text-muted space-y-2">
-                    <li>• Servidores ativos nos cargos de Analista e Técnico Judiciário.</li>
-                    <li>• Enquadramento de Vencimento Básico e GAJ (140%) na Folha Regular.</li>
-                    <li>• Gratificação de Segurança - GAS (35%).</li>
-                    <li>• Adicional de Qualificação (AQ) por pisos de VR, tetos e absorção de títulos.</li>
-                    <li>• Teto Constitucional Ordinário (R$ 46.366,19) com inclusão de VPNI.</li>
-                    <li>• Limite de Horas Extras (R$ 17.000,00) somando Folha Regular e Suplementar.</li>
-                    <li>• Coerência cadastral de FC/CJ com nível de Atribuição.</li>
-                </ul>
+    <section class="py-14 px-6 md:px-12 max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+            <h2 class="font-heading font-bold text-2xl text-text-main">Escopo Operacional</h2>
+            <p class="text-sm text-text-muted mt-1">Delimitação objetiva do perímetro de análise do aplicativo</p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-6 items-stretch">
+            
+            <!-- Painel: O que o sistema avalia -->
+            <div class="bg-white border border-emerald-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-100">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base shrink-0">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-heading font-bold text-base text-text-main">O que o sistema avalia</h3>
+                            <span class="text-xs text-text-sub font-medium">Itens e rubricas sob auditoria</span>
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-2.5">
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-check text-emerald-600 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Servidores ativos:</strong> Analista e Técnico Judiciário do TSE.</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-check text-emerald-600 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Salário e GAJ:</strong> Vencimento Básico e GAJ (140%) na Folha Regular.</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-check text-emerald-600 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Segurança:</strong> Gratificação de Atividade de Segurança — GAS (35%).</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-check text-emerald-600 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Qualificação (AQ):</strong> Pisos por VR, absorção e limites legais.</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-check text-emerald-600 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Teto Ordinário:</strong> Limite STF (R$ 46.366,19) com inclusão de VPNI.</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-check text-emerald-600 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Horas Extras:</strong> Limite de R$ 17.000,00 (Regular + Suplementar).</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-check text-emerald-600 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Consistência FC/CJ:</strong> Coerência com nível de Atribuição (1 a 3).</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div class="bg-white border border-rose-300 rounded-xl p-6">
-                <h3 class="font-heading font-bold text-base text-text-main mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-xmark text-semantic-error"></i> O que o sistema não faz
-                </h3>
-                <ul class="text-sm text-text-muted space-y-2">
-                    <li>• Não analisa inativos e pensionistas (marcados como "Não analisado").</li>
-                    <li>• Não grava dados em disco, cookies ou localStorage (apenas memória RAM).</li>
-                    <li>• Não transmite dados para redes externas, servidores remotos ou serviços de IA.</li>
-                    <li>• Não emite decisões administrativas, apenas aponta desvios numéricos.</li>
-                </ul>
+
+            <!-- Painel: O que o sistema não faz -->
+            <div class="bg-white border border-rose-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-100">
+                        <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-base shrink-0">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-heading font-bold text-base text-text-main">O que o sistema não faz</h3>
+                            <span class="text-xs text-text-sub font-medium">Limitações e garantias de segurança</span>
+                        </div>
+                    </div>
+                    
+                    <ul class="space-y-2.5">
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-xmark text-rose-500 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Inativos e pensionistas:</strong> Identificados e marcados como "Não analisado".</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-xmark text-rose-500 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Persistência em disco:</strong> Não usa cookies, localStorage ou banco de dados.</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-xmark text-rose-500 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Isolamento total:</strong> Nenhum dado é enviado para servidores externos ou IA.</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-text-muted p-2 rounded-lg bg-slate-50/60 border border-slate-100">
+                            <i class="fa-solid fa-xmark text-rose-500 text-xs mt-1 shrink-0"></i>
+                            <span><strong class="text-text-main font-semibold">Natureza consultiva:</strong> Aponta desvios objetivos sem emitir decisões de mérito.</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
+
         </div>
     </section>
 
@@ -469,7 +529,7 @@
                         <i class="fa-solid fa-chevron-down text-slate-400 text-sm transition-transform duration-300"></i>
                     </button>
                     <div class="rule-content hidden mt-2 pl-10 text-sm text-slate-300 space-y-1">
-                        <p>Soma Vencimento, GAJ, GAS, AQ, FC/CJ e VPNI. Exclui da base: horas extras, férias, 13º salário, abono de permanência (27001/8027001) e benefícios indenizatórios.</p>
+                        <p>Soma Vencimento, GAJ, GAS, AQ, FC/CJ e VPNI. Exclui da base: horas extras, férias, 13º salário, abono de permanência (27001/8027001), GECC (Gratificação por Encargo de Curso ou Concurso) e benefícios indenizatórios.</p>
                         <p class="text-xs text-brand-light font-medium">Base: Art. 37, XI da CF/88, Res. CNJ nº 14/2006 e Tema 257/STF.</p>
                     </div>
                 </div>

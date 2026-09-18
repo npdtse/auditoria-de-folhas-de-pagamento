@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pré-Auditoria de Pessoal — TSE / SAU</title>
+    <title>Pré-Auditoria de Pagamentos — TSE / SAU</title>
     
     <!-- === IMPORTAÇÕES DE FONTES E ÍCONES === -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,7 +73,7 @@
                         <p class="main-header__sub-institution">Processamento local de dados em memória</p>
                     </div>
                     <div class="main-header__active-box" id="header-active-box" style="display: none;">
-                        <h2 class="main-header__active-title" id="active-flow-title">Processamento de Lançamentos Salariais</h2>
+                        <h2 class="main-header__active-title" id="active-flow-title">Processamento de Lançamentos da Folha</h2>
                     </div>
                 </div>
 
@@ -93,7 +93,7 @@
                     <div class="upload-container">
                         <div class="section-title-box">
                             <h2 class="section-title" id="view-dashboard-title">Carregar Folha Salarial</h2>
-                            <p class="section-subtitle">Selecione o arquivo de folha de pagamento (.xlsx, .txt ou .csv)</p>
+                            <p class="section-subtitle">Selecione o arquivo de folha de pagamento (.xlsx ou .txt)</p>
                         </div>
                         
                         <div class="dropzone" id="file-dropzone" tabindex="0" role="button" aria-label="Área de envio de arquivos">
@@ -102,7 +102,7 @@
                                 <i class="fa-solid fa-file-arrow-up"></i>
                             </div>
                             <h4 class="dropzone__title">Arraste o arquivo de folha de pagamento aqui</h4>
-                            <p class="dropzone__limits">Formatos suportados: planilhas Excel (XLSX) e arquivos de texto delimitados (até 50MB)</p>
+                            <p class="dropzone__limits">Formatos suportados: planilhas Excel (XLSX) e arquivos de texto delimitados (TXT)</p>
                             <button class="btn btn--primary dropzone__btn" tabindex="-1">Selecionar Arquivo</button>
                         </div>
 
@@ -115,24 +115,43 @@
                             <p class="upload-loading__status" id="loading-status-text" style="font-size: 13px; color: var(--text3); font-weight: 500;">Agrupando rubricas por matrícula...</p>
                         </div>
 
-                        <!-- Painel de Pré-visualização pós Ingestão -->
+                        <!-- Painel de Pré-visualização pós Ingestão (Opção A: 4 Cards) -->
                         <div class="upload-preview" id="upload-preview-panel" style="display: none;">
                             <div class="upload-preview__header">
                                 <h4 class="upload-preview__title"><i class="fa-solid fa-circle-check"></i> Dados Estruturados em Memória</h4>
                             </div>
                             <div class="upload-preview__meta-grid">
-                                <div class="preview-meta-card">
-                                    <span class="preview-meta-card__label">Servidores do Escopo (Ativos)</span>
-                                    <strong class="preview-meta-card__value" id="preview-server-count">0</strong>
+                                <!-- 1. Servidores a Auditar -->
+                                <div class="preview-meta-card preview-meta-card--primary">
+                                    <span class="preview-meta-card__label">Servidores a Auditar</span>
+                                    <strong class="preview-meta-card__value preview-meta-card__value--primary" id="preview-servers-audited">0</strong>
+                                    <span class="preview-meta-card__sub">Ativos em exercício</span>
                                 </div>
-                                <div class="preview-meta-card">
-                                    <span class="preview-meta-card__label">Lançamentos Individuais</span>
-                                    <strong class="preview-meta-card__value" id="preview-row-count">0</strong>
+
+                                <!-- 2. Servidores Não Auditados -->
+                                <div class="preview-meta-card preview-meta-card--muted">
+                                    <span class="preview-meta-card__label">Servidores Não Auditados</span>
+                                    <strong class="preview-meta-card__value preview-meta-card__value--muted" id="preview-servers-nonaudited">0</strong>
+                                    <span class="preview-meta-card__sub">Inativos, cedidos e outros</span>
+                                </div>
+
+                                <!-- 3. Lançamentos a Auditar -->
+                                <div class="preview-meta-card preview-meta-card--primary">
+                                    <span class="preview-meta-card__label">Lançamentos a Auditar</span>
+                                    <strong class="preview-meta-card__value preview-meta-card__value--primary" id="preview-rubrics-audited">0</strong>
+                                    <span class="preview-meta-card__sub">Rubricas sob auditoria</span>
+                                </div>
+
+                                <!-- 4. Lançamentos Não Auditados -->
+                                <div class="preview-meta-card preview-meta-card--muted">
+                                    <span class="preview-meta-card__label">Lançamentos Não Auditados</span>
+                                    <strong class="preview-meta-card__value preview-meta-card__value--muted" id="preview-rubrics-nonaudited">0</strong>
+                                    <span class="preview-meta-card__sub">Rubricas isoladas</span>
                                 </div>
                             </div>
                             <div class="upload-preview__footer-actions">
                                 <button class="btn btn--primary" id="btn-trigger-direct-audit">
-                                    <i class="fa-solid fa-calculator"></i> Executar Diagnóstico de Desvios
+                                    <i class="fa-solid fa-calculator"></i> Executar Diagnóstico
                                 </button>
                             </div>
                         </div>
@@ -143,59 +162,137 @@
                 <section class="spa-view" id="view-auditoria" aria-labelledby="view-auditoria-title">
                     <div class="view-header">
                         <div class="view-header__title-box">
-                            <h3 class="view-header__title" id="view-auditoria-title">Resultados do Diagnóstico</h3>
-                            <p class="view-header__subtitle">Confronto de Vencimento Básico (1001), GAJ (2001), GAS (2002), Adicional de Qualificação (462001), VPNI e Teto Constitucional Ordinário (R$ 46.366,19) e Limite de Horas Extras (R$ 17.000,00) contra as tabelas e normas vigentes do TSE.</p>
+                            <h3 class="view-header__title" id="view-auditoria-title">Resumo do Diagnóstico</h3>
                             <br>
                         </div>
                     </div>
 
-                    <!-- === Resumo do Topo (KPIs + Gráfico) === -->
+                    <!-- === Resumo do Topo (Estrutura em 4 Colunas Balanceadas) === -->
                     <div class="summary-layout">
-                        <div class="summary-layout__kpis">
-                            <div class="kpi-card">
-                                <span class="kpi-card__label">Servidores Ativos Analisados</span>
-                                <strong class="kpi-card__value" id="kpi-total-audited">0</strong>
-                                <div class="kpi-card__footer">
-                                    <span class="kpi-card__badge kpi-card__badge--neutral">Escopo de Ativos</span>
+                        
+                        <!-- Coluna 1: Volume Total da Folha (Card Único) -->
+                        <div class="card card--paddings summary-layout__col summary-layout__col--volume">
+                            <div class="kpi-volume-card">
+                                <span class="kpi-volume-card__title">Volume da Folha</span>
+                                
+                                <div class="kpi-volume-card__main">
+                                    <strong class="kpi-volume-card__value" id="kpi-total-rubrics-all">0</strong>
+                                    <span class="kpi-volume-card__unit">Lançamentos Totais</span>
                                 </div>
-                            </div>
-                            <div class="kpi-card">
-                                <span class="kpi-card__label">Valores Conformes / Não Analisados</span>
-                                <strong class="kpi-card__value kpi-card__value--success" id="kpi-conforming">0</strong>
-                                <div class="kpi-card__footer">
-                                    <span class="kpi-card__badge kpi-card__badge--success" id="kpi-conforming-pct">0% da folha ativa</span>
+
+                                <div class="kpi-volume-card__breakdown">
+                                    <div class="kpi-volume-row">
+                                        <span class="kpi-volume-row__label">Auditadas (Ativos):</span>
+                                        <strong class="kpi-volume-row__val kpi-volume-row__val--primary" id="kpi-audited-rubrics">0</strong>
+                                    </div>
+                                    <div class="kpi-volume-row">
+                                        <span class="kpi-volume-row__label">Não Auditadas:</span>
+                                        <strong class="kpi-volume-row__val kpi-volume-row__val--muted" id="kpi-nonaudited-rubrics">0</strong>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="kpi-card">
-                                <span class="kpi-card__label">Valores com Divergência</span>
-                                <strong class="kpi-card__value kpi-card__value--error" id="kpi-discrepancies">0</strong>
-                                <div class="kpi-card__footer">
-                                    <span class="kpi-card__badge kpi-card__badge--error" id="kpi-discrepancies-pct">0% divergências</span>
+
+                                <div class="kpi-volume-card__footer">
+                                    <span class="kpi-volume-card__meta">
+                                        Total no arquivo: <strong id="kpi-total-servers-raw">0</strong> servidores
+                                    </span>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="card card--paddings summary-layout__chart">
-                            <h4 class="card-title">Distribuição de Conformidade</h4>
+
+                        <!-- Coluna 2: Universo de Servidores (2 Cards Empilhados) -->
+                        <div class="summary-layout__col summary-layout__col--servers">
+                            
+                            <!-- Card Superior: Servidores Auditados -->
+                            <div class="kpi-server-card kpi-server-card--audited">
+                                <span class="kpi-server-card__category kpi-server-card__category--primary">Servidores Auditados</span>
+                                <div class="kpi-server-card__row">
+                                    <span class="kpi-server-card__label"><span class="kpi-dot kpi-dot--primary"></span>Ativos com remuneração:</span>
+                                    <strong class="kpi-server-card__value kpi-server-card__value--primary" id="kpi-count-active">0</strong>
+                                </div>
+                            </div>
+
+                            <!-- Card Inferior: Servidores Não Auditados -->
+                            <div class="kpi-server-card kpi-server-card--nonaudited">
+                                <span class="kpi-server-card__category">Servidores Não Auditados</span>
+                                <div class="kpi-server-card__list">
+                                    <div class="kpi-server-card__row">
+                                        <span class="kpi-server-card__label"><span class="kpi-dot kpi-dot--muted"></span>Cedidos ou licenciados sem remuneração:</span>
+                                        <strong class="kpi-server-card__value" id="kpi-count-afastados">0</strong>
+                                    </div>
+                                    <div class="kpi-server-card__row">
+                                        <span class="kpi-server-card__label"><span class="kpi-dot kpi-dot--muted"></span>Inativos e Pensionistas:</span>
+                                        <strong class="kpi-server-card__value" id="kpi-count-inactive">0</strong>
+                                    </div>
+                                    <div class="kpi-server-card__row">
+                                        <span class="kpi-server-card__label"><span class="kpi-dot kpi-dot--muted"></span>Outros vínculos (Requisitados/Membros):</span>
+                                        <strong class="kpi-server-card__value" id="kpi-count-others">0</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Coluna 3: Status das Rubricas (3 Cards Empilhados) -->
+                        <div class="summary-layout__col summary-layout__col--status">
+                            
+                            <!-- 1. Em Conformidade -->
+                            <div class="kpi-mini-card kpi-mini-card--success">
+                                <div class="kpi-mini-card__info">
+                                    <span class="kpi-mini-card__label">Em Conformidade</span>
+                                    <strong class="kpi-mini-card__value kpi-mini-card__value--success" id="kpi-conforming-rubrics">0</strong>
+                                </div>
+                                <span class="kpi-mini-card__badge kpi-mini-card__badge--success" id="kpi-conforming-rubrics-pct">0%</span>
+                            </div>
+
+                            <!-- 2. Alertas de Pagamento Proporcional -->
+                            <div class="kpi-mini-card kpi-mini-card--warning">
+                                <div class="kpi-mini-card__info">
+                                    <span class="kpi-mini-card__label">Alertas de Pagamento Proporcional</span>
+                                    <strong class="kpi-mini-card__value kpi-mini-card__value--warning" id="kpi-proportional-rubrics">0</strong>
+                                </div>
+                                <span class="kpi-mini-card__badge kpi-mini-card__badge--warning" id="kpi-proportional-rubrics-pct">0%</span>
+                            </div>
+
+                            <!-- 3. Alertas de Divergência -->
+                            <div class="kpi-mini-card kpi-mini-card--error">
+                                <div class="kpi-mini-card__info">
+                                    <span class="kpi-mini-card__label">Alertas de Divergência</span>
+                                    <strong class="kpi-mini-card__value kpi-mini-card__value--error" id="kpi-discrepant-rubrics">0</strong>
+                                </div>
+                                <span class="kpi-mini-card__badge kpi-mini-card__badge--error" id="kpi-discrepant-rubrics-pct">0%</span>
+                            </div>
+
+                        </div>
+
+                        <!-- Coluna 4: Gráfico de Rosca Tricolor (Card Único) -->
+                        <div class="card card--paddings summary-layout__col summary-layout__col--chart">
                             <div class="chart-container">
                                 <canvas id="compliance-chart"></canvas>
                             </div>
                         </div>
+
                     </div>
 
-                    <!-- Tabela de Divergências -->
+                    <!-- Tabela de Inconsistências Reestruturada com Busca e Ordenação -->
                     <div class="card">
                         <div class="table-header">
                             <h4 class="table-header__title">Relatório de Inconsistências Identificadas</h4>
                             <div class="table-header__actions">
+                                <!-- Busca Rápida Integrada -->
+                                <div class="table-search">
+                                    <i class="fa-solid fa-magnifying-glass table-search__icon"></i>
+                                    <input type="text" id="table-search-input" class="table-search__input" placeholder="Buscar matrícula, cargo ou valor..." aria-label="Buscar na tabela">
+                                </div>
+                                
+                                <!-- Botões de Filtro -->
                                 <button class="btn btn--secondary btn--compact" id="btn-filter-all-audited">
                                     Mostrar Tudo
                                 </button>
-                                <button class="btn btn--secondary btn--compact btn--active" id="btn-filter-only-errors">
-                                    Apenas Inconsistências
+                                <button class="btn btn--secondary btn--compact btn--active" id="btn-filter-only-alerts">
+                                    Apenas Alertas
                                 </button>
                                 <button class="btn btn--primary btn--compact" id="btn-export-final-xlsx" style="margin-left: 8px;">
-                                    <i class="fa-solid fa-file-excel"></i> Exportar Relatório para RH (.xlsx)
+                                    <i class="fa-solid fa-file-excel"></i> Exportar Relatório (.xlsx)
                                 </button>
                             </div>
                         </div>
@@ -204,15 +301,39 @@
                             <table class="data-table" id="audit-results-table">
                                 <thead>
                                     <tr>
-                                        <th>Identificação Única</th>
-                                        <th>Cargo Folha</th>
-                                        <th>Classe / Padrão</th>
-                                        <th>Vencimento Pago</th>
-                                        <th>GAJ Paga</th>
-                                        <th>GAS Paga</th>
-                                        <th>AQ Pago</th>
+                                        <th class="sortable-th" data-sort="id">
+                                            <span>Identificação Única</span>
+                                            <i class="fa-solid fa-sort sort-icon"></i>
+                                        </th>
+                                        <th class="sortable-th" data-sort="carreira">
+                                            <span>Cargo Folha</span>
+                                            <i class="fa-solid fa-sort sort-icon"></i>
+                                        </th>
+                                        <th class="sortable-th" data-sort="padrao">
+                                            <span>Classe / Padrão</span>
+                                            <i class="fa-solid fa-sort sort-icon"></i>
+                                        </th>
+                                        <th class="sortable-th" data-sort="soma_ordinaria">
+                                            <span>Remuneração Ordinária</span>
+                                            <i class="fa-solid fa-sort sort-icon"></i>
+                                        </th>
+                                        <th class="sortable-th" data-sort="soma_he">
+                                            <span>Horas Extras</span>
+                                            <i class="fa-solid fa-sort sort-icon"></i>
+                                        </th>
+                                        <th class="sortable-th" data-sort="soma_outras">
+                                            <span>Outras Verbas</span>
+                                            <i class="fa-solid fa-sort sort-icon"></i>
+                                        </th>
+                                        <th class="sortable-th" data-sort="soma_descontos">
+                                            <span>Descontos</span>
+                                            <i class="fa-solid fa-sort sort-icon"></i>
+                                        </th>
                                         <th>Inconsistência Detalhada</th>
-                                        <th>Desvio Financeiro</th>
+                                        <th class="sortable-th" data-sort="desvio">
+                                            <span>Desvio Financeiro</span>
+                                            <i class="fa-solid fa-sort sort-icon"></i>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -235,23 +356,60 @@
                         <div class="view-header__title-box">
                             <h3 class="view-header__title" id="view-criterios-title">Critérios de Avaliação e Regras de Cálculo</h3>
                             <br>
-                            <p class="view-header__subtitle">Relação de parâmetros normativos e fórmulas de cálculo aplicadas na triagem automatizada da folha de pagamento do TSE.</p>
+                            <p class="view-header__subtitle">Relação de parâmetros normativos, situações funcionais e fórmulas de cálculo aplicadas na triagem automatizada da folha de pagamento do TSE.</p>
                             <br>
                         </div>
                     </div>
 
-                    <!-- Cartão 1: Vencimento Básico e GAJ -->
+                    <!-- Cartão 1: Escopo de Servidores e Situações Funcionais -->
+                    <div class="card card--paddings">
+                        <h4 class="card-title">
+                            <i class="fa-solid fa-users" style="color: var(--primary); margin-right: 8px;"></i>
+                            1. Escopo de Servidores e Situações Funcionais
+                        </h4>
+                        
+                        <ul class="parameter-list">
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Servidores Ativos em Exercício</span>
+                                    <p class="parameter-item__desc">Avalia lançamentos de servidores efetivos do TSE nos cargos de Analista e Técnico Judiciário (situações `EFETIVO` e `EXERCICIO PROVISORIO`) com remuneração regular no mês.</p>
+                                </div>
+                                <span class="badge badge--success">Auditado</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Demais Vínculos e Situações Funcionais</span>
+                                    <p class="parameter-item__desc">Aposentados, pensionistas, cedidos sem ônus, licenciados sem remuneração, servidores requisitados de outros órgãos, ocupantes de cargos em comissão sem vínculo efetivo, juízes e Ministros membros da Corte não são analisados. </p>
+                                </div>
+                                <span class="badge badge--neutral">Fora do Escopo Atual</span>
+                            </li>
+                        </ul>
+
+                        <div class="normative-shelf">
+                            <span class="normative-shelf__title"><i class="fa-solid fa-gavel"></i> Legislação e Tabelas de Apoio</span>
+                            <div class="normative-shelf__list">
+                                <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" class="normative-shelf__link" aria-label="Lei 11416 de 2006">
+                                    <i class="fa-solid fa-scale-balanced"></i> Lei nº 11.416/2006 (Carreiras do PJU)
+                                </a>
+                                <a href="https://www.planalto.gov.br/ccivil_03/leis/l8112cons.htm" target="_blank" class="normative-shelf__link" aria-label="Lei 8112 de 1990">
+                                    <i class="fa-solid fa-bookmark"></i> Lei nº 8.112/1990 (Regime Estatutário Federal)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cartão 2: Vencimento Básico e GAJ -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-money-bill-wave" style="color: var(--primary); margin-right: 8px;"></i>
-                            1. Vencimento Básico e GAJ
+                            2. Vencimento Básico e GAJ
                         </h4>
                         
                         <ul class="parameter-list">
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Vencimento Básico (Rubrica 1001)</span>
-                                    <p class="parameter-item__desc">Confronto do valor pago contra as tabelas salariais nas Classes A a C e Padrões 1 a 13 para Analista e Técnico Judiciário.</p>
+                                    <p class="parameter-item__desc">Confronto do valor pago contra as tabelas de remuneração nas Classes A a C e Padrões 1 a 13 para Analista e Técnico Judiciário.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -264,8 +422,15 @@
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Vigências Temporais (Janeiro vs. Julho de 2026)</span>
-                                    <p class="parameter-item__desc">Aplicação da Tabela de Janeiro/2026 (Lei nº 15.292/2025) para competências de 01/2026 a 06/2026, e da Tabela de Julho/2026 (Lei nº 15.293/2025) a partir de 07/2026.</p>
+                                    <span class="parameter-item__label">Processamento na Folha Regular</span>
+                                    <p class="parameter-item__desc">O enquadramento do Vencimento Básico e o cálculo da GAJ são avaliados exclusivamente nos lançamentos da Folha Regular (`Tipo Competência = 0`).</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Vigências e Tabela Espelho</span>
+                                    <p class="parameter-item__desc">Aplicação das tabelas de remuneração de Jan/2026 a Jun/2026 ou a partir de Jul/2026 (Leis nº 15.292/2025 e 15.293/2025). Em arquivos com competência anterior a 2026, o aplicativo utiliza a tabela de Janeiro/2026 como espelho de referência para a triagem.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -287,11 +452,11 @@
                         </div>
                     </div>
 
-                    <!-- Cartão 2: Adicional de Qualificação -->
+                    <!-- Cartão 3: Adicional de Qualificação -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 8px;"></i>
-                            2. Adicional de Qualificação (AQ)
+                            3. Adicional de Qualificação (AQ)
                         </h4>
                         
                         <ul class="parameter-list">
@@ -325,10 +490,17 @@
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Pisos de Enquadramento</span>
-                                    <p class="parameter-item__desc">Reconhecimento do patamar legal atingido (0,20 VR, 0,40 VR, 0,60 VR) e apuração do valor residual excedente.</p>
+                                    <span class="parameter-item__label">Detecção de Pagamento Proporcional</span>
+                                    <p class="parameter-item__desc">Identificação automática de frações diárias decorrentes de certificados averbados no decorrer do mês, classificadas como Alerta de Proporcionalidade.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Validade Quadrienal de Capacitações</span>
+                                    <p class="parameter-item__desc">O prazo de validade de 4 anos dos certificados de treinamento e capacitação não é auditado, pois a data de conclusão dos cursos não consta no arquivo mensal da folha de pagamento.</p>
+                                </div>
+                                <span class="badge badge--neutral">Não Verificado</span>
                             </li>
                         </ul>
 
@@ -348,11 +520,11 @@
                         </div>
                     </div>
 
-                    <!-- Cartão 3: Gratificação de Segurança -->
+                    <!-- Cartão 4: Gratificação de Segurança -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-shield-halved" style="color: var(--primary); margin-right: 8px;"></i>
-                            3. Gratificação de Atividade de Segurança (GAS)
+                            4. Gratificação de Atividade de Segurança (GAS)
                         </h4>
                         
                         <ul class="parameter-list">
@@ -368,7 +540,7 @@
                                     <span class="parameter-item__label">Destinação Funcional</span>
                                     <p class="parameter-item__desc">Restrita a ocupantes de cargos da Polícia Judicial em exercício de atribuições de segurança.</p>
                                 </div>
-                                <span class="badge badge--success">Análise Ativa</span>
+                                <span class="badge badge--neutral">Não Verificado</span>
                             </li>
                         </ul>
 
@@ -385,11 +557,11 @@
                         </div>
                     </div>
 
-                    <!-- Cartão 4: Teto Remuneratório Ordinário -->
+                    <!-- Cartão 5: Teto Remuneratório Ordinário -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-gavel" style="color: var(--primary); margin-right: 8px;"></i>
-                            4. Teto Remuneratório Ordinário (STF - R$ 46.366,19)
+                            5. Teto Remuneratório Ordinário (STF - R$ 46.366,19)
                         </h4>
                         
                         <ul class="parameter-list">
@@ -403,14 +575,7 @@
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Base de Incidência Ordinária (DENTRO)</span>
-                                    <p class="parameter-item__desc">Soma de parcelas remuneratórias (`Código Rendimento Desconto = 1`): Vencimento Básico, GAJ, GAS, Adicional de Qualificação (AQ), Funções de Confiança (FC), Cargos em Comissão (CJ), Gratificação por Encargo de Curso ou Concurso (GECC) e VPNI (Quintos/Décimos incorporados — rubricas 25001, 232001, 293001).</p>
-                                </div>
-                                <span class="badge badge--success">Análise Ativa</span>
-                            </li>
-                            <li class="parameter-item">
-                                <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Abono de Permanência (FORA do Teto)</span>
-                                    <p class="parameter-item__desc">Exclusão expressa do Abono de Permanência (rubricas 27001 e 8027001 — Art. 40, § 19 da CF/88 e Art. 4º, IV da Resolução CNJ nº 14/2006) da base de cálculo sujeita a glosa.</p>
+                                    <p class="parameter-item__desc">Soma Vencimento Básico, GAJ, GAS, AQ, FC, CJ e VPNI (Quintos, Décimos e outras vantagens pessoais incorporadas — rubricas 25001, 232001, 293001).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
@@ -420,6 +585,13 @@
                                     <p class="parameter-item__desc">Férias, 1/3 Constitucional de Férias, Gratificação Natalina (13º salário), Horas Extras (apuradas em limite próprio) e Benefícios Indenizatórios (Auxílio-Alimentação, Auxílio-Saúde, Assistência Pré-Escolar, Diárias e Transporte — Art. 37, § 11 da CF/88 e Art. 3º da Resolução CNJ nº 14/2006).</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Acúmulo Anual da GECC</span>
+                                    <p class="parameter-item__desc">A Gratificação por Encargo de Curso ou Concurso (GECC) é excluída do teto mensal. No entanto, o limite anual de horas dessa gratificação (120h a 240h) não é verificado pela aplicação devido à ausência do histórico acumulado no arquivo do mês.</p>
+                                </div>
+                                <span class="badge badge--neutral">Não Verificado</span>
                             </li>
                         </ul>
 
@@ -439,11 +611,11 @@
                         </div>
                     </div>
 
-                    <!-- Cartão 5: Limite de Horas Extras -->
+                    <!-- Cartão 6: Limite de Horas Extras -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-clock" style="color: var(--primary); margin-right: 8px;"></i>
-                            5. Limite de Trabalho Extraordinário (TSE - R$ 17.000,00)
+                            6. Limite de Trabalho Extraordinário (TSE - R$ 17.000,00)
                         </h4>
                         
                         <ul class="parameter-list">
@@ -468,6 +640,13 @@
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Limites Físicos de Jornada (Res. CNJ nº 204/2015)</span>
+                                    <p class="parameter-item__desc">O aplicativo audita apenas o teto financeiro administrativo. O cumprimento dos limites físicos de jornada (máximo de 2h/dia e 44h/mês) não é aferido, exigindo consulta aos espelhos do ponto eletrônico.</p>
+                                </div>
+                                <span class="badge badge--neutral">Não Verificado</span>
+                            </li>
                         </ul>
 
                         <div class="normative-shelf">
@@ -483,34 +662,20 @@
                         </div>
                     </div>
 
-                    <!-- Cartão 6: Consistência Cadastral -->
+                    <!-- Cartão 7: Consistência Cadastral -->
                     <div class="card card--paddings">
                         <h4 class="card-title">
                             <i class="fa-solid fa-user-check" style="color: var(--primary); margin-right: 8px;"></i>
-                            6. Consistência Cadastral
+                            7. Consistência Cadastral
                         </h4>
                         
                         <ul class="parameter-list">
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Atribuições de FC e CJ (Portaria Conjunta nº 1/2026)</span>
-                                    <p class="parameter-item__desc">FC 6 associada à Atribuição 1; FC 4, 3 e 1 associadas à Atribuição 3; cargos CJ não admitem Atribuição 3.</p>
+                                    <p class="parameter-item__desc">Identifica incompatibilidades de lançamento entre a sigla da função e o nível de Atribuição cadastrado. Aponta divergência se FC 6 não possuir Atribuição 1; se FC 4, 3 e 1 não possuírem Atribuição 3; ou se cargos em comissão (CJ) possuírem Atribuição 3.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
-                            </li>
-                            <li class="parameter-item">
-                                <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Filtro de Salário Base na Folha Regular</span>
-                                    <p class="parameter-item__desc">Enquadramento de Vencimento e GAJ avaliado exclusivamente no processamento da Folha Regular (`Tipo Competência = 0`).</p>
-                                </div>
-                                <span class="badge badge--success">Análise Ativa</span>
-                            </li>
-                            <li class="parameter-item">
-                                <div class="parameter-item__info">
-                                    <span class="parameter-item__label">Validade Quadrienal de AQ</span>
-                                    <p class="parameter-item__desc">Validade de 4 anos de certificados de treinamento e capacitação não verificada por ausência de dados na planilha de origem.</p>
-                                </div>
-                                <span class="badge badge--neutral">Não Verificado</span>
                             </li>
                         </ul>
 
