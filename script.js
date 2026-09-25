@@ -139,23 +139,44 @@ function isBeneficioIndenizatorio(cod, desc) {
            d.includes("DIÁRIA") || d.includes("AJUDA DE CUSTO");
 }
 
+/* --- [Seção] Resolvedor de Dias no Mês da Competência --- */
+function getDaysInCompetenceMonth(compStr) {
+    if (!compStr || compStr === "N/A") return 30;
+    const parts = compStr.toString().trim().split(/[\/\.\-]/);
+    let month = 0;
+    let year = 0;
+    if (parts.length >= 2) {
+        if (parts[0].length === 4) {
+            year = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10);
+        } else {
+            month = parseInt(parts[0], 10);
+            year = parseInt(parts[1], 10);
+        }
+    }
+    if (month >= 1 && month <= 12 && year > 1900) {
+        return new Date(year, month, 0).getDate();
+    }
+    return 30;
+}
+
 /* --- [Seção] Detector de Pagamento Proporcional de AQ (Pro-Rata Die) --- */
-function checkAqProportionalAdjustment(paidAq, expectedAq, activeVR) {
+function checkAqProportionalAdjustment(paidAq, expectedAq, activeVR, daysInMonth = 30) {
     if (paidAq <= 0) return { isProportional: false, days: 0 };
     
+    const divisor = (daysInMonth && daysInMonth >= 28 && daysInMonth <= 31) ? daysInMonth : 30;
     const diff = paidAq - expectedAq;
     const dailyUnits = [
-        (0.2 * activeVR) / 30, // Diária de 1 módulo de 120h (~R$ 4,7626)
-        (0.4 * activeVR) / 30, // Diária de 2 módulos (~R$ 9,5253)
-        (0.5 * activeVR) / 30, // Diária de Certificação (~R$ 11,9066)
-        (1.0 * activeVR) / 30  // Diária de Especialização (~R$ 23,8133)
+        (0.2 * activeVR) / divisor,
+        (0.4 * activeVR) / divisor,
+        (0.5 * activeVR) / divisor,
+        (1.0 * activeVR) / divisor
     ];
 
-    // Caso 1: Pagamento do mês somado aos dias proporcionais retroativos de averbação
     if (diff > 0.5) {
         for (const unit of dailyUnits) {
             const days = Math.round(diff / unit);
-            if (days >= 1 && days <= 29) {
+            if (days >= 1 && days < divisor) {
                 if (Math.abs(diff - days * unit) < 0.25) {
                     return { isProportional: true, days: days };
                 }
@@ -163,11 +184,10 @@ function checkAqProportionalAdjustment(paidAq, expectedAq, activeVR) {
         }
     }
 
-    // Caso 2: Pagamento referente apenas aos dias proporcionais do mês de ingresso/averbação
     if (expectedAq > 0 && paidAq < expectedAq) {
         for (const unit of dailyUnits) {
             const days = Math.round(paidAq / unit);
-            if (days >= 1 && days <= 29) {
+            if (days >= 1 && days < divisor) {
                 if (Math.abs(paidAq - days * unit) < 0.25) {
                     return { isProportional: true, days: days };
                 }
@@ -1038,8 +1058,9 @@ async function runDeterministicAudit() {
 
             expectedAq = expectedT + expectedQ;
 
+            const daysInMonth = getDaysInCompetenceMonth(AppState.matchedCompetence);
             const isAqExactMatch = Math.abs(expectedAq - paidAq) < 0.1;
-            const propCheck = !isAqExactMatch ? checkAqProportionalAdjustment(paidAq, expectedAq, activeVR) : { isProportional: false, days: 0 };
+            const propCheck = !isAqExactMatch ? checkAqProportionalAdjustment(paidAq, expectedAq, activeVR, daysInMonth) : { isProportional: false, days: 0 };
             
             let aqStatus = "CONFORME";
             if (isAqExactMatch) {
@@ -1229,8 +1250,8 @@ async function runDeterministicAudit() {
                     soma_outras: somaOutrasVerbas,
                     soma_descontos: somaDescontos,
                     rubricas_teto_ordinario: rubricasTetoOrdinario,
-                    excesso_teto_ordinario: 0,
-                    excesso_he: 0,
+                    excesso_teto_ordinario: excessoTetoOrdinario,
+                    excesso_he: excessoLimiteHE,
                     has_venc_error: hasVencError,
                     has_gaj_error: hasGajError,
                     has_gas_error: hasGasError,
@@ -1675,7 +1696,8 @@ function openAuditDetailModal(serverId) {
     let noteAq = "";
     if (finding.aq_status === "PROPORCIONAL") {
         const diffAq = finding.aq_pago - finding.aq_esperado;
-        const propCheck = checkAqProportionalAdjustment(finding.aq_pago, finding.aq_esperado, activeVR);
+        const daysInMonth = getDaysInCompetenceMonth(AppState.matchedCompetence);
+        const propCheck = checkAqProportionalAdjustment(finding.aq_pago, finding.aq_esperado, activeVR, daysInMonth);
         const daysText = propCheck.days > 0 ? `${propCheck.days} dias proporcionais` : `fração proporcional de dias`;
 
         if (finding.aq_esperado === 0) {
