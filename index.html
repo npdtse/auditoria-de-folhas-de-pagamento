@@ -422,6 +422,13 @@
                             </li>
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
+                                    <span class="parameter-item__label">Cálculo Proporcional de Vencimento e GAJ</span>
+                                    <p class="parameter-item__desc">Identificação de fração de dias trabalhados decorrentes de admissão, desligamento ou afastamento no curso do mês. A divisão utiliza a quantidade de dias do mês civil correspondente, avaliada na ordem de prioridade: 1º dias do mês anterior (M-1) e 2º dias do mês da folha (M), com incidência proporcional de 140% de GAJ.</p>
+                                </div>
+                                <span class="badge badge--success">Análise Ativa</span>
+                            </li>
+                            <li class="parameter-item">
+                                <div class="parameter-item__info">
                                     <span class="parameter-item__label">Processamento na Folha Regular</span>
                                     <p class="parameter-item__desc">O enquadramento do Vencimento Básico e o cálculo da GAJ são avaliados exclusivamente nos lançamentos da Folha Regular (`Tipo Competência = 0`).</p>
                                 </div>
@@ -491,7 +498,7 @@
                             <li class="parameter-item">
                                 <div class="parameter-item__info">
                                     <span class="parameter-item__label">Detecção de Pagamento Proporcional</span>
-                                    <p class="parameter-item__desc">Identificação automática de frações diárias decorrentes de certificados averbados no decorrer do mês, classificadas como Alerta de Proporcionalidade.</p>
+                                    <p class="parameter-item__desc">Apuração de frações de dias decorrentes de certificados averbados no decorrer do período. A divisão da unidade diária utiliza a quantidade de dias do mês civil (28, 29, 30 ou 31 dias), avaliada na seguinte ordem de prioridade: 1º dias do mês anterior (M-1) para acertos retroativos e 2º dias do mês da folha (M) para averbações correntes.</p>
                                 </div>
                                 <span class="badge badge--success">Análise Ativa</span>
                             </li>

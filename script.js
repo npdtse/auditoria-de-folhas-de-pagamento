@@ -139,63 +139,116 @@ function isBeneficioIndenizatorio(cod, desc) {
            d.includes("DIÁRIA") || d.includes("AJUDA DE CUSTO");
 }
 
-/* --- [Seção] Resolvedor de Dias no Mês da Competência --- */
-function getDaysInCompetenceMonth(compStr) {
-    if (!compStr || compStr === "N/A") return 30;
-    const parts = compStr.toString().trim().split(/[\/\.\-]/);
-    let month = 0;
-    let year = 0;
-    if (parts.length >= 2) {
-        if (parts[0].length === 4) {
-            year = parseInt(parts[0], 10);
-            month = parseInt(parts[1], 10);
-        } else {
-            month = parseInt(parts[0], 10);
-            year = parseInt(parts[1], 10);
+/* --- [Seção] Resolvedor de Vigência e Calendário da Competência (M e M-1) --- */
+function getCompetenceMonthsInfo(compStr) {
+    let month = 1;
+    let year = 2026;
+    let hasValidComp = false;
+
+    if (compStr && compStr !== "N/A") {
+        const parts = compStr.toString().trim().split(/[\/\.\-]/);
+        if (parts.length >= 2) {
+            if (parts[0].length === 4) {
+                year = parseInt(parts[0], 10);
+                month = parseInt(parts[1], 10);
+            } else {
+                month = parseInt(parts[0], 10);
+                year = parseInt(parts[1], 10);
+            }
+            if (month >= 1 && month <= 12 && year > 1900) {
+                hasValidComp = true;
+            }
         }
     }
-    if (month >= 1 && month <= 12 && year > 1900) {
-        return new Date(year, month, 0).getDate();
-    }
-    return 30;
-}
 
-/* --- [Seção] Detector de Pagamento Proporcional de AQ (Pro-Rata Die) --- */
-function checkAqProportionalAdjustment(paidAq, expectedAq, activeVR, daysInMonth = 30) {
-    if (paidAq <= 0) return { isProportional: false, days: 0 };
-    
-    const divisor = (daysInMonth && daysInMonth >= 28 && daysInMonth <= 31) ? daysInMonth : 30;
-    const diff = paidAq - expectedAq;
-    const dailyUnits = [
-        (0.2 * activeVR) / divisor,
-        (0.4 * activeVR) / divisor,
-        (0.5 * activeVR) / divisor,
-        (1.0 * activeVR) / divisor
+    if (!hasValidComp) {
+        return {
+            current: { month: 1, year: 2026, days: 30, label: "Mês da Folha" },
+            previous: { month: 12, year: 2025, days: 30, label: "Mês Anterior" }
+        };
+    }
+
+    const daysCurrent = new Date(year, month, 0).getDate();
+
+    let prevMonth = month - 1;
+    let prevYear = year;
+    if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear = year - 1;
+    }
+    const daysPrevious = new Date(prevYear, prevMonth, 0).getDate();
+
+    const monthsNames = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ];
 
+    return {
+        current: {
+            month,
+            year,
+            days: daysCurrent,
+            label: `${monthsNames[month - 1]}/${year}`
+        },
+        previous: {
+            month: prevMonth,
+            year: prevYear,
+            days: daysPrevious,
+            label: `${monthsNames[prevMonth - 1]}/${prevYear}`
+        }
+    };
+}
+
+/* --- [Seção] Detector de Pagamento Proporcional de AQ (Pro-Rata Die: M-1 e M) --- */
+function checkAqProportionalAdjustment(paidAq, expectedAq, activeVR, compInfo) {
+    if (paidAq <= 0) return { isProportional: false, days: 0, refLabel: "" };
+
+    const diff = paidAq - expectedAq;
+    const candidates = [compInfo.previous, compInfo.current];
+
     if (diff > 0.5) {
-        for (const unit of dailyUnits) {
-            const days = Math.round(diff / unit);
-            if (days >= 1 && days < divisor) {
-                if (Math.abs(diff - days * unit) < 0.25) {
-                    return { isProportional: true, days: days };
+        for (const cand of candidates) {
+            const divisor = cand.days;
+            const dailyUnits = [
+                (0.2 * activeVR) / divisor,
+                (0.4 * activeVR) / divisor,
+                (0.5 * activeVR) / divisor,
+                (1.0 * activeVR) / divisor
+            ];
+
+            for (const unit of dailyUnits) {
+                const days = Math.round(diff / unit);
+                if (days >= 1 && days < divisor) {
+                    if (Math.abs(diff - days * unit) < 0.25) {
+                        return { isProportional: true, days: days, refLabel: cand.label, divisor: divisor };
+                    }
                 }
             }
         }
     }
 
     if (expectedAq > 0 && paidAq < expectedAq) {
-        for (const unit of dailyUnits) {
-            const days = Math.round(paidAq / unit);
-            if (days >= 1 && days < divisor) {
-                if (Math.abs(paidAq - days * unit) < 0.25) {
-                    return { isProportional: true, days: days };
+        for (const cand of candidates) {
+            const divisor = cand.days;
+            const dailyUnits = [
+                (0.2 * activeVR) / divisor,
+                (0.4 * activeVR) / divisor,
+                (0.5 * activeVR) / divisor,
+                (1.0 * activeVR) / divisor
+            ];
+
+            for (const unit of dailyUnits) {
+                const days = Math.round(paidAq / unit);
+                if (days >= 1 && days < divisor) {
+                    if (Math.abs(paidAq - days * unit) < 0.25) {
+                        return { isProportional: true, days: days, refLabel: cand.label, divisor: divisor };
+                    }
                 }
             }
         }
     }
 
-    return { isProportional: false, days: 0 };
+    return { isProportional: false, days: 0, refLabel: "" };
 }
 
 /* --- [Seção] Armazenamento de Estado Local (App Store) --- */
@@ -988,7 +1041,9 @@ async function runDeterministicAudit() {
         totalActiveRubrics += server.detalheRubricas.length;
 
         const referenceTable = activeTables[normalizedCareer];
+        const compInfo = getCompetenceMonthsInfo(AppState.matchedCompetence);
         let matchedGrade = null;
+        let propVencInfo = null;
 
         for (let i = 0; i < referenceTable.length; i++) {
             const grade = referenceTable[i];
@@ -1005,9 +1060,42 @@ async function runDeterministicAudit() {
             matchedGrade = referenceTable.find(g => Math.abs(g.vencimento - paidVenc) < 0.1);
         }
 
+        if (!matchedGrade && paidVenc > 0) {
+            const candidates = [compInfo.previous, compInfo.current];
+            for (const cand of candidates) {
+                if (matchedGrade) break;
+                const divisor = cand.days;
+
+                for (const grade of referenceTable) {
+                    if (paidVenc < grade.vencimento) {
+                        const dailyVenc = grade.vencimento / divisor;
+                        const days = Math.round(paidVenc / dailyVenc);
+
+                        if (days >= 1 && days < divisor && Math.abs(paidVenc - days * dailyVenc) < 0.25) {
+                            const expectedPropGaj = (grade.gaj / divisor) * days;
+                            const isGajProp = Math.abs(paidGaj - expectedPropGaj) < 0.25 || paidGaj === 0;
+
+                            if (isGajProp) {
+                                matchedGrade = grade;
+                                propVencInfo = {
+                                    isProportional: true,
+                                    days: days,
+                                    refLabel: cand.label,
+                                    divisor: divisor,
+                                    expectedVenc: days * dailyVenc,
+                                    expectedGaj: paidGaj > 0 ? expectedPropGaj : 0
+                                };
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (matchedGrade) {
-            const expectedVenc = matchedGrade.vencimento;
-            const expectedGaj = matchedGrade.gaj;
+            const expectedVenc = propVencInfo ? propVencInfo.expectedVenc : matchedGrade.vencimento;
+            const expectedGaj = propVencInfo ? propVencInfo.expectedGaj : matchedGrade.gaj;
             
             let expectedGas = 0;
             if (paidGas > 0) {
@@ -1015,7 +1103,6 @@ async function runDeterministicAudit() {
             }
             const isGasConforming = Math.abs(expectedGas - paidGas) < 0.1;
 
-            // Recálculo por Faixas de Piso de Direito do AQ
             let expectedAq = 0;
             let expectedT = 0; 
             let expectedQ = 0; 
@@ -1058,9 +1145,8 @@ async function runDeterministicAudit() {
 
             expectedAq = expectedT + expectedQ;
 
-            const daysInMonth = getDaysInCompetenceMonth(AppState.matchedCompetence);
             const isAqExactMatch = Math.abs(expectedAq - paidAq) < 0.1;
-            const propCheck = !isAqExactMatch ? checkAqProportionalAdjustment(paidAq, expectedAq, activeVR, daysInMonth) : { isProportional: false, days: 0 };
+            const propCheck = !isAqExactMatch ? checkAqProportionalAdjustment(paidAq, expectedAq, activeVR, compInfo) : { isProportional: false, days: 0, refLabel: "" };
             
             let aqStatus = "CONFORME";
             if (isAqExactMatch) {
@@ -1091,7 +1177,6 @@ async function runDeterministicAudit() {
             const isVencConforming = Math.abs(expectedVenc - paidVenc) < 0.1;
             const isGajConforming = Math.abs(expectedGaj - paidGaj) < 0.1;
             
-            // Flags de divergência individual por rubrica
             const hasVencError = !isVencConforming;
             const hasGajError = !isGajConforming;
             const hasGasError = !isGasConforming;
@@ -1100,9 +1185,8 @@ async function runDeterministicAudit() {
             const hasHeError = possuiExcessoHE;
             
             const hasCriticalError = hasVencError || hasGajError || hasGasError || (aqStatus === "DIVERGENTE") || hasCadastralError || hasTetoError || hasHeError;
-            const hasProportionalOnly = !hasCriticalError && (aqStatus === "PROPORCIONAL");
+            const hasProportional = !hasCriticalError && (propVencInfo !== null || aqStatus === "PROPORCIONAL");
 
-            // Contabilização de Rubricas com problemas
             if (hasVencError) divergentRubricsCount++;
             if (hasGajError) divergentRubricsCount++;
             if (hasGasError) divergentRubricsCount++;
@@ -1110,9 +1194,11 @@ async function runDeterministicAudit() {
             if (hasCadastralError) divergentRubricsCount++;
             if (hasTetoError) divergentRubricsCount++;
             if (hasHeError) divergentRubricsCount++;
+            
+            if (propVencInfo !== null) proportionalRubricsCount += 2;
             if (aqStatus === "PROPORCIONAL") proportionalRubricsCount++;
 
-            if (!hasCriticalError && !hasProportionalOnly) {
+            if (!hasCriticalError && !hasProportional) {
                 findings.push({
                     id: server.id,
                     nome: server.nome,
@@ -1130,6 +1216,7 @@ async function runDeterministicAudit() {
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
                     aq_status: "CONFORME",
+                    prop_venc_info: null,
                     soma_ordinaria: somaRemuneratoriaOrdinaria,
                     soma_he: somaHorasExtras,
                     soma_outras: somaOutrasVerbas,
@@ -1171,22 +1258,31 @@ async function runDeterministicAudit() {
                     `);
                 }
                 
-                if (!isVencConforming) {
+                if (propVencInfo !== null) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave" style="margin-right: 6px;"></i> VENCIMENTO</span>
-                            <div class="audit-issue__math">Pago: <strong>R$ ${paidVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-clock" style="margin-right: 6px;"></i> VENCIMENTO E GAJ PROPORCIONAL</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${(paidVenc + paidGaj).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${propVencInfo.days} dias de ${propVencInfo.refLabel} • ${matchedGrade.classe}-${matchedGrade.padrao})</div>
                         </div>
                     `);
-                }
-                
-                if (!isGajConforming) {
-                    errorDetails.push(`
-                        <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-coins" style="margin-right: 6px;"></i> GAJ (140%)</span>
-                            <div class="audit-issue__math">Paga: <strong>R$ ${paidGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                        </div>
-                    `);
+                } else {
+                    if (!isVencConforming) {
+                        errorDetails.push(`
+                            <div class="audit-issue">
+                                <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave" style="margin-right: 6px;"></i> VENCIMENTO</span>
+                                <div class="audit-issue__math">Pago: <strong>R$ ${paidVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                            </div>
+                        `);
+                    }
+                    
+                    if (!isGajConforming) {
+                        errorDetails.push(`
+                            <div class="audit-issue">
+                                <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-coins" style="margin-right: 6px;"></i> GAJ (140%)</span>
+                                <div class="audit-issue__math">Paga: <strong>R$ ${paidGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                            </div>
+                        `);
+                    }
                 }
                 
                 if (!isGasConforming) {
@@ -1202,7 +1298,7 @@ async function runDeterministicAudit() {
                     errorDetails.push(`
                         <div class="audit-issue">
                             <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-graduation-cap" style="margin-right: 6px;"></i> ADICIONAL QUALIFICAÇÃO</span>
-                            <div class="audit-issue__math">Pago: <strong>R$ ${paidAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (Pagamento Proporcional)</div>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${paidAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${propCheck.days} dias de ${propCheck.refLabel})</div>
                         </div>
                     `);
                 } else if (aqStatus === "DIVERGENTE") {
@@ -1245,6 +1341,7 @@ async function runDeterministicAudit() {
                     aq_esperado: expectedAq,
                     aq_pago: paidAq,
                     aq_status: aqStatus,
+                    prop_venc_info: propVencInfo,
                     soma_ordinaria: somaRemuneratoriaOrdinaria,
                     soma_he: somaHorasExtras,
                     soma_outras: somaOutrasVerbas,
@@ -1658,52 +1755,58 @@ function openAuditDetailModal(serverId) {
         `;
     });
 
+    const compInfo = getCompetenceMonthsInfo(AppState.matchedCompetence);
     const isVencConforming = Math.abs(finding.venc_pago - finding.venc_esperado) < 0.1;
     const isGajConforming = Math.abs(finding.gaj_paga - finding.gaj_esperada) < 0.1;
     const isGasConforming = Math.abs(finding.gas_paga - finding.gas_esperada) < 0.1;
     const isTetoOrdConforming = finding.excesso_teto_ordinario <= 0.01;
     const isHeConforming = finding.excesso_he <= 0.01;
 
-    const diffVenc = finding.venc_pago - finding.venc_esperado;
-    const noteVenc = isVencConforming ? "" : `
-        O vencimento básico de <strong>R$ ${finding.venc_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> pago difere do previsto na Tabela Remuneratória Oficial do TSE para o padrão <strong>${gradeStr}</strong> (esperado: <strong>R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
-        Diferença calculada: <strong style="color: var(--color-conclusion);">R$ ${diffVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>.
-    `;
+    let vencStatusType = isVencConforming;
+    let noteVenc = "";
+    if (finding.prop_venc_info) {
+        vencStatusType = "PROPORCIONAL";
+        noteVenc = `Pagamento proporcional a <strong>${finding.prop_venc_info.days} dias</strong> referente a <strong>${finding.prop_venc_info.refLabel}</strong> sobre o padrão <strong>${gradeStr}</strong>. Base diária considerada: ${finding.prop_venc_info.days}/${finding.prop_venc_info.divisor} avos.`;
+    } else if (!isVencConforming) {
+        const diffVenc = finding.venc_pago - finding.venc_esperado;
+        noteVenc = `
+            O vencimento básico de <strong>R$ ${finding.venc_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> pago difere do previsto na Tabela Remuneratória Oficial do TSE para o padrão <strong>${gradeStr}</strong> (esperado: <strong>R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
+            Diferença calculada: <strong style="color: var(--color-conclusion);">R$ ${diffVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>.
+        `;
+    }
 
-    const diffGaj = finding.gaj_paga - finding.gaj_esperada;
-    const noteGaj = isGajConforming ? "" : `
-        A GAJ paga de <strong>R$ ${finding.gaj_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge de 140% sobre o Vencimento Básico do padrão <strong>${gradeStr}</strong> (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 140% = <strong>R$ ${finding.gaj_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
-        Desvio de <strong style="color: var(--color-conclusion);">R$ ${diffGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 13 da Lei nº 11.416/2006).
-    `;
+    let gajStatusType = isGajConforming;
+    let noteGaj = "";
+    if (finding.prop_venc_info && isGajConforming) {
+        gajStatusType = "PROPORCIONAL";
+        noteGaj = `Cálculo de 140% incidente sobre o Vencimento Básico proporcional apurado (<strong>${finding.prop_venc_info.days} dias</strong> de <strong>${finding.prop_venc_info.refLabel}</strong>).`;
+    } else if (!isGajConforming) {
+        const diffGaj = finding.gaj_paga - finding.gaj_esperada;
+        noteGaj = `
+            A GAJ paga de <strong>R$ ${finding.gaj_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge de 140% sobre o Vencimento Básico do padrão <strong>${gradeStr}</strong> (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 140% = <strong>R$ ${finding.gaj_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
+            Desvio de <strong style="color: var(--color-conclusion);">R$ ${diffGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 13 da Lei nº 11.416/2006).
+        `;
+    }
     
     let noteGas = "";
     if (!isGasConforming) {
         const diffGas = finding.gas_paga - finding.gas_esperada;
-        if (finding.gas_esperada === 0 && finding.gas_paga > 0) {
-            noteGas = `
-                Recebimento indevido: foi pago <strong>R$ ${finding.gas_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> de GAS (Adicional de Segurança), mas o servidor não possui atribuições policiais ativas. 
-                Diferença a ser glosada: <strong style="color: var(--color-conclusion);">R$ ${diffGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 17 da Lei nº 11.416/2006).
-            `;
-        } else {
-            noteGas = `
-                A GAS paga de <strong>R$ ${finding.gas_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge do percentual de 35% sobre o Vencimento Básico (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 35% = <strong>R$ ${finding.gas_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
-                Divergência: <strong style="color: var(--color-conclusion);">R$ ${diffGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 17 da Lei nº 11.416/2006).
-            `;
-        }
+        noteGas = `
+            A GAS paga de <strong>R$ ${finding.gas_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge do percentual de 35% sobre o Vencimento Básico (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 35% = <strong>R$ ${finding.gas_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
+            Divergência: <strong style="color: var(--color-conclusion);">R$ ${diffGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 17 da Lei nº 11.416/2006).
+        `;
     }
 
-    // Redação Aprimorada e Direta para as Notas Técnicas de AQ
     let noteAq = "";
     if (finding.aq_status === "PROPORCIONAL") {
         const diffAq = finding.aq_pago - finding.aq_esperado;
-        const daysInMonth = getDaysInCompetenceMonth(AppState.matchedCompetence);
-        const propCheck = checkAqProportionalAdjustment(finding.aq_pago, finding.aq_esperado, activeVR, daysInMonth);
-        const daysText = propCheck.days > 0 ? `${propCheck.days} dias proporcionais` : `fração proporcional de dias`;
+        const propCheck = checkAqProportionalAdjustment(finding.aq_pago, finding.aq_esperado, activeVR, compInfo);
+        const daysText = propCheck.days > 0 ? `${propCheck.days} dias proporcionais (${propCheck.refLabel})` : `fração proporcional de dias`;
 
         if (finding.aq_esperado === 0) {
-            noteAq = `Pagamento de <strong>R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> correspondente a <strong>${daysText}</strong> de nova averbação no decorrer do mês.`;
+            noteAq = `Pagamento de <strong>R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> correspondente a <strong>${daysText}</strong> de nova averbação calculada na ordem de prioridade temporal.`;
         } else {
-            noteAq = `Pagamento composto pelo patamar regular de <strong>${(finding.aq_esperado / activeVR).toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong> acrescido de <strong>R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> correspondente a <strong>${daysText}</strong> de nova averbação no decorrer do mês.`;
+            noteAq = `Pagamento composto pelo patamar regular de <strong>${(finding.aq_esperado / activeVR).toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong> acrescido de <strong>R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> correspondente a <strong>${daysText}</strong> de averbação retroativa.`;
         }
     } else if (finding.aq_status === "DIVERGENTE") {
         const calculatedCoefficient = finding.aq_pago / activeVR;
@@ -1812,8 +1915,8 @@ function openAuditDetailModal(serverId) {
     };
 
     const reconciliaHtml = `
-        ${compRow("Vencimento Básico", finding.venc_pago, finding.venc_esperado, isVencConforming, "fa-solid fa-money-bill-wave", noteVenc)}
-        ${compRow("Gratificação Judiciária (GAJ)", finding.gaj_paga, finding.gaj_esperada, isGajConforming, "fa-solid fa-coins", noteGaj)}
+        ${compRow("Vencimento Básico", finding.venc_pago, finding.venc_esperado, vencStatusType, "fa-solid fa-money-bill-wave", noteVenc)}
+        ${compRow("Gratificação Judiciária (GAJ)", finding.gaj_paga, finding.gaj_esperada, gajStatusType, "fa-solid fa-coins", noteGaj)}
         ${compRow("Gratificação de Segurança (GAS)", finding.gas_paga, finding.gas_esperada, isGasConforming, "fa-solid fa-shield-halved", noteGas)}
         ${compRow("Adicional de Qualificação (AQ)", finding.aq_pago, finding.aq_esperado, finding.aq_status, "fa-solid fa-graduation-cap", noteAq)}
         ${compRow("Teto Constitucional Ordinário", finding.soma_ordinaria, TETO_CONSTITUCIONAL_STF, isTetoOrdConforming, "fa-solid fa-gavel", noteTetoOrd, true)}
