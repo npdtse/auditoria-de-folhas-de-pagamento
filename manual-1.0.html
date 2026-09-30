@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Critérios de Avaliação — Pré-Auditoria de Pagamentos (TSE / SAU)</title>
+    
+    <!-- === IMPORTAÇÕES DE FONTES E ÍCONES === -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- === FOLHA DE ESTILOS UNIFICADA DO SISTEMA === -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- === FOLHA DE ESTILOS UNIFICADA DO MANUAL === -->
+    <link rel="stylesheet" href="style-manual.css">
+</head>
+<body class="doc-body">
+
+    <!-- === BARRA LATERAL COM ÍNDICE DOS ASSUNTOS === -->
+    <aside class="doc-sidebar">
+        <div class="doc-sidebar__header">
+            <div class="doc-sidebar__brand" style="display: flex; align-items: center; gap: 10px;">
+                <div class="sidebar__icon-box" style="width: 36px; height: 36px; background-color: var(--primary-faded); color: var(--primary); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <span style="font-family: var(--font-main); font-size: 15px; font-weight: 800; color: var(--text); line-height: 1.2;">Manual de Critérios de Avaliação — Pré-Auditoria de Pagamentos</span>
+            </div>
+        </div>
+
+        <nav class="doc-sidebar__nav" id="sidebar-nav">
+            <a href="#sec-escopo" class="doc-nav-item doc-nav-item--active"><i class="fa-solid fa-users"></i> 1. Escopo da Auditoria</a>
+            <a href="#sec-resultados" class="doc-nav-item"><i class="fa-solid fa-square-poll-vertical"></i> 2. Classificação de Resultados</a>
+            <a href="#sec-venc" class="doc-nav-item"><i class="fa-solid fa-money-bill-wave"></i> 3. Vencimento Básico</a>
+            <a href="#sec-gaj" class="doc-nav-item"><i class="fa-solid fa-coins"></i> 4. Gratificação Judiciária (GAJ)</a>
+            <a href="#sec-gas" class="doc-nav-item"><i class="fa-solid fa-shield-halved"></i> 5. Gratificação de Segurança (GAS)</a>
+            <a href="#sec-aq" class="doc-nav-item"><i class="fa-solid fa-graduation-cap"></i> 6. Adicional de Qualificação (AQ)</a>
+            <!-- [VERSÃO FUTURA: RETRIBUIÇÃO DE FC E CJ (VALORES)]
+            <a href="#sec-fc-cj-valores" class="doc-nav-item"><i class="fa-solid fa-briefcase"></i> Retribuição de FC e CJ</a>
+            -->
+            <a href="#sec-fc-cj-atrib" class="doc-nav-item"><i class="fa-solid fa-id-badge"></i> 7. Níveis de Atribuição de FC e CJ</a>
+            <!-- [VERSÃO FUTURA: SUBSTITUIÇÃO TEMPORÁRIA]
+            <a href="#sec-subst" class="doc-nav-item"><i class="fa-solid fa-people-arrows"></i> Substituição Temporária</a>
+            -->
+            <!-- [VERSÃO FUTURA: AUXÍLIO-ALIMENTAÇÃO (VALORES)]
+            <a href="#sec-alim" class="doc-nav-item"><i class="fa-solid fa-utensils"></i> Auxílio-Alimentação</a>
+            -->
+            <!-- [VERSÃO FUTURA: ASSISTÊNCIA PRÉ-ESCOLAR (VALORES)]
+            <a href="#sec-pre" class="doc-nav-item"><i class="fa-solid fa-child"></i> Assistência Pré-Escolar</a>
+            -->
+            <!-- [VERSÃO FUTURA: ABONO DE PERMANÊNCIA (VALORES)]
+            <a href="#sec-abono" class="doc-nav-item"><i class="fa-solid fa-award"></i> Abono de Permanência</a>
+            -->
+            <a href="#sec-teto" class="doc-nav-item"><i class="fa-solid fa-gavel"></i> 8. Teto Constitucional (STF)</a>
+            <a href="#sec-he" class="doc-nav-item"><i class="fa-solid fa-clock"></i> 9. Limite de Horas Extras</a>
+        </nav>
+
+        <div class="doc-sidebar__footer">
+            <span>Manual de Critérios de Avaliação — Secretaria de Auditoria (TSE)</span>
+        </div>
+    </aside>
+
+    <!-- === ÁREA PRINCIPAL CENTRALIZADA DE LEITURA === -->
+    <main class="doc-main">
+        <div class="doc-container">
+            
+            <a href="index.html" class="btn-return">
+                <i class="fa-solid fa-arrow-left"></i> Voltar ao Aplicativo de Auditoria
+            </a>
+
+            <!-- Cartão Inicial de Identificação Institucional -->
+            <header class="doc-hero">
+                <h1 class="doc-hero__title">Manual de Critérios de Avaliação</h1>
+                <p class="doc-hero__desc">
+                    Este documento estabelece as regras e fórmulas aplicadas pela ferramenta de <strong>Pré-Auditoria de Pagamentos</strong> da Secretaria de Auditoria (SAU) sobre os relatórios mensais da folha de pagamento do Tribunal Superior Eleitoral, processados localmente em memória.
+                </p>
+            </header>
+
+            <!-- ==========================================================================
+                 === BLOCO 1: ESCOPO DA AUDITORIA ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-escopo">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">1</div>
+                    <h2 class="doc-section__title">Escopo da Auditoria</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Universo de Servidores e Folhas Avaliadas</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Quem é auditado</span>
+                            <p class="rule-step__desc">
+                                Servidores efetivos do quadro próprio do Tribunal Superior Eleitoral, ocupantes dos cargos de <strong>Analista Judiciário</strong> e <strong>Técnico Judiciário</strong>, em exercício ativo e com registro de remuneração no mês da folha.
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Quem não é auditado</span>
+                            <p class="rule-step__desc">
+                                Aposentados, pensionistas e servidores licenciados ou cedidos sem remuneração no TSE (sem vencimento e sem GAJ). Esses vínculos recebem status de "Não Analisado" e desvio financeiro de R$ 0,00, sem gerar alertas. Servidores sem vínculo efetivo com o quadro próprio (requisitados de outros órgãos ou ocupantes de cargo em comissão sem vínculo) são isolados e quantificados no grupo de "Servidores Não Auditados".
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Folha Regular e Folha Suplementar</span>
+                            <p class="rule-step__desc">
+                                A ferramenta identifica o tipo de competência de cada lançamento:
+                            </p>
+                            <table class="info-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tipo de Folha</th>
+                                        <th>Tratamento na Ferramenta</th>
+                                        <th>Rubricas Avaliadas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Folha Regular</strong></td>
+                                        <td>Análise direta de enquadramento mensal e apuração de base ordinária.</td>
+                                        <td>Vencimento Básico (1001), Gratificação Judiciária - GAJ (2001), Gratificação de Segurança - GAS (2002), Adicionais de Qualificação (462001, 463001, 23001) e conformidade cadastral de FC e CJ.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Folha Suplementar</strong></td>
+                                        <td>Auditoria do limite de horas extras e segregação de verbas excluídas do teto constitucional.</td>
+                                        <td>
+                                            • <strong>Avaliada:</strong> Horas extras suplementares (consolidadas no limite mensal de R$ 17.000,00).<br>
+                                            • <strong>Apenas segregadas:</strong> Férias, terço constitucional e gratificação natalina / 13º salário (classificadas em 'Outras Verbas' para não compor a base de incidência do teto do STF).
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Consolidação (Regular + Suplementar)</strong></td>
+                                        <td>Soma dos lançamentos de ambas as folhas para conferência de limites mensais globais.</td>
+                                        <td>Teto Constitucional do Supremo Tribunal Federal e Limite Máximo de Horas Extras do TSE.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Tabelas Remuneratórias por Período</span>
+                            <p class="rule-step__desc">
+                                A ferramenta seleciona a Tabela Remuneratória de padrões a partir do mês da folha carregada:
+                            </p>
+                            <table class="info-table">
+                                <thead>
+                                    <tr>
+                                        <th>Período da Folha</th>
+                                        <th>Legislação Aplicável</th>
+                                        <th>Valor de Referência (VR)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Janeiro a Junho de 2026</strong></td>
+                                        <td>Lei nº 15.292/2025</td>
+                                        <td>R$ 714,40</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Julho de 2026 em diante</strong></td>
+                                        <td>Lei nº 15.293/2025</td>
+                                        <td>R$ 771,55</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="rule-card__footer">
+                        <span class="rule-card__footer-label"><i class="fa-solid fa-gavel"></i> Fontes Normativas:</span>
+                        <div class="rule-card__footer-refs">
+                            <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Lei nº 11.416/2006</strong>
+                                <span class="ref-desc">Dispõe sobre as Carreiras dos Servidores do Poder Judiciário da União.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                            <a href="https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15292.htm" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Leis nº 15.292 e 15.293/2025</strong>
+                                <span class="ref-desc">Tabelas de remuneração e Valor de Referência dos semestres de 2026.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ==========================================================================
+                 === BLOCO 2: CLASSIFICAÇÃO DE RESULTADOS ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-resultados">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">2</div>
+                    <h2 class="doc-section__title">Classificação de Resultados e Desvios Financeiros</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Status de Auditoria e Saldo de Desvio Financeiro</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Cálculo do Desvio Financeiro</span>
+                            <p class="rule-step__desc">
+                                O desvio financeiro é a diferença em reais entre o valor pago ao servidor e o valor apurado pelas tabelas, frações diárias ou limites legais da competência. Cada registro avaliado recebe uma das seguintes classificações:
+                            </p>
+                        </div>
+                        <div class="formula-card">
+                            <div class="formula-card__example">
+                                • <strong style="color: var(--color-success);"><i class="fa-solid fa-circle-check"></i> Conforme (Verde):</strong> Todos os pagamentos recebidos correspondem aos valores fixados em lei para o cargo efetivo, adicionais avaliados e limites de teto.<br><br>
+                                • <strong style="color: var(--color-warning);"><i class="fa-solid fa-triangle-exclamation"></i> Alerta de Pagamento Proporcional (Amarelo):</strong> O valor recebido corresponde a pagamento de dias parciais de trabalho ou acerto funcional, apurado pela divisão dos dias do mês civil na ordem de prioridade: 1º dias do mês anterior (M-1) e 2º dias do mês da folha (M). A coluna Desvio Financeiro registra o valor correspondente à fração proporcional ou ao acerto retroativo apurado (diferença entre o total recebido e o valor regular integral). Esse montante não constitui glosa automática, indicando a materialidade financeira a ser ratificada pela auditoria mediante conferência do ato de concessão ou registro funcional. A nota técnica informa o divisor utilizado, a quantidade de dias apurados e o mês base de calendário.<br><br>
+                                • <strong style="color: var(--color-danger);"><i class="fa-solid fa-circle-exclamation"></i> Alerta de Divergência (Vermelho):</strong> Identifica diferença matemática em relação às tabelas oficiais, ausência de correspondência diária, inconsistência entre a sigla da função e o nível de atribuição cadastrado, ou pagamento acima dos tetos legais. O valor excedente ou não justificado compõe o saldo de desvio financeiro.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-card__footer">
+                        <span class="rule-card__footer-label"><i class="fa-solid fa-gavel"></i> Fontes Normativas:</span>
+                        <div class="rule-card__footer-refs">
+                            <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm#art37" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Constituição Federal (Art. 37, XI)</strong>
+                                <span class="ref-desc">Princípios da legalidade remuneratória e teto remuneratório constitucional.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ==========================================================================
+                 === BLOCO 3: VENCIMENTO BÁSICO ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-venc">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">3</div>
+                    <h2 class="doc-section__title">Vencimento Básico</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Padrões da Tabela Remuneratória</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Descrição</span>
+                            <p class="rule-step__desc">
+                                Rubrica avaliada: <strong>1001 (Vencimento Básico)</strong>. Retribuição pecuniária fixada por lei devida pelo exercício do cargo público efetivo, correspondente ao padrão ocupado na respectiva carreira (Classes A a C, Padrões 1 a 13).
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Critérios de Avaliação</span>
+                            <p class="rule-step__desc">
+                                A ferramenta verifica se o valor recebido coincide com um dos padrões nominais da Tabela Remuneratória oficial do Tribunal Superior Eleitoral. Nos pagamentos parciais (admissão, desligamento ou afastamento no curso do mês), a diária é apurada pela divisão da remuneração integral pelos dias de calendário, avaliada na ordem de prioridade: 1º dias do mês anterior (M-1) e 2º dias do mês da folha (M).
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Alertas</span>
+                            <div class="formula-card">
+                                <div class="formula-card__example">
+                                    • <strong style="color: var(--color-warning);">Alerta de Pagamento Proporcional:</strong> Pagamento correspondente a dias parciais de trabalho sobre um padrão da carreira, apurado pelos dias de calendário do mês anterior (M-1) ou do mês da folha (M). A nota técnica informa a quantidade de dias apurados e o mês base de calendário.<br><br>
+                                    • <strong style="color: var(--color-danger);">Alerta de Divergência:</strong> Vencimento básico pago que não corresponde aos padrões nominais da carreira na Tabela Remuneratória nem a frações diárias válidas de M-1 ou M, inclusive nos casos de acertos somados na mesma rubrica com valor superior ao padrão nominal.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-card__footer">
+                        <span class="rule-card__footer-label"><i class="fa-solid fa-gavel"></i> Fontes Normativas:</span>
+                        <div class="rule-card__footer-refs">
+                            <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Lei nº 11.416/2006 (Arts. 11 e 12)</strong>
+                                <span class="ref-desc">Estrutura os padrões e classes das carreiras dos servidores do Poder Judiciário da União.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                            <a href="https://www.tse.jus.br/transparencia-e-prestacao-de-contas/pessoal/cargos-e-funcoes/arquivos/2026/tse-anexo-iii-tabela-remuneratoria-transparencia-tse/@@display-file/file/ANEXO-III-RES-102-CNJ-VIGENCIA-01-07-2026.pdf" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title"><i class="fa-solid fa-file-pdf" style="color: var(--color-danger);"></i> Tabela Remuneratória TSE (Jul/2026)</strong>
+                                <span class="ref-desc">Anexo III contendo os valores dos padrões de vencimento vigentes a partir do segundo semestre de 2026.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ==========================================================================
+                 === BLOCO 4: GRATIFICAÇÃO DE ATIVIDADE JUDICIÁRIA (GAJ) ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-gaj">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">4</div>
+                    <h2 class="doc-section__title">Gratificação de Atividade Judiciária (GAJ)</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Gratificação Obrigatória de 140%</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Descrição</span>
+                            <p class="rule-step__desc">
+                                Rubrica avaliada: <strong>2001 (Gratificação de Atividade Judiciária - GAJ)</strong>. Parcela remuneratória devida aos servidores das carreiras do Poder Judiciário da União, correspondente a 140% sobre o vencimento básico do cargo efetivo (Art. 13 da Lei nº 11.416/2006).
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Critérios de Avaliação</span>
+                            <p class="rule-step__desc">
+                                A ferramenta verifica se o valor recebido equivale a 140% sobre o vencimento básico pago no mês, seja sobre o padrão integral, seja sobre frações proporcionais de dias apuradas na ordem de prioridade de M-1 e M.
+                            </p>
+                            <div class="formula-card">
+                                <span class="formula-card__heading">Cálculo da GAJ:</span>
+                                <div class="formula-card__equation">
+                                    <span class="formula-card__pill">Vencimento Básico</span>
+                                    <span class="formula-card__operator">×</span>
+                                    <span class="formula-card__pill formula-card__pill--highlight">140% (GAJ)</span>
+                                    <span class="formula-card__operator">=</span>
+                                    <span class="formula-card__pill">Gratificação Devida</span>
+                                </div>
+                                <p class="formula-card__example">
+                                    <strong>Exemplo (Analista A-1 a partir de Jul/2026):</strong> Vencimento Básico de R$ 6.683,70 multiplicado por 1,40 resulta em <strong>R$ 9.357,18</strong> de GAJ.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Alertas</span>
+                            <div class="formula-card">
+                                <div class="formula-card__example">
+                                    • <strong style="color: var(--color-warning);">Alerta de Pagamento Proporcional:</strong> Pagamento proporcional de GAJ decorrente de vencimento básico recebido em dias parciais de trabalho, mantendo a proporção de 140% sobre a fração apurada.<br><br>
+                                    • <strong style="color: var(--color-danger);">Alerta de Divergência:</strong> Valor de GAJ que diverge do percentual de 140% sobre o vencimento básico recebido no mês.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-card__footer">
+                        <span class="rule-card__footer-label"><i class="fa-solid fa-gavel"></i> Fontes Normativas:</span>
+                        <div class="rule-card__footer-refs">
+                            <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Lei nº 11.416/2006 (Art. 13)</strong>
+                                <span class="ref-desc">Fixa a Gratificação de Atividade Judiciária no percentual de 140% sobre o vencimento básico.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ==========================================================================
+                 === BLOCO 5: GRATIFICAÇÃO DE SEGURANÇA (GAS) ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-gas">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">5</div>
+                    <h2 class="doc-section__title">Gratificação de Atividade de Segurança (GAS)</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Adicional de Atividade de Segurança</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Descrição</span>
+                            <p class="rule-step__desc">
+                                Rubrica avaliada: <strong>2002 (Gratificação de Atividade de Segurança - GAS)</strong>. Verba devida aos servidores no exercício de funções de segurança institucional, correspondente a 35% sobre o vencimento básico do cargo efetivo (Art. 17 da Lei nº 11.416/2006).
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Critérios de Avaliação</span>
+                            <p class="rule-step__desc">
+                                A ferramenta confere se o valor pago equivale a 35% do vencimento básico recebido no mês. Em pagamentos com vencimento fracionado em dias parciais, a GAS é calculada na mesma proporção de dias do vencimento.
+                            </p>
+                            <div class="formula-card">
+                                <span class="formula-card__heading">Cálculo da GAS:</span>
+                                <div class="formula-card__equation">
+                                    <span class="formula-card__pill">Vencimento Básico</span>
+                                    <span class="formula-card__operator">×</span>
+                                    <span class="formula-card__pill formula-card__pill--highlight">35% (GAS)</span>
+                                    <span class="formula-card__operator">=</span>
+                                    <span class="formula-card__pill">Valor Devido da GAS</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Alertas</span>
+                            <div class="formula-card">
+                                <div class="formula-card__example">
+                                    • <strong style="color: var(--color-warning);">Alerta de Pagamento Proporcional:</strong> Pagamento proporcional de GAS decorrente de vencimento básico recebido em dias parciais, mantendo a proporção de 35% sobre a fração apurada.<br><br>
+                                    • <strong style="color: var(--color-danger);">Alerta de Divergência:</strong> Valor pago que diverge de 35% do vencimento básico apurado para o padrão.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-card__footer">
+                        <span class="rule-card__footer-label"><i class="fa-solid fa-gavel"></i> Fontes Normativas:</span>
+                        <div class="rule-card__footer-refs">
+                            <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Lei nº 11.416/2006 (Art. 17)</strong>
+                                <span class="ref-desc">Institui a Gratificação de Atividade de Segurança no percentual de 35% sobre o vencimento básico.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                            <a href="https://www.tse.jus.br/legislacao/compilada/res/2012/resolucao-no-23-380-de-8-de-maio-de-2012" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Resolução TSE nº 23.380/2012</strong>
+                                <span class="ref-desc">Regulamenta a concessão da Gratificação de Atividade de Segurança na Justiça Eleitoral.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ==========================================================================
+                 === BLOCO 6: ADICIONAL DE QUALIFICAÇÃO (AQ) ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-aq">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">6</div>
+                    <h2 class="doc-section__title">Adicional de Qualificação (AQ)</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Titulação Acadêmica e Cursos de Treinamento</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Descrição</span>
+                            <p class="rule-step__desc">
+                                Rubricas avaliadas conjuntamente: <strong>462001</strong> e <strong>463001</strong> (Titulação Acadêmica) e <strong>23001</strong> (Ações de Treinamento). Adicional devido pelo cumprimento de requisitos de capacitação e escolaridade superiores aos exigidos para o cargo efetivo. O valor mensal é calculado pela aplicação de multiplicadores sobre o Valor de Referência (VR) legalmente fixado.
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Critérios de Avaliação e Absorção</span>
+                            <p class="rule-step__desc">
+                                A ferramenta consolida os lançamentos de titulação e treinamento em um montante único, confrontando a soma contra os parâmetros legais:
+                            </p>
+                            <table class="info-table">
+                                <thead>
+                                    <tr>
+                                        <th>Modalidade / Título</th>
+                                        <th>Multiplicador</th>
+                                        <th>Valor em Jul/2026 (VR = R$ 771,55)</th>
+                                        <th>Regra de Absorção e Limites</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Doutorado</strong></td>
+                                        <td>5,0 × VR</td>
+                                        <td>R$ 3.857,75</td>
+                                        <td>Absorve pós-graduações lato sensu e segundas graduações.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Mestrado</strong></td>
+                                        <td>3,5 × VR</td>
+                                        <td>R$ 2.700,43</td>
+                                        <td>Absorve especializações e segundas graduações.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Teto de Títulos Menores</strong></td>
+                                        <td>Máx. 2,0 × VR</td>
+                                        <td>R$ 1.543,10</td>
+                                        <td>Limite cumulado para especializações (1,0 VR) e certificações (0,5 VR).</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>1 Especialização ou 2ª Graduação</strong></td>
+                                        <td>1,0 × VR</td>
+                                        <td>R$ 771,55</td>
+                                        <td>Curso de pós-graduação lato sensu ou graduação adicional.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Treinamento (por bloco de 120h)</strong></td>
+                                        <td>0,20 × VR</td>
+                                        <td>R$ 154,31</td>
+                                        <td>Até 3 conjuntos (máximo 0,60 VR = R$ 462,93 por 360 horas).</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Teto Global (Títulos + Treinamento)</strong></td>
+                                        <td>Máx. 5,60 × VR</td>
+                                        <td>R$ 4.320,68</td>
+                                        <td>Limite máximo acumulado admitido em lei para o conjunto do AQ.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p class="rule-step__desc" style="margin-top: 12px;">
+                                Nos pagamentos proporcionais decorrentes de certificados averbados no curso do período, a fração diária é apurada pela divisão da unidade devida pelos dias de calendário civil, avaliada na ordem de prioridade: 1º dias do mês anterior (M-1) para acertos retroativos e 2º dias do mês da folha (M) para averbações correntes.
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Alertas</span>
+                            <div class="formula-card">
+                                <div class="formula-card__example">
+                                    • <strong style="color: var(--color-warning);">Alerta de Pagamento Proporcional:</strong> Fração proporcional de dias de adicional decorrente de averbação em M-1 ou M. A coluna Desvio Financeiro registra o valor monetário da fração proporcional paga. A nota técnica informa a quantidade de dias apurados e o mês base de calendário.<br><br>
+                                    • <strong style="color: var(--color-danger);">Alerta de Divergência:</strong> Montante consolidado que não corresponde aos coeficientes legais autorizados (patamares intermediários não previstos em lei); valor de treinamento superior ao teto de 0,60 VR; soma global de titulação e treinamento acima de 5,60 VR; ou quantia que não coincide com frações diárias válidas de M-1 ou M.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-card__footer">
+                        <span class="rule-card__footer-label"><i class="fa-solid fa-gavel"></i> Fontes Normativas:</span>
+                        <div class="rule-card__footer-refs">
+                            <a href="https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11416.htm" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Lei nº 11.416/2006 (Art. 15)</strong>
+                                <span class="ref-desc">Fixa os coeficientes, tetos e requisitos do Adicional de Qualificação.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                            <a href="https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15292.htm" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Lei nº 15.292/2025</strong>
+                                <span class="ref-desc">Regulamenta os critérios de absorção de títulos e limites de cursos de treinamento.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                            <a href="https://www.tse.jus.br/legislacao/compilada/prtc/2026/portaria-conjunta-no-1-de-8-de-janeiro-de-2026" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Portaria Conjunta nº 1/2026</strong>
+                                <span class="ref-desc">Regulamenta a aplicação do Adicional de Qualificação no âmbito do Poder Judiciário da União.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ==========================================================================
+                 === [VERSÃO FUTURA: BLOCO - RETRIBUIÇÃO DE FC E CJ (VALORES)] ===
+                 ========================================================================== -->
+            <!--
+            <section class="doc-section" id="sec-fc-cj-valores">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">—</div>
+                    <h2 class="doc-section__title">Retribuição de Funções Comissionadas (FC) e Cargos em Comissão (CJ)</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Valores Nominais e Parcela de Opção de 65%</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Descrição</span>
+                            <p class="rule-step__desc">
+                                Rubricas: Funções Comissionadas 13001, 6001, 6401, 6701, 8006001; Cargos em Comissão: 19701 (Integral) e 18001, 8018001, 18701 (Opção de 65%).
+                            </p>
+                        </div>
+                    </div>
+                </article>
+            </section>
+            -->
+
+            <!-- ==========================================================================
+                 === BLOCO 8: NÍVEIS DE ATRIBUIÇÃO DE FC E CJ ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-fc-cj-atrib">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">7</div>
+                    <h2 class="doc-section__title">Níveis de Atribuição de Funções e Cargos Comissionados</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Correspondência com o Cadastro Funcional</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Descrição</span>
+                            <p class="rule-step__desc">
+                                Verificação da conformidade cadastral entre a sigla da função ou cargo em comissão e o nível de responsabilidade registrado no cadastro funcional do servidor (campo Atribuição).
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Critérios de Avaliação</span>
+                            <p class="rule-step__desc">
+                                A ferramenta verifica a correlação cadastral entre a função ou cargo em comissão e o nível de atribuição informado na folha:
+                            </p>
+                            <div class="formula-card">
+                                <div class="formula-card__example">
+                                    • <strong>FC 6:</strong> Exige obrigatoriamente Nível de Atribuição = 1.<br>
+                                    • <strong>FC 4, FC 3 e FC 1:</strong> Exigem obrigatoriamente Nível de Atribuição = 3.<br>
+                                    • <strong>Cargos CJ (CJ 1 a CJ 4):</strong> Não admitem Nível de Atribuição = 3.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Alertas</span>
+                            <div class="formula-card">
+                                <div class="formula-card__example">
+                                    • <strong>Sem Alerta de Pagamento Proporcional:</strong> A correlação cadastral possui regras objetivas, não comportando classificação de pagamento fracionário.<br><br>
+                                    • <strong style="color: var(--color-danger);">Alerta de Divergência:</strong> Incompatibilidade cadastral entre a comissão e o nível de atribuição (exemplo: cargo CJ cadastrado com atribuição 3, ou FC 6 cadastrada com atribuição diferente de 1).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-card__footer">
+                        <span class="rule-card__footer-label"><i class="fa-solid fa-gavel"></i> Fontes Normativas:</span>
+                        <div class="rule-card__footer-refs">
+                            <a href="https://www.tse.jus.br/legislacao/compilada/prtc/2026/portaria-conjunta-no-1-de-8-de-janeiro-de-2026" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Portaria Conjunta nº 1/2026</strong>
+                                <span class="ref-desc">Regulamenta as diretrizes de atribuição e retribuição de cargos em comissão e funções de confiança no PJU.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ==========================================================================
+                 === [VERSÃO FUTURA: BLOCO - SUBSTITUIÇÃO TEMPORÁRIA] ===
+                 ========================================================================== -->
+            <!--
+            <section class="doc-section" id="sec-subst">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">—</div>
+                    <h2 class="doc-section__title">Substituição de Função e Cargo em Comissão</h2>
+                </div>
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Substituição Eventual por Diferença ou Valor Pleno</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <p class="rule-step__desc">Rubricas avaliadas: 50001, 50701, 50007, 50008 e 50009.</p>
+                    </div>
+                </article>
+            </section>
+            -->
+
+            <!-- ==========================================================================
+                 === [VERSÃO FUTURA: BLOCO - AUXÍLIO-ALIMENTAÇÃO (VALORES)] ===
+                 ========================================================================== -->
+            <!--
+            <section class="doc-section" id="sec-alim">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">—</div>
+                    <h2 class="doc-section__title">Auxílio-Alimentação</h2>
+                </div>
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Benefício Indenizatório de Alimentação</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <p class="rule-step__desc">Rubricas avaliadas: 85001, 85701, 8085701, 8086001 e 86001. Valor integral de R$ 1.860,51.</p>
+                    </div>
+                </article>
+            </section>
+            -->
+
+            <!-- ==========================================================================
+                 === [VERSÃO FUTURA: BLOCO - ASSISTÊNCIA PRÉ-ESCOLAR (VALORES)] ===
+                 ========================================================================== -->
+            <!--
+            <section class="doc-section" id="sec-pre">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">—</div>
+                    <h2 class="doc-section__title">Assistência Pré-Escolar</h2>
+                </div>
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Benefício Indenizatório de Apoio Pré-Escolar</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <p class="rule-step__desc">Rubricas avaliadas: 90001, 90701 e 93001. Valor de R$ 1.288,47 por dependente.</p>
+                    </div>
+                </article>
+            </section>
+            -->
+
+            <!-- ==========================================================================
+                 === [VERSÃO FUTURA: BLOCO - ABONO DE PERMANÊNCIA (VALORES)] ===
+                 ========================================================================== -->
+            <!--
+            <section class="doc-section" id="sec-abono">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">—</div>
+                    <h2 class="doc-section__title">Abono de Permanência</h2>
+                </div>
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Reembolso da Contribuição Previdenciária</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <p class="rule-step__desc">Rubricas avaliadas: 27001, 8027001, 27004 a 27009, 29004 a 29006.</p>
+                    </div>
+                </article>
+            </section>
+            -->
+
+            <!-- ==========================================================================
+                 === BLOCO 8: TETO REMUNERATÓRIO CONSTITUCIONAL ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-teto">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">8</div>
+                    <h2 class="doc-section__title">Teto Remuneratório Constitucional (Limite do STF)</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Limite Remuneratório Máximo Constitucional</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Descrição</span>
+                            <p class="rule-step__desc">
+                                A remuneração mensal ordinária não pode ultrapassar o subsídio mensal de Ministro do Supremo Tribunal Federal, fixado em <strong>R$ 46.366,19</strong> (Art. 37, XI da Constituição Federal).
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Critérios de Avaliação</span>
+                            <p class="rule-step__desc">
+                                A ferramenta consolida os proventos da <strong>folha regular e da folha suplementar</strong> e submete as verbas remuneratórias ordinárias à base de corte do teto:
+                            </p>
+                            <div class="formula-card">
+                                <div class="formula-card__example">
+                                    • <strong>Entra na base ordinária do teto:</strong> Vencimento Básico, GAJ, GAS, Adicionais de Qualificação (AQ), Funções Comissionadas (FC), Cargos em Comissão (CJ) e Vantagens Pessoais Nominalmente Identificadas (VPNI / Quintos / Décimos).<br><br>
+                                    • <strong>Fica fora da base do teto:</strong> Horas extras (apuradas em limite próprio), gratificação natalina (13º salário), férias e terço constitucional, benefícios indenizatórios (auxílio-alimentação, auxílio-transporte, auxílio-saúde e creche), abono de permanência e Gratificação por Encargo de Curso ou Concurso (GECC).
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Alertas</span>
+                            <div class="formula-card">
+                                <div class="formula-card__example">
+                                    • <strong style="color: var(--color-danger);">Alerta de Divergência:</strong> Soma da remuneração ordinária bruta superior a R$ 46.366,19 no mês. A apuração afere a extrapolação do total bruto de proventos ordinários, independentemente de eventuais rubricas de retenção por teto (abate-teto) já lançadas nos descontos da folha. O valor excedente bruto compõe o saldo de desvio financeiro sob exame.<br><br>
+                                    • <strong>Sem Alerta de Pagamento Proporcional:</strong> Por se tratar de limite remuneratório mensal fixo, qualquer extrapolação gera o alerta de divergência.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-card__footer">
+                        <span class="rule-card__footer-label"><i class="fa-solid fa-gavel"></i> Fontes Normativas:</span>
+                        <div class="rule-card__footer-refs">
+                            <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm#art37" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Constituição Federal (Art. 37, XI)</strong>
+                                <span class="ref-desc">Fixa o subsídio dos Ministros do STF como limite remuneratório máximo no serviço público.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                            <a href="https://atos.cnj.jus.br/atos/detalhar/88" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Resolução CNJ nº 14/2006</strong>
+                                <span class="ref-desc">Regulamenta a aplicação do teto remuneratório constitucional no Poder Judiciário.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <!-- ==========================================================================
+                 === BLOCO 9: LIMITE DE HORAS EXTRAS ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-he">
+                <div class="doc-section__header">
+                    <div class="doc-section__number">9</div>
+                    <h2 class="doc-section__title">Limite de Horas Extras</h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Teto Administrativo de Serviço Extraordinário</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        <div class="rule-step">
+                            <span class="rule-step__title">Descrição</span>
+                            <p class="rule-step__desc">
+                                Rubricas avaliadas: Lançamentos de serviço extraordinário na folha regular e na folha suplementar. O total pago a título de horas extras a cada servidor não pode ultrapassar o teto administrativo fixado pelo TSE em <strong>R$ 17.000,00 no mês</strong>.
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Critérios de Avaliação</span>
+                            <p class="rule-step__desc">
+                                A ferramenta consolida os lançamentos de serviço extraordinário recebidos pelo servidor tanto na folha regular quanto na folha suplementar dentro do mesmo mês de competência, confrontando a soma com o teto de R$ 17.000,00.
+                            </p>
+                        </div>
+                        <div class="rule-step">
+                            <span class="rule-step__title">Alertas</span>
+                            <div class="formula-card">
+                                <div class="formula-card__example">
+                                    • <strong style="color: var(--color-danger);">Alerta de Divergência:</strong> Soma dos lançamentos de horas extras do mês superior a R$ 17.000,00. O valor excedente é apontado para glosa financeira e somado ao saldo de desvio financeiro.<br><br>
+                                    • <strong>Sem Alerta de Pagamento Proporcional:</strong> As horas extras remuneram o serviço extraordinário apurado, não havendo enquadramento fracionário.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rule-card__footer">
+                        <span class="rule-card__footer-label"><i class="fa-solid fa-gavel"></i> Fontes Normativas:</span>
+                        <div class="rule-card__footer-refs">
+                            <a href="https://atos.cnj.jus.br/atos/detalhar/88" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Resolução CNJ nº 14/2006 (Art. 3º, IV)</strong>
+                                <span class="ref-desc">Fixa o teto administrativo máximo mensal para a remuneração de horas extras.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                            <a href="https://www.planalto.gov.br/ccivil_03/leis/l8112cons.htm" target="_blank" rel="noopener noreferrer" class="rule-ref-link">
+                                <strong class="ref-title">Lei nº 8.112/1990 (Arts. 73 e 74)</strong>
+                                <span class="ref-desc">Regulamenta o serviço extraordinário no âmbito da administração pública federal.</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- === SCRIPT DE INTERAÇÃO DO MANUAL === -->
+    <script>
+        const docMain = document.querySelector('.doc-main');
+        const sections = document.querySelectorAll('.doc-section');
+        const navItems = document.querySelectorAll('.doc-nav-item');
+
+        function updateActiveNavOnScroll() {
+            if (!docMain) return;
+            const mainTop = docMain.getBoundingClientRect().top;
+            let activeId = "";
+
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top - mainTop <= 160) {
+                    activeId = section.getAttribute('id');
+                }
+            });
+
+            if (activeId) {
+                navItems.forEach(item => {
+                    if (item.getAttribute('href') === `#${activeId}`) {
+                        item.classList.add('doc-nav-item--active');
+                    } else {
+                        item.classList.remove('doc-nav-item--active');
+                    }
+                });
+            }
+        }
+
+        if (docMain) {
+            docMain.addEventListener('scroll', updateActiveNavOnScroll, { passive: true });
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(n => n.classList.remove('doc-nav-item--active'));
+                item.classList.add('doc-nav-item--active');
+            });
+        });
+    </script>
+</body>
+</html>
