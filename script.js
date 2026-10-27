@@ -2,6 +2,16 @@
    === [CAPÍTULO] CONFIGURAÇÃO E LINHA DO TEMPO DE TABELAS ===
    ========================================================================== */
 
+/* --- [Seção] Configuração de Versão e Controle de Recursos (Feature Flags) --- */
+const APP_CONFIG = {
+    version: "1.2",
+    features: {
+        auditSubstituicao: false,
+        auditAbono: false,
+        exportXlsx: false
+    }
+};
+
 /* --- [Seção] Dicionário Temporal de Tabelas Remuneratórias do TSE --- */
 const TABELAS_HISTORICAS = {
     "2026_JUL": {
@@ -38,6 +48,20 @@ const TABELAS_HISTORICAS = {
                 { classe: "A", padrao: 2,  vencimento: 4195.86, gaj: 5874.20 },
                 { classe: "A", padrao: 1,  vencimento: 4073.63, gaj: 5703.08 }
             ]
+        },
+        fc: {
+            "FC 1": 1312.57,
+            "FC 2": 1526.19,
+            "FC 3": 1776.07,
+            "FC 4": 2498.33,
+            "FC 5": 2875.02,
+            "FC 6": 3956.81
+        },
+        cj: {
+            "CJ 1": { integral: 11870.00, opcao: 7715.50 },
+            "CJ 2": { integral: 14659.71, opcao: 9528.81 },
+            "CJ 3": { integral: 16665.13, opcao: 10832.33 },
+            "CJ 4": { integral: 18812.93, opcao: 12228.40 }
         }
     },
     "2026_JAN": {
@@ -74,34 +98,194 @@ const TABELAS_HISTORICAS = {
                 { classe: "A", padrao: 2,  vencimento: 3885.06, gaj: 5439.08 },
                 { classe: "A", padrao: 1,  vencimento: 3771.88, gaj: 5280.63 }
             ]
+        },
+        fc: {
+            "FC 1": 1215.34,
+            "FC 2": 1413.14,
+            "FC 3": 1644.51,
+            "FC 4": 2313.27,
+            "FC 5": 2662.06,
+            "FC 6": 3663.71
+        },
+        cj: {
+            "CJ 1": { integral: 10990.74, opcao: 7143.98 },
+            "CJ 2": { integral: 13573.81, opcao: 8822.98 },
+            "CJ 3": { integral: 15430.68, opcao: 10029.94 },
+            "CJ 4": { integral: 17419.38, opcao: 11322.60 }
         }
     }
 };
 
-/* --- [Seção] Códigos de Rubricas Mapeados --- */
+/* --- [Seção] Valores Padrão de Benefícios Fixos (Vigência 2026) --- */
+const VALOR_AUXILIO_ALIMENTACAO_2026 = 1860.51;
+const VALOR_ASSISTENCIA_PRE_ESCOLAR_2026 = 1288.47;
+
+/* --- [Seção] Códigos de Rubricas Estruturais --- */
 const RUBRICA_VENCIMENTO = "1001";
 const RUBRICA_GAJ = "2001";
 const RUBRICA_GAS = "2002";
+const RUBRICA_AQ_TREINAMENTO = "23001";
+const RUBRICA_AQ_TITULACAO_1 = "462001";
+const RUBRICA_AQ_TITULACAO_2 = "463001";
 
-/* --- [Seção] Constantes de Tetos e Limites --- */
-const TETO_CONSTITUCIONAL_STF = 46366.19; // Subsídio mensal de Ministro do STF (Art. 37, XI da CF/88)
-const LIMITE_HORAS_EXTRAS_TSE = 17000.00; // Limite Administrativo de Trabalho Extraordinário (TSE / Art. 3º, IV da Res. CNJ 14/2006)
-const VALOR_REFERENCIA_AQ = 714.40;       // Base padrão de VR
+// Cargos em Comissão (CJ) e Funções Comissionadas (FC)
+const RUBRICA_CJ_INTEGRAL = "19701";
+const RUBRICAS_CJ_OPCAO = ["18001", "8018001", "18701"];
+const RUBRICAS_FC = ["13001", "6001", "6401", "6701", "8006001"];
 
-/* --- [Seção] Rol de Rubricas Indenizatórias, Benefícios e Abonos Excluídos do Teto --- */
-const RUBRICAS_EXCLUIDAS_TETO = [
-    "85001",   // Auxílio-Alimentação
-    "85002",   // Auxílio-Saúde
-    "85003",   // Assistência Pré-Escolar
-    "85004",   // Auxílio-Natalidade
-    "85005",   // Auxílio-Transporte
-    "85006",   // Ajuda de Custo
-    "85007",   // Diárias
-    "27001",   // Abono de Permanência Ativo EC
-    "8027001"  // Abono de Permanência EC nº 41/2003 RPPS
+// Substituição de Função e Cargo em Comissão
+const RUBRICAS_SUBSTITUICAO = ["50001", "50701", "50007", "50008", "50009"];
+
+// Benefícios Indenizatórios Regulamentados
+const RUBRICAS_ALIMENTACAO = ["85001", "85701", "8085701", "8086001", "86001"];
+const RUBRICAS_PRE_ESCOLAR = ["90001", "90701", "93001"];
+
+// Previdência do Regime Próprio (RPPS)
+const RUBRICAS_DESCONTO_RPPS = [
+    "6001000", "6008000", "6015000", "6017000", "6201000", "6326000", "6340000",
+    "8001001", "8002001", "8023001"
 ];
 
-/* --- [Seção] Funções de Categorização Textual de Rubricas --- */
+// Abono de Permanência — Segregação entre Mês Corrente e Retroativo/Passivo
+const RUBRICAS_ABONO_CORRENTE = ["27001", "8027001"];
+const RUBRICAS_ABONO_RETROATIVO = [
+    "27004", "27005", "27006", "27007", "27008", "27009",
+    "29004", "29005", "29006"
+];
+const RUBRICAS_ABONO_PERMANENCIA = [...RUBRICAS_ABONO_CORRENTE, ...RUBRICAS_ABONO_RETROATIVO];
+
+// Rol de Rubricas de VPNI e Quintos
+const RUBRICAS_VPNI_BASE = [
+    "20001", "25001", "230001", "232001", "235001", "236001", "237001", 
+    "292001", "293001", "630001", "632001", "635001", "637001", "692001", 
+    "693001", "225001", "226001", "626001", "8462001", "8463001"
+];
+
+/* --- [Seção] Constantes de Tetos e Limites Legais --- */
+const TETO_CONSTITUCIONAL_STF = 46366.19;
+const LIMITE_HORAS_EXTRAS_TSE = 17000.00;
+const TETO_AQ_TITULACAO_VR = 5.0;
+const TETO_AQ_TITULOS_MENORES_VR = 2.0;
+const TETO_AQ_TREINAMENTO_VR = 0.60;
+const TETO_GLOBAL_AQ_VR = 5.60;
+
+/* --- [Seção] Rubricas Excluídas do Teto Remuneratório Ordinário --- */
+const RUBRICAS_EXCLUIDAS_TETO = [
+    "85001", "85701", "8085701", "8086001", "86001",
+    "90001", "90701", "93001",
+    "85002", "85004", "85005", "85006", "85007",
+    "120001", "120004", "120701", "120704", "122001", "125001", "125701", "262001", "264001",
+    "110001", "8111001",
+    "42004", "42005", "42006", "42701",
+    "27001", "27004", "27005", "27006", "27007", "27008", "27009",
+    "29004", "29005", "29006", "8027001"
+];
+
+/* --- [Seção] Funções Utilitárias Gerais --- */
+function formatMoeda(val) {
+    const num = typeof val === "number" ? val : (parseFloat(val) || 0);
+    return num.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function debounce(func, wait = 250) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/* --- [Seção] Tratamento e Normalização de Datas de Nascimento --- */
+function parseDataNascimento(val) {
+    if (val === undefined || val === null || val === "") return null;
+
+    // 1. Conversor de número serial do Excel
+    const numVal = Number(val);
+    if (!isNaN(numVal) && numVal > 1000 && numVal < 60000) {
+        const excelEpoch = new Date(1899, 11, 30);
+        const jsDate = new Date(excelEpoch.getTime() + numVal * 86400 * 1000);
+        const dia = jsDate.getDate();
+        const mes = jsDate.getMonth() + 1;
+        const ano = jsDate.getFullYear();
+        return {
+            dia: dia,
+            mes: mes,
+            ano: ano,
+            strFormatada: `${dia.toString().padStart(2, '0')}/${mes.toString().padStart(2, '0')}/${ano}`
+        };
+    }
+
+    // 2. Leitura de string textual (DD/MM/AAAA ou AAAA-MM-DD)
+    const strVal = val.toString().trim();
+    const parts = strVal.split(/[\/\.\-]/);
+    if (parts.length === 3) {
+        let dia = 1, mes = 1, ano = 1970;
+        if (parts[0].length === 4) {
+            ano = parseInt(parts[0], 10);
+            mes = parseInt(parts[1], 10);
+            dia = parseInt(parts[2], 10);
+        } else {
+            dia = parseInt(parts[0], 10);
+            mes = parseInt(parts[1], 10);
+            ano = parseInt(parts[2], 10);
+        }
+        if (!isNaN(dia) && !isNaN(mes) && !isNaN(ano) && ano > 1900 && mes >= 1 && mes <= 12 && dia >= 1 && dia <= 31) {
+            return {
+                dia: dia,
+                mes: mes,
+                ano: ano,
+                strFormatada: `${dia.toString().padStart(2, '0')}/${mes.toString().padStart(2, '0')}/${ano}`
+            };
+        }
+    }
+    return null;
+}
+
+function calcularIdadeCompetencia(nascObj, compStr) {
+    if (!nascObj || !compStr || compStr === "N/A") {
+        return { idadeAnos: null, completouNoMes: false, jaTinha75Antes: false };
+    }
+    const parts = compStr.split(/[\/\.\-]/);
+    if (parts.length < 2) return { idadeAnos: null, completouNoMes: false, jaTinha75Antes: false };
+
+    const compMes = parseInt(parts[0], 10);
+    const compAno = parseInt(parts[1], 10);
+
+    if (isNaN(compMes) || isNaN(compAno)) {
+        return { idadeAnos: null, completouNoMes: false, jaTinha75Antes: false };
+    }
+
+    let idade = compAno - nascObj.ano;
+    let completouNoMes = false;
+    let jaTinha75Antes = false;
+
+    if (compMes < nascObj.mes) {
+        idade--;
+    } else if (compMes === nascObj.mes) {
+        if (idade === 75) {
+            completouNoMes = true;
+        }
+    }
+
+    if (idade >= 75 && !completouNoMes) {
+        jaTinha75Antes = true;
+    }
+
+    return {
+        idadeAnos: idade,
+        completouNoMes: completouNoMes,
+        jaTinha75Antes: jaTinha75Antes
+    };
+}
+
+/* --- [Seção] Funções de Categorização Textual --- */
 function isHorasExtras(desc) {
     const d = (desc || "").toString().toUpperCase();
     return d.includes("EXTRAORDINARIO") || d.includes("EXTRAORDINÁRIO") || d.includes("SERV EXTRA") || d.includes("PLEITOS") || d.includes("HORA EXTRA");
@@ -118,7 +302,7 @@ function isGratificacaoNatalina(desc) {
 }
 
 function isAbonoPermanencia(cod, desc) {
-    if (cod === "27001" || cod === "8027001") return true;
+    if (RUBRICAS_ABONO_PERMANENCIA.includes(cod)) return true;
     const d = (desc || "").toString().toUpperCase();
     return d.includes("ABONO DE PERMANENCIA") || d.includes("ABONO DE PERMANÊNCIA") || d.includes("ABONO PERMANENCIA") || d.includes("ABONO PERMANÊNCIA") || d.includes("PERMANENCIA ATIVO");
 }
@@ -128,155 +312,652 @@ function isGECC(desc) {
     return d.includes("CURSO/CONCURSO") || d.includes("CURSO E CONCURSO") || d.includes("ENCARGO DE CURSO") || d.includes("GECC") || d.includes("INSTRUTORIA");
 }
 
+function isGAACTA(desc) {
+    const d = (desc || "").toString().toUpperCase();
+    return d.includes("GAACTA") || d.includes("ALTA COMPLEXIDADE");
+}
+
 function isBeneficioIndenizatorio(cod, desc) {
     if (RUBRICAS_EXCLUIDAS_TETO.includes(cod)) return true;
     if (isAbonoPermanencia(cod, desc)) return true;
     if (isGECC(desc)) return true;
+    if (isGAACTA(desc)) return true;
     const d = (desc || "").toString().toUpperCase();
     return d.includes("ALIMENTACAO") || d.includes("ALIMENTAÇÃO") || d.includes("PRE ESCOLAR") || 
            d.includes("PRÉ-ESCOLAR") || d.includes("AUXILIO SAUDE") || d.includes("AUXÍLIO SAÚDE") || 
            d.includes("NATALIDADE") || d.includes("TRANSPORTE") || d.includes("DIARIA") || 
-           d.includes("DIÁRIA") || d.includes("AJUDA DE CUSTO");
+           d.includes("DIÁRIA") || d.includes("AJUDA DE CUSTO") || d.includes("REEMBOLSO");
 }
 
-/* --- [Seção] Resolvedor de Vigência e Calendário da Competência (M e M-1) --- */
-function getCompetenceMonthsInfo(compStr) {
-    let month = 1;
-    let year = 2026;
-    let hasValidComp = false;
+function isCargoComissao(cod, desc) {
+    if (cod === RUBRICA_CJ_INTEGRAL || RUBRICAS_CJ_OPCAO.includes(cod)) return true;
+    const d = (desc || "").toString().toUpperCase();
+    return d.includes("CARGO EM COMISSAO") || d.includes("CARGO EM COMISSÃO") || d.includes("CJ-") || d.includes("CJ ");
+}
 
-    if (compStr && compStr !== "N/A") {
-        const parts = compStr.toString().trim().split(/[\/\.\-]/);
-        if (parts.length >= 2) {
-            if (parts[0].length === 4) {
-                year = parseInt(parts[0], 10);
-                month = parseInt(parts[1], 10);
-            } else {
-                month = parseInt(parts[0], 10);
-                year = parseInt(parts[1], 10);
-            }
-            if (month >= 1 && month <= 12 && year > 1900) {
-                hasValidComp = true;
-            }
-        }
-    }
+function isFuncaoComissionada(cod, desc) {
+    if (RUBRICAS_FC.includes(cod)) return true;
+    const d = (desc || "").toString().toUpperCase();
+    return (d.includes("FUNCAO COMISSIONADA") || d.includes("FUNÇÃO COMISSIONADA") || d.includes("FC-") || d.includes("FC ")) && !isCargoComissao(cod, desc) && !d.includes("SUBSTITU");
+}
 
-    if (!hasValidComp) {
+function isSubstituicaoComissao(cod, desc) {
+    if (RUBRICAS_SUBSTITUICAO.includes(cod)) return true;
+    const d = (desc || "").toString().toUpperCase();
+    return d.includes("SUBSTITUICAO") || d.includes("SUBSTITUIÇÃO");
+}
+
+/* ==========================================================================
+   === [CAPÍTULO] DETECTORES DETERMINÍSTICOS DE CÁLCULO ===
+   ========================================================================== */
+
+/* --- [Seção] Calendário Concreto do TSE: Mês da Folha (M) e Mês Anterior (M-1) --- */
+function getCalendarioCompetencia(compStr) {
+    const nomesMeses = [
+        "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+        "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+    ];
+
+    if (!compStr || compStr === "N/A") {
         return {
-            current: { month: 1, year: 2026, days: 30, label: "Mês da Folha" },
-            previous: { month: 12, year: 2025, days: 30, label: "Mês Anterior" }
+            diasMesAtual: 30,
+            mesAtualNome: "mês corrente",
+            diasMesAnterior: 30,
+            mesAnteriorNome: "mês anterior",
+            divisoresGerais: [{ divisor: 30, tipo: "M", rotulo: "mês da folha (base: 30 dias)" }],
+            divisoresSubst: [{ divisor: 30, tipo: "M-1", rotulo: "mês anterior (base: 30 dias)" }]
         };
     }
 
-    const daysCurrent = new Date(year, month, 0).getDate();
+    const parts = compStr.split(/[\/\.\-]/);
+    if (parts.length >= 2) {
+        const mes = parseInt(parts[0], 10);
+        const ano = parseInt(parts[1], 10);
 
-    let prevMonth = month - 1;
-    let prevYear = year;
-    if (prevMonth === 0) {
-        prevMonth = 12;
-        prevYear = year - 1;
+        if (!isNaN(mes) && !isNaN(ano) && mes >= 1 && mes <= 12 && ano > 1900) {
+            const diasAtual = new Date(ano, mes, 0).getDate();
+            const nomeAtual = nomesMeses[mes - 1];
+
+            const mesAntNum = mes === 1 ? 12 : mes - 1;
+            const anoAntNum = mes === 1 ? ano - 1 : ano;
+            const diasAnt = new Date(anoAntNum, mesAntNum, 0).getDate();
+            const nomeAnt = nomesMeses[mesAntNum - 1];
+
+            const candAtual = { divisor: diasAtual, tipo: "M", rotulo: `mês da folha (${nomeAtual} - ${diasAtual} dias)` };
+            const candAnterior = { divisor: diasAnt, tipo: "M-1", rotulo: `mês anterior (${nomeAnt} - ${diasAnt} dias)` };
+
+            return {
+                diasMesAtual: diasAtual,
+                mesAtualNome: nomeAtual,
+                diasMesAnterior: diasAnt,
+                mesAnteriorNome: nomeAnt,
+                divisoresGerais: [candAtual, candAnterior],
+                divisoresSubst: [candAnterior, candAtual]
+            };
+        }
     }
-    const daysPrevious = new Date(prevYear, prevMonth, 0).getDate();
-
-    const monthsNames = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ];
 
     return {
-        current: {
-            month,
-            year,
-            days: daysCurrent,
-            label: `${monthsNames[month - 1]}/${year}`
-        },
-        previous: {
-            month: prevMonth,
-            year: prevYear,
-            days: daysPrevious,
-            label: `${monthsNames[prevMonth - 1]}/${prevYear}`
-        }
+        diasMesAtual: 30,
+        mesAtualNome: "mês corrente",
+        diasMesAnterior: 30,
+        mesAnteriorNome: "mês anterior",
+        divisoresGerais: [{ divisor: 30, tipo: "M", rotulo: "mês da folha (base: 30 dias)" }],
+        divisoresSubst: [{ divisor: 30, tipo: "M-1", rotulo: "mês anterior (base: 30 dias)" }]
     };
 }
 
-/* --- [Seção] Detector de Pagamento Proporcional de AQ (Pro-Rata Die: M-1 e M) --- */
-function checkAqProportionalAdjustment(paidAq, expectedAq, activeVR, compInfo) {
-    if (paidAq <= 0) return { isProportional: false, days: 0, refLabel: "" };
+/* --- [Seção] Detector de Vencimento e GAJ Proporcional --- */
+function checkVencGajProportionalAdjustment(paidVenc, paidGaj, referenceTable) {
+    if (!paidVenc || paidVenc <= 0 || !referenceTable || referenceTable.length === 0) return null;
 
-    const diff = paidAq - expectedAq;
-    const candidates = [compInfo.previous, compInfo.current];
+    const cal = typeof AppState !== "undefined" ? getCalendarioCompetencia(AppState.matchedCompetence) : getCalendarioCompetencia("N/A");
+    const isGajRatioExact = paidGaj > 0 && Math.abs((paidVenc * 1.40) - paidGaj) < 0.50;
 
-    if (diff > 0.5) {
-        for (const cand of candidates) {
-            const divisor = cand.days;
-            const dailyUnits = [
-                (0.2 * activeVR) / divisor,
-                (0.4 * activeVR) / divisor,
-                (0.5 * activeVR) / divisor,
-                (1.0 * activeVR) / divisor
-            ];
+    for (const cand of cal.divisoresGerais) {
+        const divisor = cand.divisor;
+        const maxDiasProporcionais = divisor - 1;
 
+        for (let i = 0; i < referenceTable.length; i++) {
+            const grade = referenceTable[i];
+            const dailyVenc = grade.vencimento / divisor;
+            const days = Math.round(paidVenc / dailyVenc);
+
+            if (days >= 1 && days <= maxDiasProporcionais) {
+                const expectedVencCalc = days * dailyVenc;
+                if (Math.abs(paidVenc - expectedVencCalc) < 0.60) {
+                    const expectedGajCalc = (grade.gaj / divisor) * days;
+                    const gajMatch = (paidGaj === 0) || Math.abs(paidGaj - expectedGajCalc) < 0.60 || isGajRatioExact;
+
+                    if (gajMatch) {
+                        return {
+                            tipo: "FRACAO_DIAS",
+                            grade: grade,
+                            classe: grade.classe,
+                            padrao: grade.padrao,
+                            dias: days,
+                            divisor: divisor,
+                            baseRotulo: cand.rotulo,
+                            vencEsperado: paidVenc,
+                            gajEsperada: paidGaj > 0 ? paidGaj : expectedGajCalc,
+                            vencTabelaCheia: grade.vencimento,
+                            gajTabelaCheia: grade.gaj
+                        };
+                    }
+                }
+            }
+        }
+
+        for (let i = referenceTable.length - 1; i > 0; i--) {
+            const gradeAnt = referenceTable[i];
+            const gradeNovo = referenceTable[i - 1];
+
+            const dailyAnt = gradeAnt.vencimento / divisor;
+            const dailyNovo = gradeNovo.vencimento / divisor;
+
+            if (paidVenc > (gradeAnt.vencimento - 0.1) && paidVenc < (gradeNovo.vencimento + 0.1)) {
+                for (let diasNovo = 1; diasNovo <= maxDiasProporcionais; diasNovo++) {
+                    const diasAnt = divisor - diasNovo;
+                    const calcVenc = (diasAnt * dailyAnt) + (diasNovo * dailyNovo);
+
+                    if (Math.abs(paidVenc - calcVenc) < 0.60) {
+                        const calcGaj = (diasAnt * (gradeAnt.gaj / divisor)) + (diasNovo * (gradeNovo.gaj / divisor));
+                        const gajMatch = (paidGaj === 0) || Math.abs(paidGaj - calcGaj) < 0.60 || isGajRatioExact;
+
+                        if (gajMatch) {
+                            return {
+                                tipo: "PROGRESSAO",
+                                grade: gradeNovo,
+                                classe: gradeNovo.classe,
+                                padrao: `${gradeAnt.classe}${gradeAnt.padrao} ➔ ${gradeNovo.classe}${gradeNovo.padrao}`,
+                                diasAnt: diasAnt,
+                                diasNovo: diasNovo,
+                                divisor: divisor,
+                                baseRotulo: cand.rotulo,
+                                gradeAnt: gradeAnt,
+                                gradeNovo: gradeNovo,
+                                vencEsperado: paidVenc,
+                                gajEsperada: paidGaj > 0 ? paidGaj : calcGaj,
+                                vencTabelaCheia: gradeNovo.vencimento,
+                                gajTabelaCheia: gradeNovo.gaj
+                            };
+                        }
+                    }
+                }
+
+                if (isGajRatioExact) {
+                    return {
+                        tipo: "TRANSICAO_FERIAS",
+                        grade: gradeNovo,
+                        classe: gradeNovo.classe,
+                        padrao: `${gradeAnt.classe}${gradeAnt.padrao} ➔ ${gradeNovo.classe}${gradeNovo.padrao}`,
+                        divisor: divisor,
+                        baseRotulo: cand.rotulo,
+                        gradeAnt: gradeAnt,
+                        gradeNovo: gradeNovo,
+                        vencEsperado: gradeAnt.vencimento,
+                        gajEsperada: gradeAnt.gaj,
+                        vencTabelaCheia: gradeNovo.vencimento,
+                        gajTabelaCheia: gradeNovo.gaj
+                    };
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+/* --- [Seção] Detectores de AQ Titulação e Treinamento --- */
+function checkAqTitProportionalAdjustment(paidAqTit, expectedAqTit, activeVR) {
+    if (paidAqTit <= 0) return { isProportional: false, days: 0, divisor: 30, baseRotulo: "" };
+
+    const cal = typeof AppState !== "undefined" ? getCalendarioCompetencia(AppState.matchedCompetence) : getCalendarioCompetencia("N/A");
+    const diff = paidAqTit - expectedAqTit;
+
+    for (const cand of cal.divisoresGerais) {
+        const divisor = cand.divisor;
+        const maxDiasProporcionais = divisor - 1;
+        const dailyUnits = [
+            (0.5 * activeVR) / divisor,
+            (1.0 * activeVR) / divisor,
+            (1.5 * activeVR) / divisor,
+            (2.0 * activeVR) / divisor
+        ];
+
+        if (diff > 0.5) {
             for (const unit of dailyUnits) {
                 const days = Math.round(diff / unit);
-                if (days >= 1 && days < divisor) {
-                    if (Math.abs(diff - days * unit) < 0.25) {
-                        return { isProportional: true, days: days, refLabel: cand.label, divisor: divisor };
-                    }
+                if (days >= 1 && days <= maxDiasProporcionais && Math.abs(diff - days * unit) < 0.35) {
+                    return { isProportional: true, days: days, divisor: divisor, baseRotulo: cand.rotulo };
                 }
             }
         }
-    }
 
-    if (expectedAq > 0 && paidAq < expectedAq) {
-        for (const cand of candidates) {
-            const divisor = cand.days;
-            const dailyUnits = [
-                (0.2 * activeVR) / divisor,
-                (0.4 * activeVR) / divisor,
-                (0.5 * activeVR) / divisor,
-                (1.0 * activeVR) / divisor
-            ];
-
+        if (expectedAqTit > 0 && paidAqTit < expectedAqTit) {
             for (const unit of dailyUnits) {
-                const days = Math.round(paidAq / unit);
-                if (days >= 1 && days < divisor) {
-                    if (Math.abs(paidAq - days * unit) < 0.25) {
-                        return { isProportional: true, days: days, refLabel: cand.label, divisor: divisor };
+                const days = Math.round(paidAqTit / unit);
+                if (days >= 1 && days <= maxDiasProporcionais && Math.abs(paidAqTit - days * unit) < 0.35) {
+                    return { isProportional: true, days: days, divisor: divisor, baseRotulo: cand.rotulo };
+                }
+            }
+        }
+    }
+
+    return { isProportional: false, days: 0, divisor: cal.diasMesAtual, baseRotulo: "" };
+}
+
+function checkAqTreinProportionalAdjustment(paidAqTrein, expectedAqTrein, activeVR) {
+    if (paidAqTrein <= 0) return { isProportional: false, days: 0, divisor: 30, baseRotulo: "" };
+
+    const cal = typeof AppState !== "undefined" ? getCalendarioCompetencia(AppState.matchedCompetence) : getCalendarioCompetencia("N/A");
+    const diff = paidAqTrein - expectedAqTrein;
+
+    for (const cand of cal.divisoresGerais) {
+        const divisor = cand.divisor;
+        const maxDiasProporcionais = divisor - 1;
+        const dailyUnits = [
+            (0.2 * activeVR) / divisor,
+            (0.4 * activeVR) / divisor,
+            (0.6 * activeVR) / divisor
+        ];
+
+        if (diff > 0.3) {
+            for (const unit of dailyUnits) {
+                const days = Math.round(diff / unit);
+                if (days >= 1 && days <= maxDiasProporcionais && Math.abs(diff - days * unit) < 0.25) {
+                    return { isProportional: true, days: days, divisor: divisor, baseRotulo: cand.rotulo };
+                }
+            }
+        }
+
+        if (expectedAqTrein > 0 && paidAqTrein < expectedAqTrein) {
+            for (const unit of dailyUnits) {
+                const days = Math.round(paidAqTrein / unit);
+                if (days >= 1 && days <= maxDiasProporcionais && Math.abs(paidAqTrein - days * unit) < 0.25) {
+                    return { isProportional: true, days: days, divisor: divisor, baseRotulo: cand.rotulo };
+                }
+            }
+        }
+    }
+
+    return { isProportional: false, days: 0, divisor: cal.diasMesAtual, baseRotulo: "" };
+}
+
+/* --- [Seção] Detector de Funções e Cargos Comissionados --- */
+function checkCommissionProportionalAdjustment(paidValue, expectedFullValue) {
+    const cal = typeof AppState !== "undefined" ? getCalendarioCompetencia(AppState.matchedCompetence) : getCalendarioCompetencia("N/A");
+    if (paidValue <= 0 || expectedFullValue <= 0) return { isProportional: false, days: 0, divisor: cal.diasMesAtual, baseRotulo: "" };
+
+    for (const cand of cal.divisoresGerais) {
+        const divisor = cand.divisor;
+        if (Math.abs(paidValue - expectedFullValue) < 0.10) {
+            return { isProportional: false, days: divisor, divisor: divisor, baseRotulo: cand.rotulo };
+        }
+
+        const dailyUnit = expectedFullValue / divisor;
+        const days = Math.round(paidValue / dailyUnit);
+        const maxDiasProporcionais = divisor - 1;
+
+        if (days >= 1 && days <= maxDiasProporcionais) {
+            if (Math.abs(paidValue - days * dailyUnit) < 0.30) {
+                return { isProportional: true, days: days, divisor: divisor, baseRotulo: cand.rotulo };
+            }
+        }
+    }
+
+    return { isProportional: false, days: 0, divisor: cal.diasMesAtual, baseRotulo: "" };
+}
+
+/* --- [Seção] Detector de Substituição de FC e CJ --- */
+function checkSubstituicaoComissao(paidSubst, titularSigla, activeFcTable, activeCjTable) {
+    if (!paidSubst || paidSubst <= 0) return null;
+
+    const hierarquia = [
+        { cargo: "FC 1", valor: activeFcTable["FC 1"] || 0 },
+        { cargo: "FC 2", valor: activeFcTable["FC 2"] || 0 },
+        { cargo: "FC 3", valor: activeFcTable["FC 3"] || 0 },
+        { cargo: "FC 4", valor: activeFcTable["FC 4"] || 0 },
+        { cargo: "FC 5", valor: activeFcTable["FC 5"] || 0 },
+        { cargo: "FC 6", valor: activeFcTable["FC 6"] || 0 },
+        { cargo: "CJ 1", valor: (activeCjTable["CJ 1"] && activeCjTable["CJ 1"].opcao) || 0 },
+        { cargo: "CJ 2", valor: (activeCjTable["CJ 2"] && activeCjTable["CJ 2"].opcao) || 0 },
+        { cargo: "CJ 3", valor: (activeCjTable["CJ 3"] && activeCjTable["CJ 3"].opcao) || 0 },
+        { cargo: "CJ 4", valor: (activeCjTable["CJ 4"] && activeCjTable["CJ 4"].opcao) || 0 }
+    ];
+
+    let cleanTitular = (titularSigla || "").trim().toUpperCase().replace("-", " ");
+    cleanTitular = cleanTitular.replace(/FC\s*0?(\d)/g, "FC $1").replace(/CJ\s*0?(\d)/g, "CJ $1");
+    const matchCargo = cleanTitular.match(/^(FC\s*\d|CJ\s*\d)/);
+    if (matchCargo) {
+        cleanTitular = matchCargo[1].replace(/\s+/, " ");
+    }
+
+    const titularItem = hierarquia.find(h => h.cargo === cleanTitular);
+    const cal = typeof AppState !== "undefined" ? getCalendarioCompetencia(AppState.matchedCompetence) : getCalendarioCompetencia("N/A");
+    const divisores = cal.divisoresSubst;
+
+    if (titularItem && titularItem.valor > 0) {
+        const titularIndex = hierarquia.indexOf(titularItem);
+        for (let i = titularIndex + 1; i < hierarquia.length; i++) {
+            const superiorItem = hierarquia[i];
+            const deltaValor = superiorItem.valor - titularItem.valor;
+
+            for (const cand of divisores) {
+                const divisor = cand.divisor;
+                const deltaDiaria = deltaValor / divisor;
+                const days = Math.round(paidSubst / deltaDiaria);
+
+                if (days >= 1 && days <= divisor) {
+                    if (Math.abs(paidSubst - days * deltaDiaria) < 0.45) {
+                        return {
+                            tipo: "DIFERENCA",
+                            cargoSubstituido: superiorItem.cargo,
+                            cargoTitular: titularItem.cargo,
+                            dias: days,
+                            divisor: divisor,
+                            baseRotulo: cand.rotulo,
+                            valorPago: paidSubst,
+                            deltaDiaria: deltaDiaria,
+                            diariaSuperior: superiorItem.valor / divisor,
+                            diariaTitular: titularItem.valor / divisor,
+                            valorSuperiorCheio: superiorItem.valor,
+                            valorTitularCheio: titularItem.valor
+                        };
                     }
                 }
             }
         }
     }
 
-    return { isProportional: false, days: 0, refLabel: "" };
+    for (let i = 0; i < hierarquia.length; i++) {
+        const item = hierarquia[i];
+        if (item.valor > 0) {
+            for (const cand of divisores) {
+                const divisor = cand.divisor;
+                const diaria = item.valor / divisor;
+                const days = Math.round(paidSubst / diaria);
+
+                if (days >= 1 && days <= divisor) {
+                    if (Math.abs(paidSubst - days * diaria) < 0.45) {
+                        return {
+                            tipo: "PLENA",
+                            cargoSubstituido: item.cargo,
+                            cargoTitular: cleanTitular || "Sem função titular",
+                            dias: days,
+                            divisor: divisor,
+                            baseRotulo: cand.rotulo,
+                            valorPago: paidSubst,
+                            diariaSuperior: diaria,
+                            valorSuperiorCheio: item.valor
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    for (let t = 0; t < hierarquia.length; t++) {
+        const tItem = hierarquia[t];
+        for (let s = t + 1; s < hierarquia.length; s++) {
+            const sItem = hierarquia[s];
+            const deltaValor = sItem.valor - tItem.valor;
+
+            for (const cand of divisores) {
+                const divisor = cand.divisor;
+                const deltaDiaria = deltaValor / divisor;
+                const days = Math.round(paidSubst / deltaDiaria);
+
+                if (days >= 1 && days <= divisor) {
+                    if (Math.abs(paidSubst - days * deltaDiaria) < 0.45) {
+                        return {
+                            tipo: "DIFERENCA",
+                            cargoSubstituido: sItem.cargo,
+                            cargoTitular: tItem.cargo,
+                            dias: days,
+                            divisor: divisor,
+                            baseRotulo: cand.rotulo,
+                            valorPago: paidSubst,
+                            deltaDiaria: deltaDiaria,
+                            diariaSuperior: sItem.valor / divisor,
+                            diariaTitular: tItem.valor / divisor,
+                            valorSuperiorCheio: sItem.valor,
+                            valorTitularCheio: tItem.valor
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+/* --- [Seção] Detector de Benefícios Indenizatórios --- */
+function checkBeneficioProportionalAdjustment(paidValue, fullMonthlyValue) {
+    const cal = typeof AppState !== "undefined" ? getCalendarioCompetencia(AppState.matchedCompetence) : getCalendarioCompetencia("N/A");
+    if (paidValue <= 0 || fullMonthlyValue <= 0) return { isConforme: false, isProportional: false, days: 0, cotas: 0, divisor: cal.diasMesAtual, baseRotulo: "" };
+
+    const cotas = Math.round(paidValue / fullMonthlyValue);
+    if (cotas >= 1 && Math.abs(paidValue - cotas * fullMonthlyValue) < 0.25) {
+        return { isConforme: true, isProportional: false, days: cal.diasMesAtual, cotas: cotas, divisor: cal.diasMesAtual, baseRotulo: cal.divisoresGerais[0].rotulo };
+    }
+
+    for (const cand of cal.divisoresGerais) {
+        const divisor = cand.divisor;
+        const dailyUnit = fullMonthlyValue / divisor;
+        const days = Math.round(paidValue / dailyUnit);
+        const maxDiasProporcionais = divisor - 1;
+
+        if (days >= 1 && days <= maxDiasProporcionais && Math.abs(paidValue - days * dailyUnit) < 0.35) {
+            return { isConforme: true, isProportional: true, days: days, cotas: 1, divisor: divisor, baseRotulo: cand.rotulo };
+        }
+    }
+
+    return { isConforme: false, isProportional: false, days: 0, cotas: 0, divisor: cal.diasMesAtual, baseRotulo: "" };
+}
+
+/* --- [Seção] Cálculo da Contribuição Previdenciária Progressiva (RPPS 2026) --- */
+function calcularRppsProgressivo2026(baseCalculo) {
+    if (!baseCalculo || baseCalculo <= 0) return 0;
+
+    let valor = 0;
+    if (baseCalculo <= 1621.00) {
+        valor = baseCalculo * 0.075;
+    } else if (baseCalculo <= 2902.84) {
+        valor = (baseCalculo * 0.09) - 24.33;
+    } else if (baseCalculo <= 4354.27) {
+        valor = (baseCalculo * 0.12) - 111.41;
+    } else if (baseCalculo <= 8475.55) {
+        valor = (baseCalculo * 0.14) - 198.51;
+    } else if (baseCalculo <= 14514.30) {
+        valor = (baseCalculo * 0.145) - 240.89;
+    } else if (baseCalculo <= 29028.57) {
+        valor = (baseCalculo * 0.165) - 531.18;
+    } else if (baseCalculo <= 56605.73) {
+        valor = (baseCalculo * 0.19) - 1256.90;
+    } else {
+        valor = (baseCalculo * 0.22) - 2955.08;
+    }
+
+    return Math.round(valor * 100) / 100;
+}
+
+/* --- [Seção] Detector Determinístico de Abono de Permanência --- */
+function checkAbonoPermanenciaProportional(paidAbonoCorrente, paidAbonoRetroativo, rppsDiscountValue, baseCargoEfetivo, serverAgeInfo) {
+    const totalAbono = paidAbonoCorrente + paidAbonoRetroativo;
+    const cal = typeof AppState !== "undefined" ? getCalendarioCompetencia(AppState.matchedCompetence) : getCalendarioCompetencia("N/A");
+
+    if (totalAbono <= 0) {
+        return { isConforme: false, isProportional: false, tipo: "INEXISTENTE", days: 0, divisor: cal.diasMesAtual, baseRotulo: "", rppsEsperado: rppsDiscountValue, baseEfetivo: baseCargoEfetivo, desvio: 0 };
+    }
+
+    // Regra da Aposentadoria Compulsória aos 75 Anos
+    if (serverAgeInfo && serverAgeInfo.jaTinha75Antes) {
+        return {
+            isConforme: false,
+            isProportional: false,
+            tipo: "COMPULSORIA_ULTRAPASSADA",
+            days: cal.diasMesAtual,
+            divisor: cal.diasMesAtual,
+            baseRotulo: cal.divisoresGerais[0].rotulo,
+            rppsEsperado: 0,
+            desvio: totalAbono,
+            baseEfetivo: baseCargoEfetivo,
+            abonoRetroativo: paidAbonoRetroativo
+        };
+    }
+
+    // Anomalia: Abono recebido sem desconto de previdência no mês
+    if (paidAbonoCorrente > 0 && rppsDiscountValue <= 0) {
+        return {
+            isConforme: false,
+            isProportional: false,
+            tipo: "SEM_RETENCAO",
+            days: cal.diasMesAtual,
+            divisor: cal.diasMesAtual,
+            baseRotulo: cal.divisoresGerais[0].rotulo,
+            rppsEsperado: 0,
+            desvio: paidAbonoCorrente,
+            baseEfetivo: baseCargoEfetivo,
+            abonoRetroativo: paidAbonoRetroativo
+        };
+    }
+
+    // Anomalia: Abono corrente maior que o desconto total do contracheque
+    if (paidAbonoCorrente > rppsDiscountValue + 1.00) {
+        return {
+            isConforme: false,
+            isProportional: false,
+            tipo: "EXCESSO",
+            days: cal.diasMesAtual,
+            divisor: cal.diasMesAtual,
+            baseRotulo: cal.divisoresGerais[0].rotulo,
+            rppsEsperado: rppsDiscountValue,
+            desvio: paidAbonoCorrente - rppsDiscountValue,
+            baseEfetivo: baseCargoEfetivo,
+            abonoRetroativo: paidAbonoRetroativo
+        };
+    }
+
+    const rppsEfetivoCalculado = calcularRppsProgressivo2026(baseCargoEfetivo);
+    const abonoTestar = paidAbonoCorrente > 0 ? paidAbonoCorrente : 0;
+
+    // Teste 1: Reembolso Total (espelha 100% da previdência descontada no holerite)
+    if (abonoTestar > 0 && rppsDiscountValue > 0 && Math.abs(abonoTestar - rppsDiscountValue) < 0.60) {
+        return {
+            isConforme: true,
+            isProportional: false,
+            tipo: "RPPS_TOTAL",
+            days: cal.diasMesAtual,
+            divisor: cal.diasMesAtual,
+            baseRotulo: cal.divisoresGerais[0].rotulo,
+            rppsEsperado: abonoTestar,
+            rppsEfetivo: rppsEfetivoCalculado,
+            abonoRetroativo: paidAbonoRetroativo,
+            baseEfetivo: baseCargoEfetivo,
+            desvio: 0
+        };
+    }
+
+    // Teste 2: Reembolso do Cargo Efetivo (previdência sobre FC/CJ sem reembolso)
+    if (abonoTestar > 0 && rppsEfetivoCalculado > 0 && Math.abs(abonoTestar - rppsEfetivoCalculado) < 0.60) {
+        return {
+            isConforme: true,
+            isProportional: false,
+            tipo: "RPPS_EFETIVO",
+            days: cal.diasMesAtual,
+            divisor: cal.diasMesAtual,
+            baseRotulo: cal.divisoresGerais[0].rotulo,
+            rppsEsperado: abonoTestar,
+            rppsTotalHolerite: rppsDiscountValue,
+            abonoRetroativo: paidAbonoRetroativo,
+            baseEfetivo: baseCargoEfetivo,
+            desvio: 0
+        };
+    }
+
+    // Teste 3: Pagamento Proporcional de Concessão no Mês (Alerta de Atenção)
+    if (abonoTestar > 0 && rppsEfetivoCalculado > 0 && abonoTestar < rppsEfetivoCalculado) {
+        for (const cand of cal.divisoresGerais) {
+            const divisor = cand.divisor;
+            const maxDiasProporcionais = divisor - 1;
+            const dailyEfetivo = rppsEfetivoCalculado / divisor;
+            const days = Math.round(abonoTestar / dailyEfetivo);
+
+            if (days >= 1 && days <= maxDiasProporcionais && Math.abs(abonoTestar - days * dailyEfetivo) < 0.60) {
+                return {
+                    isConforme: true,
+                    isProportional: true,
+                    tipo: "PROPORCIONAL_EFETIVO",
+                    days: days,
+                    divisor: divisor,
+                    baseRotulo: cand.rotulo,
+                    rppsEsperado: abonoTestar,
+                    rppsEfetivoCheio: rppsEfetivoCalculado,
+                    abonoRetroativo: paidAbonoRetroativo,
+                    baseEfetivo: baseCargoEfetivo,
+                    desvio: 0
+                };
+            }
+        }
+    }
+
+    // Teste 4: Se não houver abono corrente mas houver apenas retroativo/passivo
+    if (paidAbonoRetroativo > 0 && paidAbonoCorrente === 0) {
+        return {
+            isConforme: true,
+            isProportional: false,
+            tipo: "PASSIVO_RETROATIVO",
+            days: cal.diasMesAtual,
+            divisor: cal.diasMesAtual,
+            baseRotulo: cal.divisoresGerais[0].rotulo,
+            rppsEsperado: totalAbono,
+            abonoRetroativo: paidAbonoRetroativo,
+            baseEfetivo: baseCargoEfetivo,
+            desvio: 0
+        };
+    }
+
+    // Divergência de cálculo
+    const baseEsperada = rppsEfetivoCalculado > 0 ? rppsEfetivoCalculado : rppsDiscountValue;
+    return {
+        isConforme: false,
+        isProportional: false,
+        tipo: "DIVERGENTE",
+        days: cal.diasMesAtual,
+        divisor: cal.diasMesAtual,
+        baseRotulo: cal.divisoresGerais[0].rotulo,
+        rppsEsperado: baseEsperada,
+        desvio: Math.abs(abonoTestar - baseEsperada),
+        baseEfetivo: baseCargoEfetivo,
+        abonoRetroativo: paidAbonoRetroativo
+    };
 }
 
 /* --- [Seção] Armazenamento de Estado Local (App Store) --- */
 const AppState = {
-    rawRecords: [],          // Registros brutos lidos
-    pivotedServers: {},      // Servidores agrupados em memória
-    auditFindings: [],       // Lista de auditoria e conclusões
-    filteredFindings: [],    // Conclusões filtradas (ativas para tabela)
-    isProcessing: false,     // Semáforo concorrente
-    chartInstance: null,     // Instância ativa do Chart.js
-    
-    // Propriedades do Motor Temporal
+    rawRecords: [],
+    pivotedServers: {},
+    auditFindings: [],
+    filteredFindings: [],
+    isProcessing: false,
+    chartInstance: null,
     matchedCompetence: "N/A",
     activeTableKey: "2026_JAN",
     activeVR: 714.40,
     isIncompatibleCompetence: false,
-    
-    // Paginação, Filtros e Busca Rápida
     currentPage: 1,
     itemsPerPage: 25,
-    activeFilter: "alerts",   // 'all' | 'alerts'
+    activeFilter: "alerts",
+    alertTypeFilter: "all",
     searchQuery: "",
     sortField: "id",
-    sortDirection: "asc"      // 'asc' | 'desc'
+    sortDirection: "asc"
 };
 
 /* ==========================================================================
-   === [CAPÍTULO] INICIALIZAÇÃO E CICLO DE VIDA ===
+   === [CAPÍTULO] INICIALIZAÇÃO E NAVEGAÇÃO ===
    ========================================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -289,15 +970,10 @@ document.addEventListener("DOMContentLoaded", () => {
     switchView("tab-dashboard");
 });
 
-/* ==========================================================================
-   === [CAPÍTULO] NAVEGAÇÃO E SPA ===
-   ========================================================================== */
-
 function switchView(targetTabId) {
     const viewMap = {
         "tab-dashboard": "view-dashboard",
-        "tab-auditoria": "view-auditoria",
-        "tab-criterios": "view-criterios"
+        "tab-auditoria": "view-auditoria"
     };
 
     const targetViewId = viewMap[targetTabId];
@@ -332,14 +1008,14 @@ function switchView(targetTabId) {
 }
 
 function initAppNavigation() {
-    document.querySelectorAll(".sidebar__menu-item").forEach(tab => {
+    document.querySelectorAll(".sidebar__menu-item[id^='tab-']").forEach(tab => {
         tab.addEventListener("click", (e) => {
             const tabId = e.currentTarget.id;
             if (tabId === "tab-auditoria" && AppState.auditFindings.length === 0) {
                 Swal.fire({
                     icon: "info",
                     title: "Aba Bloqueada",
-                    text: "Faça o upload da folha e execute o diagnóstico de desvios primeiro.",
+                    text: "Faça o upload da folha e execute o diagnóstico primeiro.",
                     confirmButtonColor: "var(--primary)"
                 });
                 return;
@@ -379,31 +1055,47 @@ function initThemeManager() {
         if (AppState.auditFindings.length > 0) {
             let totalActiveRubrics = 0;
             let divergentRubricsCount = 0;
-            let proportionalRubricsCount = 0;
+            let attentionRubricsCount = 0;
 
             AppState.auditFindings.forEach(f => {
                 const s = AppState.pivotedServers[f.id];
-                if (s && (f.status === "CONFORME" || f.status === "PROPORCIONAL" || f.status === "DIVERGENTE")) {
+                if (s && (f.status === "CONFORME" || f.status === "ATENCAO" || f.status === "PROPORCIONAL")) {
                     totalActiveRubrics += s.detalheRubricas.length;
                 }
                 if (f.has_venc_error) divergentRubricsCount++;
                 if (f.has_gaj_error) divergentRubricsCount++;
                 if (f.has_gas_error) divergentRubricsCount++;
-                if (f.aq_status === "DIVERGENTE") divergentRubricsCount++;
+                if (f.aq_tit_status === "DIVERGENTE") divergentRubricsCount++;
+                if (f.aq_trein_status === "DIVERGENTE") divergentRubricsCount++;
+                if (f.fccj_status === "DIVERGENTE") divergentRubricsCount++;
+                if (APP_CONFIG.features.auditSubstituicao && f.subst_status === "DIVERGENTE") divergentRubricsCount++;
+                if (f.alim_status === "DIVERGENTE") divergentRubricsCount++;
+                if (f.pre_status === "DIVERGENTE") divergentRubricsCount++;
+                if (APP_CONFIG.features.auditAbono && f.abono_status === "DIVERGENTE") divergentRubricsCount++;
                 if (f.has_cadastral_error) divergentRubricsCount++;
+                if (f.has_compulsoria_error) divergentRubricsCount++;
                 if (f.has_teto_error) divergentRubricsCount++;
                 if (f.has_he_error) divergentRubricsCount++;
-                if (f.aq_status === "PROPORCIONAL") proportionalRubricsCount++;
+                
+                if (f.is_venc_prop) attentionRubricsCount++;
+                if (f.aq_tit_status === "PROPORCIONAL") attentionRubricsCount++;
+                if (f.aq_trein_status === "PROPORCIONAL") attentionRubricsCount++;
+                if (f.fccj_status === "ATENCAO" || f.fccj_status === "PROPORCIONAL") attentionRubricsCount++;
+                if (APP_CONFIG.features.auditSubstituicao && f.subst_status === "PROPORCIONAL") attentionRubricsCount++;
+                if (f.alim_status === "PROPORCIONAL") attentionRubricsCount++;
+                if (f.pre_status === "PROPORCIONAL") attentionRubricsCount++;
+                if (APP_CONFIG.features.auditAbono && (f.abono_status === "ATENCAO" || f.abono_status === "PROPORCIONAL")) attentionRubricsCount++;
+                if (f.has_compulsoria_atencao) attentionRubricsCount++;
             });
 
-            const conformingRubricsCount = Math.max(0, totalActiveRubrics - divergentRubricsCount - proportionalRubricsCount);
-            renderComplianceChart(conformingRubricsCount, proportionalRubricsCount, divergentRubricsCount);
+            const conformingRubricsCount = Math.max(0, totalActiveRubrics - divergentRubricsCount - attentionRubricsCount);
+            renderComplianceChart(conformingRubricsCount, attentionRubricsCount, divergentRubricsCount);
         }
     });
 }
 
 /* ==========================================================================
-   === [CAPÍTULO] PROCESSAMENTO E INGESTÃO PROGRESSIVA ===
+   === [CAPÍTULO] INGESTÃO E PIVOTAGEM DE DADOS ===
    ========================================================================== */
 
 function initDropzoneHandlers() {
@@ -447,7 +1139,6 @@ function normalizeHeaderName(str) {
         .replace(/\s+/g, "_");
 }
 
-/* --- [Seção] Resolvedor de Vigência com Conversor de Ordinal do Excel --- */
 function resolveActiveTableConfig(competenciaStr) {
     if (!competenciaStr || competenciaStr === "N/A") {
         return { key: "2026_JAN", vr: 714.40, isIncompatible: false, label: "Janeiro/2026 (Padrão)", formattedDate: "N/A" };
@@ -544,8 +1235,8 @@ function runVisualLoadingProgress(callback) {
 
     const steps = [
         { delay: 300, text: "Lendo linhas locais em memória temporária..." },
-        { delay: 800, text: "Identificando competência e selecionando Tabela Salarial..." },
-        { delay: 1400, text: "Mapeando e agregando rubricas regulares e suplementares..." },
+        { delay: 800, text: "Identificando competência e selecionando Tabelas Salariais..." },
+        { delay: 1400, text: "Mapeando e segregando rubricas, datas de nascimento e vantagens..." },
         { delay: 1900, text: "Pivotagem estrutural concluída na Sandbox!" }
     ];
 
@@ -631,7 +1322,6 @@ function parseMatrixData(matrix) {
     pivotAndNormalizeData();
 }
 
-/* --- [Seção] Pivoteamento com Mapeamento Multi-Competência de HE e Férias --- */
 function pivotAndNormalizeData() {
     const servers = {};
     let matchedCompetence = "N/A";
@@ -640,6 +1330,7 @@ function pivotAndNormalizeData() {
         id: ["identificacao_unica", "matricula", "id", "identific", "cod_servidor"],
         nome: ["nome", "servidor", "nome_do_servidor"],
         cpf: ["cpf", "documento", "num_cpf"],
+        data_nascimento: ["data_nascimento", "data_de_nascimento", "dt_nascimento", "nascimento", "dtnasc", "dt_nasc"],
         carreira: ["carreira", "cargo_efetivo", "cargo"],
         sigla: ["sigla", "cargo_comissao", "funcao", "sigla_fc_cj"],
         atribuicao: ["atribuicao", "atrib", "nivel_atribuicao"],
@@ -653,7 +1344,6 @@ function pivotAndNormalizeData() {
         competencia: ["mes_ano", "competencia", "mes", "compet"]
     };
 
-    // Extração antecipada da competência
     for (const rec of AppState.rawRecords) {
         const keys = Object.keys(rec);
         const findCompKey = keys.find(k => fuzzyMap.competencia.some(pat => k.includes(pat)) && !k.includes("tipo"));
@@ -680,6 +1370,7 @@ function pivotAndNormalizeData() {
         const idRaw = getVal(fuzzyMap.id);
         const nomeRaw = getVal(fuzzyMap.nome);
         const cpfRaw = getVal(fuzzyMap.cpf);
+        const dataNascRaw = getVal(fuzzyMap.data_nascimento);
         const carreiraRaw = getVal(fuzzyMap.carreira, ["requisito", "ingresso"]);
         const siglaRaw = getVal(fuzzyMap.sigla);
         const atribuicaoRaw = getVal(fuzzyMap.atribuicao);
@@ -702,10 +1393,13 @@ function pivotAndNormalizeData() {
         const cleanId = idRaw.toString().trim();
 
         if (!servers[cleanId]) {
+            const parsedNasc = parseDataNascimento(dataNascRaw);
             servers[cleanId] = {
                 id: cleanId,
                 nome: nomeRaw ? nomeRaw.toString().trim() : "Não Informado",
                 cpf: cpfRaw ? cpfRaw.toString().replace(/[^\d]/g, "") : "",
+                data_nascimento: parsedNasc ? parsedNasc.strFormatada : "",
+                nascimento_obj: parsedNasc,
                 carreira: carreiraRaw ? carreiraRaw.toString().trim().toUpperCase() : "CARREIRA INDEFINIDA",
                 sigla: siglaRaw ? siglaRaw.toString().trim().toUpperCase() : "",
                 atribuicao: atribuicaoRaw !== undefined ? parseInt(atribuicaoRaw) : 0,
@@ -740,7 +1434,7 @@ function pivotAndNormalizeData() {
 
             const descStr = descRubricaRaw ? descRubricaRaw.toString().trim() : "Sem descrição";
 
-            if (parsedTipoComp === 0 && cleanRendDesc === 1) {
+            if (parsedTipoComp === 0) {
                 servers[cleanId].rubricas[cleanRubrica] = (servers[cleanId].rubricas[cleanRubrica] || 0) + valorParsed;
             } else if (cleanRendDesc === 1 && (isHorasExtras(descStr) || isFerias(descStr) || isGratificacaoNatalina(descStr))) {
                 servers[cleanId].rubricas[cleanRubrica] = (servers[cleanId].rubricas[cleanRubrica] || 0) + valorParsed;
@@ -765,7 +1459,6 @@ function pivotAndNormalizeData() {
     AppState.activeVR = tableConfig.vr;
     AppState.isIncompatibleCompetence = tableConfig.isIncompatible;
 
-    // Contagem harmonizada dos 4 quadrantes para a pré-visualização da Tela 1 (Opção A)
     let countActiveServers = 0;
     let countNonAuditedServers = 0;
     let countAuditedRubrics = 0;
@@ -807,11 +1500,16 @@ function pivotAndNormalizeData() {
         if (!previewBanner) {
             previewBanner = document.createElement("div");
             previewBanner.id = "preview-incompatible-banner";
-            previewBanner.style.cssText = "margin-top: 16px; padding: 14px 16px; background-color: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; font-size: 13.5px; color: #92400E; display: flex; align-items: center; gap: 10px;";
+            previewBanner.className = "notice-banner notice-banner--warning";
             previewPanel.appendChild(previewBanner);
         }
         previewBanner.style.display = "flex";
-        previewBanner.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #D97706;"></i> <div><strong>Aviso de Competência Histórica (${AppState.matchedCompetence}):</strong> Não há tabela salarial cadastrada para este ano no aplicativo. A auditoria usará a Tabela de Jan/2026 como espelho estático.</div>`;
+        previewBanner.innerHTML = `
+            <i class="fa-solid fa-triangle-exclamation notice-banner__icon"></i>
+            <div class="notice-banner__content">
+                <strong>Aviso de Competência Histórica (${AppState.matchedCompetence}):</strong> Não há tabela cadastrada para este ano. A auditoria usará a Tabela de Jan/2026 como espelho estático.
+            </div>
+        `;
     } else if (previewBanner) {
         previewBanner.style.display = "none";
     }
@@ -843,7 +1541,7 @@ function resetFileUIPanel() {
 }
 
 /* ==========================================================================
-   === [CAPÍTULO] MOTOR DE AUDITORIA DETERMINÍSTICA (FOCO EM RUBRICAS) ===
+   === [CAPÍTULO] MOTOR DE AUDITORIA DETERMINÍSTICA EXPANDIDO ===
    ========================================================================== */
 
 async function runDeterministicAudit() {
@@ -864,7 +1562,7 @@ async function runDeterministicAudit() {
 
     Swal.fire({
         title: "Processando Auditoria",
-        text: `Comparando lançamentos contra a Tabela do TSE (${TABELAS_HISTORICAS[AppState.activeTableKey].label})...`,
+        text: `Auditando lançamentos contra as Tabelas do TSE (${TABELAS_HISTORICAS[AppState.activeTableKey].label})...`,
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
@@ -872,6 +1570,8 @@ async function runDeterministicAudit() {
     const activeConfig = TABELAS_HISTORICAS[AppState.activeTableKey];
     const activeVR = activeConfig.vr;
     const activeTables = activeConfig.tabelas;
+    const activeFcTable = activeConfig.fc;
+    const activeCjTable = activeConfig.cj;
 
     const findings = [];
     let countActiveServers = 0;
@@ -884,7 +1584,7 @@ async function runDeterministicAudit() {
     let totalActiveRubrics = 0;
     let totalNonAuditedRubrics = 0;
     let divergentRubricsCount = 0;
-    let proportionalRubricsCount = 0;
+    let attentionRubricsCount = 0;
 
     for (const id in AppState.pivotedServers) {
         const server = AppState.pivotedServers[id];
@@ -904,13 +1604,18 @@ async function runDeterministicAudit() {
         const paidGaj = server.rubricas[RUBRICA_GAJ] || 0;
         const paidGas = server.rubricas[RUBRICA_GAS] || 0;
 
-        const paidAq = (server.rubricas["462001"] || 0) + 
-                       (server.rubricas["463001"] || 0) + 
-                       (server.rubricas["23001"] || 0);
+        const paidAqTit = (server.rubricas[RUBRICA_AQ_TITULACAO_1] || 0) + 
+                          (server.rubricas[RUBRICA_AQ_TITULACAO_2] || 0);
+        const paidAqTrein = server.rubricas[RUBRICA_AQ_TREINAMENTO] || 0;
 
-        // =========================================================================
-        // SEGREGAÇÃO DE MACROBLOCOS FINANCEIROS (TETO ORDINÁRIO, HE, OUTRAS E DESCONTOS)
-        // =========================================================================
+        let paidAlim = 0;
+        let paidPre = 0;
+        let paidAbonoCorrente = 0;
+        let paidAbonoRetroativo = 0;
+        let paidSubst = 0;
+        let paidRppsDesconto = 0;
+        let paidVpni = 0;
+
         let somaRemuneratoriaOrdinaria = 0;
         let somaHorasExtras = 0;
         let somaOutrasVerbas = 0;
@@ -918,9 +1623,27 @@ async function runDeterministicAudit() {
         const rubricasTetoOrdinario = [];
 
         server.detalheRubricas.forEach(rub => {
+            const cod = rub.codigo;
+            const desc = rub.descricao.toUpperCase();
+
+            if (rub.tipoRD === 2 && RUBRICAS_DESCONTO_RPPS.includes(cod)) {
+                paidRppsDesconto += rub.valor;
+            }
+
             if (rub.tipoRD === 1) {
-                const desc = rub.descricao;
-                const cod = rub.codigo;
+                if (RUBRICAS_ALIMENTACAO.includes(cod) || desc.includes("ALIMENTACAO") || desc.includes("ALIMENTAÇÃO")) {
+                    paidAlim += rub.valor;
+                } else if (RUBRICAS_PRE_ESCOLAR.includes(cod) || desc.includes("PRE ESCOLAR") || desc.includes("PRÉ-ESCOLAR")) {
+                    paidPre += rub.valor;
+                } else if (RUBRICAS_ABONO_CORRENTE.includes(cod)) {
+                    paidAbonoCorrente += rub.valor;
+                } else if (RUBRICAS_ABONO_RETROATIVO.includes(cod) || (isAbonoPermanencia(cod, desc) && !RUBRICAS_ABONO_CORRENTE.includes(cod))) {
+                    paidAbonoRetroativo += rub.valor;
+                } else if (isSubstituicaoComissao(cod, desc)) {
+                    paidSubst += rub.valor;
+                } else if (RUBRICAS_VPNI_BASE.includes(cod) || desc.includes("VPNI") || desc.includes("QUINTOS") || desc.includes("DECIMOS")) {
+                    paidVpni += rub.valor;
+                }
 
                 if (isHorasExtras(desc)) {
                     somaHorasExtras += rub.valor;
@@ -935,28 +1658,30 @@ async function runDeterministicAudit() {
             }
         });
 
-        // 1. Teto Constitucional Ordinário (R$ 46.366,19)
+        const paidAbonoTotal = paidAbonoCorrente + paidAbonoRetroativo;
+
         const excessoTetoOrdinario = Math.max(0, somaRemuneratoriaOrdinaria - TETO_CONSTITUCIONAL_STF);
         const possuiExcessoTetoOrdinario = excessoTetoOrdinario > 0.01;
 
-        // 2. Limite Específico de Horas Extras do TSE (R$ 17.000,00)
         const excessoLimiteHE = Math.max(0, somaHorasExtras - LIMITE_HORAS_EXTRAS_TSE);
         const possuiExcessoHE = excessoLimiteHE > 0.01;
 
-        // Isolamento de Inativos e Pensionistas
         const isPensionOrInactiveStrict = server.categoria === 5 || server.categoria === 6 || server.categoria === 7 ||
                                           server.situacao.includes("INATIVO") || server.situacao.includes("PENSIONISTA") ||
                                           server.situacao.includes("PENSAO");
 
         const isAfastadoWithoutPay = !isPensionOrInactiveStrict && (paidVenc === 0 && paidGaj === 0);
 
-        if (isPensionOrInactiveStrict) {
-            countInactiveServers++;
+        if (isPensionOrInactiveStrict || isAfastadoWithoutPay) {
+            if (isPensionOrInactiveStrict) countInactiveServers++;
+            else countAfastadosServers++;
             totalNonAuditedRubrics += server.detalheRubricas.length;
             findings.push({
                 id: server.id,
                 nome: server.nome,
                 cpf: server.cpf,
+                data_nascimento: server.data_nascimento,
+                idade_calculada: null,
                 carreira: normalizedCareer,
                 classe: "N/A",
                 padrao: "N/A",
@@ -967,9 +1692,30 @@ async function runDeterministicAudit() {
                 gaj_paga: paidGaj,
                 gas_esperada: 0,
                 gas_paga: paidGas,
-                aq_esperado: 0,
-                aq_pago: paidAq,
-                aq_status: "CONFORME",
+                aq_tit_esperado: 0,
+                aq_tit_pago: paidAqTit,
+                aq_tit_status: "CONFORME",
+                aq_trein_esperado: 0,
+                aq_trein_pago: paidAqTrein,
+                aq_trein_status: "CONFORME",
+                fccj_cargo: "",
+                fccj_modalidade: "",
+                fccj_esperado: 0,
+                fccj_pago: 0,
+                fccj_status: "CONFORME",
+                fccj_dias: 30,
+                subst_paga: 0,
+                subst_esperada: 0,
+                subst_status: "CONFORME",
+                alim_pago: paidAlim,
+                alim_esperado: 0,
+                alim_status: "CONFORME",
+                pre_pago: paidPre,
+                pre_esperado: 0,
+                pre_status: "CONFORME",
+                abono_pago: paidAbonoTotal,
+                abono_esperado: 0,
+                abono_status: "CONFORME",
                 soma_ordinaria: somaRemuneratoriaOrdinaria,
                 soma_he: somaHorasExtras,
                 soma_outras: somaOutrasVerbas,
@@ -980,12 +1726,21 @@ async function runDeterministicAudit() {
                 has_venc_error: false,
                 has_gaj_error: false,
                 has_gas_error: false,
+                has_aq_tit_error: false,
+                has_aq_trein_error: false,
+                has_fccj_error: false,
+                has_subst_error: false,
+                has_alim_error: false,
+                has_pre_error: false,
+                has_abono_error: false,
                 has_cadastral_error: false,
+                has_compulsoria_error: false,
+                has_compulsoria_atencao: false,
                 has_teto_error: false,
                 has_he_error: false,
                 detalhe: `
                     <div class="audit-issue">
-                        <span class="audit-issue__badge badge badge--neutral"><i class="fa-solid fa-user-slash"></i> Inativo / Pensionista</span>
+                        <span class="audit-issue__badge badge badge--neutral"><i class="fa-solid fa-user-slash"></i> ${isPensionOrInactiveStrict ? 'Inativo / Pensionista' : 'Cedido / Licenciado sem remuneração'}</span>
                     </div>
                 `,
                 desvio: 0
@@ -993,57 +1748,18 @@ async function runDeterministicAudit() {
             continue;
         }
 
-        if (isAfastadoWithoutPay) {
-            countAfastadosServers++;
-            totalNonAuditedRubrics += server.detalheRubricas.length;
-            findings.push({
-                id: server.id,
-                nome: server.nome,
-                cpf: server.cpf,
-                carreira: normalizedCareer,
-                classe: "N/A",
-                padrao: "N/A",
-                status: "NAO_ANALISADO",
-                venc_esperado: 0,
-                venc_pago: paidVenc,
-                gaj_esperada: 0,
-                gaj_paga: paidGaj,
-                gas_esperada: 0,
-                gas_paga: paidGas,
-                aq_esperado: 0,
-                aq_pago: paidAq,
-                aq_status: "CONFORME",
-                soma_ordinaria: somaRemuneratoriaOrdinaria,
-                soma_he: somaHorasExtras,
-                soma_outras: somaOutrasVerbas,
-                soma_descontos: somaDescontos,
-                rubricas_teto_ordinario: rubricasTetoOrdinario,
-                excesso_teto_ordinario: 0,
-                excesso_he: 0,
-                has_venc_error: false,
-                has_gaj_error: false,
-                has_gas_error: false,
-                has_cadastral_error: false,
-                has_teto_error: false,
-                has_he_error: false,
-                detalhe: `
-                    <div class="audit-issue">
-                        <span class="audit-issue__badge badge badge--neutral"><i class="fa-solid fa-user-slash"></i> Cedido / Licenciado sem remuneração</span>
-                    </div>
-                `,
-                desvio: 0
-            });
-            continue;
-        }
-
-        // Incremento dos servidores ativos e de seus lançamentos sob auditoria
         countActiveServers++;
         totalActiveRubrics += server.detalheRubricas.length;
 
+        // Verificação Ampla da Idade e Aposentadoria Compulsória (75 Anos — EC nº 88/2015)
+        const serverAgeInfo = calcularIdadeCompetencia(server.nascimento_obj, AppState.matchedCompetence);
+        server.idade_calculada = serverAgeInfo.idadeAnos;
+        const hasCompulsoriaError = serverAgeInfo.jaTinha75Antes;
+        const hasCompulsoriaAtencao = serverAgeInfo.completouNoMes;
+
         const referenceTable = activeTables[normalizedCareer];
-        const compInfo = getCompetenceMonthsInfo(AppState.matchedCompetence);
         let matchedGrade = null;
-        let propVencInfo = null;
+        let vencPropInfo = null;
 
         for (let i = 0; i < referenceTable.length; i++) {
             const grade = referenceTable[i];
@@ -1060,101 +1776,318 @@ async function runDeterministicAudit() {
             matchedGrade = referenceTable.find(g => Math.abs(g.vencimento - paidVenc) < 0.1);
         }
 
-        if (!matchedGrade && paidVenc > 0) {
-            const candidates = [compInfo.previous, compInfo.current];
-            for (const cand of candidates) {
-                if (matchedGrade) break;
-                const divisor = cand.days;
+        if (!matchedGrade) {
+            vencPropInfo = checkVencGajProportionalAdjustment(paidVenc, paidGaj, referenceTable);
+            if (vencPropInfo) {
+                matchedGrade = vencPropInfo.grade;
+            } else {
+                const otherCareer = normalizedCareer === "ANALISTA JUDICIARIO" ? "TECNICO JUDICIARIO" : "ANALISTA JUDICIARIO";
+                const otherTable = activeTables[otherCareer];
+                const crossCheck = checkVencGajProportionalAdjustment(paidVenc, paidGaj, otherTable);
 
-                for (const grade of referenceTable) {
-                    if (paidVenc < grade.vencimento) {
-                        const dailyVenc = grade.vencimento / divisor;
-                        const days = Math.round(paidVenc / dailyVenc);
-
-                        if (days >= 1 && days < divisor && Math.abs(paidVenc - days * dailyVenc) < 0.25) {
-                            const expectedPropGaj = (grade.gaj / divisor) * days;
-                            const isGajProp = Math.abs(paidGaj - expectedPropGaj) < 0.25 || paidGaj === 0;
-
-                            if (isGajProp) {
-                                matchedGrade = grade;
-                                propVencInfo = {
-                                    isProportional: true,
-                                    days: days,
-                                    refLabel: cand.label,
-                                    divisor: divisor,
-                                    expectedVenc: days * dailyVenc,
-                                    expectedGaj: paidGaj > 0 ? expectedPropGaj : 0
-                                };
-                                break;
-                            }
-                        }
-                    }
+                if (crossCheck) {
+                    vencPropInfo = crossCheck;
+                    matchedGrade = crossCheck.grade;
+                    vencPropInfo.cargoIncompativel = true;
+                    vencPropInfo.cargoEsperado = otherCareer;
                 }
             }
         }
 
         if (matchedGrade) {
-            const expectedVenc = propVencInfo ? propVencInfo.expectedVenc : matchedGrade.vencimento;
-            const expectedGaj = propVencInfo ? propVencInfo.expectedGaj : matchedGrade.gaj;
+            let expectedVenc = matchedGrade.vencimento;
+            let expectedGaj = matchedGrade.gaj;
+            let isVencProp = false;
+
+            if (vencPropInfo) {
+                expectedVenc = vencPropInfo.vencEsperado;
+                expectedGaj = vencPropInfo.gajEsperada;
+                isVencProp = true;
+            }
             
             let expectedGas = 0;
             if (paidGas > 0) {
                 expectedGas = expectedVenc * 0.35;
             }
-            const isGasConforming = Math.abs(expectedGas - paidGas) < 0.1;
+            const isGasConforming = Math.abs(expectedGas - paidGas) < 0.15;
 
-            let expectedAq = 0;
-            let expectedT = 0; 
-            let expectedQ = 0; 
+            // AQ Titulação
+            let expectedAqTit = 0;
+            const coefTit = paidAqTit / activeVR;
 
-            const rawT = server.rubricas["23001"] || 0;
-            const coefT = rawT / activeVR;
-            let matchedCoefT = 0.0;
+            if (coefTit >= 5.0 - 0.01) expectedAqTit = 5.0 * activeVR;
+            else if (coefTit >= 3.5 - 0.01) expectedAqTit = 3.5 * activeVR;
+            else if (coefTit >= 2.0 - 0.01) expectedAqTit = 2.0 * activeVR;
+            else if (coefTit >= 1.5 - 0.01) expectedAqTit = 1.5 * activeVR;
+            else if (coefTit >= 1.0 - 0.01) expectedAqTit = 1.0 * activeVR;
+            else if (coefTit >= 0.5 - 0.01) expectedAqTit = 0.5 * activeVR;
 
-            if (coefT >= 0.60 - 0.01) {
-                matchedCoefT = 0.6;
-            } else if (coefT >= 0.40 - 0.01) {
-                matchedCoefT = 0.4;
-            } else if (coefT >= 0.20 - 0.01) {
-                matchedCoefT = 0.2;
-            } else {
-                matchedCoefT = 0.0;
+            const isAqTitExactMatch = Math.abs(expectedAqTit - paidAqTit) < 0.1;
+            const propTitCheck = !isAqTitExactMatch ? checkAqTitProportionalAdjustment(paidAqTit, expectedAqTit, activeVR) : { isProportional: false, days: 0 };
+
+            let aqTitStatus = isAqTitExactMatch ? "CONFORME" : (propTitCheck.isProportional ? "PROPORCIONAL" : (paidAqTit > 0 ? "DIVERGENTE" : "CONFORME"));
+
+            // AQ Treinamento
+            let expectedAqTrein = 0;
+            const coefTrein = paidAqTrein / activeVR;
+
+            if (coefTrein >= 0.60 - 0.01) expectedAqTrein = 0.60 * activeVR;
+            else if (coefTrein >= 0.40 - 0.01) expectedAqTrein = 0.40 * activeVR;
+            else if (coefTrein >= 0.20 - 0.01) expectedAqTrein = 0.20 * activeVR;
+
+            const isAqTreinExactMatch = Math.abs(expectedAqTrein - paidAqTrein) < 0.1;
+            const propTreinCheck = !isAqTreinExactMatch ? checkAqTreinProportionalAdjustment(paidAqTrein, expectedAqTrein, activeVR) : { isProportional: false, days: 0 };
+
+            let aqTreinStatus = isAqTreinExactMatch ? "CONFORME" : (propTreinCheck.isProportional ? "PROPORCIONAL" : (paidAqTrein > 0 ? "DIVERGENTE" : "CONFORME"));
+
+            if ((paidAqTit + paidAqTrein) > (TETO_GLOBAL_AQ_VR * activeVR) + 0.1) {
+                aqTitStatus = "DIVERGENTE";
             }
-            expectedT = matchedCoefT * activeVR;
 
-            const rawQ = (server.rubricas["462001"] || 0) + (server.rubricas["463001"] || 0);
-            const coefQ = rawQ / activeVR;
-            let matchedCoefQ = 0.0;
+            // FC e CJ Titular com Detecção de Transição e Busca Reversa
+            let fccjCargo = "";
+            let fccjModalidade = "";
+            let expectedFccj = 0;
+            let paidFccj = 0;
+            let fccjStatus = "CONFORME";
+            let fccjDias = 30;
+            let fccjDivergenceType = "";
+            let fccjCargoCorrespondente = "";
+            let fccjTipoCorrespondente = "";
 
-            if (coefQ >= 5.0 - 0.01) {
-                matchedCoefQ = 5.0;
-            } else if (coefQ >= 3.5 - 0.01) {
-                matchedCoefQ = 3.5;
-            } else if (coefQ >= 2.0 - 0.01) {
-                matchedCoefQ = 2.0;
-            } else if (coefQ >= 1.5 - 0.01) {
-                matchedCoefQ = 1.5;
-            } else if (coefQ >= 1.0 - 0.01) {
-                matchedCoefQ = 1.0;
-            } else if (coefQ >= 0.5 - 0.01) {
-                matchedCoefQ = 0.5;
-            } else {
-                matchedCoefQ = 0.0;
+            let rawSigla = (server.sigla || "").trim().toUpperCase().replace("-", " ");
+            rawSigla = rawSigla.replace(/FC\s*0?(\d)/g, "FC $1").replace(/CJ\s*0?(\d)/g, "CJ $1");
+            const matchSigla = rawSigla.match(/^(FC\s*\d|CJ\s*\d)/);
+            if (matchSigla) {
+                rawSigla = matchSigla[1].replace(/\s+/, " ");
             }
-            expectedQ = matchedCoefQ * activeVR;
 
-            expectedAq = expectedT + expectedQ;
+            const isCjSigla = rawSigla.startsWith("CJ");
+            const isFcSigla = rawSigla.startsWith("FC");
 
-            const isAqExactMatch = Math.abs(expectedAq - paidAq) < 0.1;
-            const propCheck = !isAqExactMatch ? checkAqProportionalAdjustment(paidAq, expectedAq, activeVR, compInfo) : { isProportional: false, days: 0, refLabel: "" };
-            
-            let aqStatus = "CONFORME";
-            if (isAqExactMatch) {
-                aqStatus = "CONFORME";
-            } else if (propCheck.isProportional) {
-                aqStatus = "PROPORCIONAL";
+            let paidCjIntegral = 0;
+            let paidCjOpcao = 0;
+            let paidFcVal = 0;
+
+            server.detalheRubricas.forEach(rub => {
+                if (rub.tipoComp === 0 && rub.tipoRD === 1) {
+                    const cod = rub.codigo;
+                    const desc = rub.descricao.toUpperCase();
+
+                    if (cod === RUBRICA_CJ_INTEGRAL || desc.includes("CARGO EM COMISSAO INTEGRAL")) {
+                        paidCjIntegral += rub.valor;
+                    } else if (RUBRICAS_CJ_OPCAO.includes(cod) || desc.includes("OPCAO C EFETIVO") || desc.includes("OPTANTE C EFETIVO")) {
+                        paidCjOpcao += rub.valor;
+                    } else if (isFuncaoComissionada(cod, desc)) {
+                        paidFcVal += rub.valor;
+                    }
+                }
+            });
+
+            const totalPaidComissao = paidCjIntegral + paidCjOpcao + paidFcVal;
+
+            if (totalPaidComissao > 0) {
+                for (const fcName in activeFcTable) {
+                    if (Math.abs(totalPaidComissao - activeFcTable[fcName]) < 0.15) {
+                        fccjCargoCorrespondente = fcName;
+                        fccjTipoCorrespondente = "Função de Confiança";
+                        break;
+                    }
+                }
+                if (!fccjCargoCorrespondente) {
+                    for (const cjName in activeCjTable) {
+                        if (Math.abs(totalPaidComissao - activeCjTable[cjName].opcao) < 0.15) {
+                            fccjCargoCorrespondente = cjName;
+                            fccjTipoCorrespondente = "Opção Efetivo, 65%";
+                            break;
+                        }
+                        if (Math.abs(totalPaidComissao - activeCjTable[cjName].integral) < 0.15) {
+                            fccjCargoCorrespondente = cjName;
+                            fccjTipoCorrespondente = "Integral, 100%";
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (isCjSigla) {
+                fccjCargo = rawSigla;
+                const cjConfig = activeCjTable[rawSigla];
+
+                if (cjConfig) {
+                    expectedFccj = paidCjIntegral > 0 ? cjConfig.integral : cjConfig.opcao;
+                    fccjModalidade = paidCjIntegral > 0 ? "Integral, 100%" : "Opção Efetivo, 65%";
+                    paidFccj = totalPaidComissao;
+
+                    if (totalPaidComissao === 0) {
+                        fccjStatus = "ATENCAO";
+                        fccjDivergenceType = "NAO_PAGA";
+                    } else if (Math.abs(totalPaidComissao - expectedFccj) < 0.10) {
+                        fccjStatus = "CONFORME";
+                        fccjDias = 30;
+                    } else {
+                        const propCheck = checkCommissionProportionalAdjustment(totalPaidComissao, expectedFccj);
+                        if (propCheck.isProportional) {
+                            fccjStatus = "ATENCAO";
+                            fccjDias = propCheck.days;
+                        } else if (fccjCargoCorrespondente && fccjCargoCorrespondente !== rawSigla) {
+                            fccjStatus = "ATENCAO";
+                            fccjDivergenceType = "DESCOMPASSO";
+                        } else {
+                            fccjStatus = "DIVERGENTE";
+                        }
+                    }
+                }
+            } else if (isFcSigla) {
+                fccjCargo = rawSigla;
+                fccjModalidade = "Função de Confiança";
+                const fcFullVal = activeFcTable[rawSigla] || 0;
+                expectedFccj = fcFullVal;
+                paidFccj = totalPaidComissao;
+
+                if (totalPaidComissao === 0) {
+                    fccjStatus = "ATENCAO";
+                    fccjDivergenceType = "NAO_PAGA";
+                } else if (Math.abs(totalPaidComissao - expectedFccj) < 0.10) {
+                    fccjStatus = "CONFORME";
+                    fccjDias = 30;
+                } else {
+                    const propCheck = checkCommissionProportionalAdjustment(totalPaidComissao, expectedFccj);
+                    if (propCheck.isProportional) {
+                        fccjStatus = "ATENCAO";
+                        fccjDias = propCheck.days;
+                    } else if (fccjCargoCorrespondente && fccjCargoCorrespondente !== rawSigla) {
+                        fccjStatus = "ATENCAO";
+                        fccjDivergenceType = "DESCOMPASSO";
+                    } else {
+                        fccjStatus = "DIVERGENTE";
+                    }
+                }
             } else {
-                aqStatus = "DIVERGENTE";
+                if (totalPaidComissao > 0) {
+                    paidFccj = totalPaidComissao;
+                    let reverseMatch = null;
+
+                    for (const fcName in activeFcTable) {
+                        const fullVal = activeFcTable[fcName];
+                        const check = checkCommissionProportionalAdjustment(totalPaidComissao, fullVal);
+                        if (check.isProportional) {
+                            reverseMatch = { cargo: fcName, modalidade: "Função de Confiança", esperado: fullVal, dias: check.days };
+                            break;
+                        }
+                    }
+
+                    if (!reverseMatch) {
+                        for (const cjName in activeCjTable) {
+                            const fullVal = activeCjTable[cjName].opcao;
+                            const check = checkCommissionProportionalAdjustment(totalPaidComissao, fullVal);
+                            if (check.isProportional) {
+                                reverseMatch = { cargo: cjName, modalidade: "Opção Efetivo, 65%", esperado: fullVal, dias: check.days };
+                                break;
+                            }
+                        }
+                    }
+
+                    if (reverseMatch) {
+                        fccjCargo = reverseMatch.cargo;
+                        fccjModalidade = reverseMatch.modalidade;
+                        expectedFccj = reverseMatch.esperado;
+                        fccjDias = reverseMatch.dias;
+                        fccjStatus = "ATENCAO";
+                    } else if (fccjCargoCorrespondente) {
+                        fccjCargo = "Sem sigla";
+                        fccjModalidade = fccjTipoCorrespondente;
+                        expectedFccj = activeFcTable[fccjCargoCorrespondente] || (activeCjTable[fccjCargoCorrespondente] && activeCjTable[fccjCargoCorrespondente].opcao) || 0;
+                        fccjStatus = "ATENCAO";
+                        fccjDivergenceType = "SEM_SIGLA";
+                    } else {
+                        fccjCargo = "Sem sigla";
+                        fccjModalidade = paidCjIntegral > 0 ? "Integral, 100%" : "Opção Efetivo, 65%";
+                        expectedFccj = 0;
+                        fccjStatus = "DIVERGENTE";
+                    }
+                }
+            }
+
+            // Substituição de Função e Cargo em Comissão
+            let substStatus = "CONFORME";
+            let substEsperada = 0;
+            let substInfo = null;
+
+            if (paidSubst > 0) {
+                const substResult = checkSubstituicaoComissao(paidSubst, server.sigla, activeFcTable, activeCjTable);
+                if (substResult) {
+                    substStatus = "PROPORCIONAL";
+                    substEsperada = paidSubst;
+                    substInfo = substResult;
+                } else {
+                    substStatus = "DIVERGENTE";
+                    substEsperada = 0;
+                    substInfo = null;
+                }
+            }
+
+            // Auxílio-Alimentação
+            let alimStatus = "CONFORME";
+            let alimEsperado = 0;
+            let alimDias = 30;
+
+            if (paidAlim > 0) {
+                const alimCheck = checkBeneficioProportionalAdjustment(paidAlim, VALOR_AUXILIO_ALIMENTACAO_2026);
+                alimEsperado = paidAlim;
+                alimDias = alimCheck.days;
+                if (!alimCheck.isConforme) {
+                    alimStatus = "DIVERGENTE";
+                    alimEsperado = VALOR_AUXILIO_ALIMENTACAO_2026;
+                } else if (alimCheck.isProportional) {
+                    alimStatus = "PROPORCIONAL";
+                }
+            }
+
+            // Assistência Pré-Escolar
+            let preStatus = "CONFORME";
+            let preEsperado = 0;
+            let preDias = 30;
+            let preCotas = 0;
+
+            if (paidPre > 0) {
+                const preCheck = checkBeneficioProportionalAdjustment(paidPre, VALOR_ASSISTENCIA_PRE_ESCOLAR_2026);
+                preEsperado = paidPre;
+                preDias = preCheck.days;
+                preCotas = preCheck.cotas;
+                if (!preCheck.isConforme) {
+                    preStatus = "DIVERGENTE";
+                    preEsperado = VALOR_ASSISTENCIA_PRE_ESCOLAR_2026;
+                } else if (preCheck.isProportional) {
+                    preStatus = "PROPORCIONAL";
+                }
+            }
+
+            // Abono de Permanência Refatorado
+            let abonoStatus = "CONFORME";
+            let abonoEsperado = 0;
+            let abonoDias = 30;
+            let abonoInfo = null;
+            let abonoDesvioCalculado = 0;
+
+            if (paidAbonoTotal > 0) {
+                const baseCargoEfetivo = paidVenc + paidGaj + paidGas + paidAqTit + paidAqTrein + paidVpni;
+                const abonoCheck = checkAbonoPermanenciaProportional(paidAbonoCorrente, paidAbonoRetroativo, paidRppsDesconto, baseCargoEfetivo, serverAgeInfo);
+
+                abonoInfo = abonoCheck;
+                abonoEsperado = abonoCheck.rppsEsperado;
+                abonoDias = abonoCheck.days;
+                abonoDesvioCalculado = abonoCheck.desvio || 0;
+
+                if (abonoCheck.isConforme) {
+                    if (abonoCheck.isProportional || paidAbonoRetroativo > 0) {
+                        abonoStatus = "ATENCAO";
+                    } else {
+                        abonoStatus = "CONFORME";
+                    }
+                } else {
+                    abonoStatus = "DIVERGENTE";
+                }
             }
 
             // Validação Cadastral de FC/CJ
@@ -1162,50 +2095,133 @@ async function runDeterministicAudit() {
             const sigla = server.sigla;
             const atrib = server.atribuicao;
 
-            if (sigla === "FC 6" && atrib !== 1) {
-                cadastralIssue = "FC 6 exige Atribuição = 1.";
-            } else if (sigla === "FC 4" && atrib !== 3) {
-                cadastralIssue = "FC 4 exige Atribuição = 3.";
-            } else if (sigla === "FC 3" && atrib !== 3) {
-                cadastralIssue = "FC 3 exige Atribuição = 3.";
-            } else if (sigla === "FC 1" && atrib !== 3) {
-                cadastralIssue = "FC 1 exige Atribuição = 3.";
-            } else if (sigla.startsWith("CJ") && atrib === 3) {
-                cadastralIssue = "Cargos CJ não admitem Atribuição = 3.";
-            }
+            if (sigla === "FC 6" && atrib !== 1) cadastralIssue = "FC 6 exige Atribuição = 1.";
+            else if (sigla === "FC 4" && atrib !== 3) cadastralIssue = "FC 4 exige Atribuição = 3.";
+            else if (sigla === "FC 3" && atrib !== 3) cadastralIssue = "FC 3 exige Atribuição = 3.";
+            else if (sigla === "FC 1" && atrib !== 3) cadastralIssue = "FC 1 exige Atribuição = 3.";
+            else if (sigla.startsWith("CJ") && atrib === 3) cadastralIssue = "Cargos CJ não admitem Atribuição = 3.";
 
-            const isVencConforming = Math.abs(expectedVenc - paidVenc) < 0.1;
-            const isGajConforming = Math.abs(expectedGaj - paidGaj) < 0.1;
-            
+            const isTransicaoFerias = vencPropInfo && vencPropInfo.tipo === "TRANSICAO_FERIAS";
+            const isVencConforming = Math.abs(expectedVenc - paidVenc) < 0.20 || isTransicaoFerias;
+            const isGajConforming = Math.abs(expectedGaj - paidGaj) < 0.20 || isTransicaoFerias;
+
             const hasVencError = !isVencConforming;
             const hasGajError = !isGajConforming;
             const hasGasError = !isGasConforming;
+            const hasAqTitError = (aqTitStatus === "DIVERGENTE");
+            const hasAqTreinError = (aqTreinStatus === "DIVERGENTE");
+            const hasFccjError = (fccjStatus === "DIVERGENTE");
+            const hasSubstError = APP_CONFIG.features.auditSubstituicao ? (substStatus === "DIVERGENTE") : false;
+            const hasAlimError = (alimStatus === "DIVERGENTE");
+            const hasPreError = (preStatus === "DIVERGENTE");
+            const hasAbonoError = APP_CONFIG.features.auditAbono ? (abonoStatus === "DIVERGENTE") : false;
             const hasCadastralError = !!cadastralIssue;
             const hasTetoError = possuiExcessoTetoOrdinario;
             const hasHeError = possuiExcessoHE;
-            
-            const hasCriticalError = hasVencError || hasGajError || hasGasError || (aqStatus === "DIVERGENTE") || hasCadastralError || hasTetoError || hasHeError;
-            const hasProportional = !hasCriticalError && (propVencInfo !== null || aqStatus === "PROPORCIONAL");
+
+            const hasSubstAttention = APP_CONFIG.features.auditSubstituicao ? (substStatus === "PROPORCIONAL") : false;
+            const hasAbonoAttention = APP_CONFIG.features.auditAbono ? (abonoStatus === "ATENCAO" || abonoStatus === "PROPORCIONAL") : false;
+
+            const hasCriticalError = hasVencError || hasGajError || hasGasError || hasAqTitError || hasAqTreinError || hasFccjError || hasSubstError || hasAlimError || hasPreError || hasAbonoError || hasCadastralError || hasCompulsoriaError || hasTetoError || hasHeError;
+            const hasAttentionOnly = !hasCriticalError && (isVencProp || aqTitStatus === "PROPORCIONAL" || aqTreinStatus === "PROPORCIONAL" || fccjStatus === "ATENCAO" || fccjStatus === "PROPORCIONAL" || hasSubstAttention || alimStatus === "PROPORCIONAL" || preStatus === "PROPORCIONAL" || hasAbonoAttention || hasCompulsoriaAtencao);
+
+            if (isVencProp) attentionRubricsCount++;
+            if (aqTitStatus === "PROPORCIONAL") attentionRubricsCount++;
+            if (aqTreinStatus === "PROPORCIONAL") attentionRubricsCount++;
+            if (fccjStatus === "ATENCAO" || fccjStatus === "PROPORCIONAL") attentionRubricsCount++;
+            if (hasSubstAttention) attentionRubricsCount++;
+            if (alimStatus === "PROPORCIONAL") attentionRubricsCount++;
+            if (preStatus === "PROPORCIONAL") attentionRubricsCount++;
+            if (hasAbonoAttention) attentionRubricsCount++;
+            if (hasCompulsoriaAtencao) attentionRubricsCount++;
 
             if (hasVencError) divergentRubricsCount++;
             if (hasGajError) divergentRubricsCount++;
             if (hasGasError) divergentRubricsCount++;
-            if (aqStatus === "DIVERGENTE") divergentRubricsCount++;
+            if (hasAqTitError) divergentRubricsCount++;
+            if (hasAqTreinError) divergentRubricsCount++;
+            if (hasFccjError) divergentRubricsCount++;
+            if (hasSubstError) divergentRubricsCount++;
+            if (hasAlimError) divergentRubricsCount++;
+            if (hasPreError) divergentRubricsCount++;
+            if (hasAbonoError) divergentRubricsCount++;
             if (hasCadastralError) divergentRubricsCount++;
+            if (hasCompulsoriaError) divergentRubricsCount++;
             if (hasTetoError) divergentRubricsCount++;
             if (hasHeError) divergentRubricsCount++;
-            
-            if (propVencInfo !== null) proportionalRubricsCount += 2;
-            if (aqStatus === "PROPORCIONAL") proportionalRubricsCount++;
 
-            if (!hasCriticalError && !hasProportional) {
+            // 1. Materialidade sob Atenção / Desvio de Vencimento e GAJ
+            let desvioVenc = 0;
+            let desvioGaj = 0;
+            if (isVencProp && vencPropInfo) {
+                if (vencPropInfo.tipo === "FRACAO_DIAS") {
+                    desvioVenc = paidVenc;
+                    desvioGaj = paidGaj;
+                } else if (vencPropInfo.tipo === "PROGRESSAO" || vencPropInfo.tipo === "TRANSICAO_FERIAS") {
+                    desvioVenc = Math.abs(vencPropInfo.gradeNovo.vencimento - vencPropInfo.gradeAnt.vencimento);
+                    desvioGaj = Math.abs(vencPropInfo.gradeNovo.gaj - vencPropInfo.gradeAnt.gaj);
+                } else {
+                    desvioVenc = paidVenc;
+                    desvioGaj = paidGaj;
+                }
+            } else {
+                desvioVenc = paidVenc - expectedVenc;
+                desvioGaj = paidGaj - expectedGaj;
+            }
+
+            // 2. Desvio de GAS
+            const desvioGas = isGasConforming ? 0 : (paidGas - expectedGas);
+
+            // 3. Materialidade sob Atenção / Desvio de Adicional de Qualificação
+            const desvioAqTit = paidAqTit - expectedAqTit;
+            const desvioAqTrein = paidAqTrein - expectedAqTrein;
+
+            // 4. Materialidade sob Atenção / Desvio de FC e CJ
+            let desvioFccj = 0;
+            if (fccjStatus === "ATENCAO" || fccjStatus === "PROPORCIONAL") {
+                if (fccjDivergenceType === "DESCOMPASSO") {
+                    desvioFccj = Math.abs(paidFccj - expectedFccj);
+                } else if (fccjDivergenceType === "NAO_PAGA") {
+                    desvioFccj = expectedFccj;
+                } else if (fccjDivergenceType === "SEM_SIGLA") {
+                    desvioFccj = paidFccj;
+                } else {
+                    desvioFccj = paidFccj;
+                }
+            } else if (fccjStatus === "DIVERGENTE") {
+                desvioFccj = paidFccj - expectedFccj;
+            } else {
+                desvioFccj = 0;
+            }
+
+            // 5. Substituição e Benefícios Indenizatórios
+            const desvioSubst = APP_CONFIG.features.auditSubstituicao ? (paidSubst - substEsperada) : 0;
+            const desvioAlim = alimStatus === "PROPORCIONAL" ? paidAlim : (paidAlim - alimEsperado);
+            const desvioPre = preStatus === "PROPORCIONAL" ? paidPre : (paidPre - preEsperado);
+            const desvioAbono = APP_CONFIG.features.auditAbono ? abonoDesvioCalculado : 0;
+
+            // Consolidação Geral do Desvio / Materialidade sob Exame
+            const desvioFinanceiro = Math.round((desvioVenc + desvioGaj + desvioGas + desvioAqTit + desvioAqTrein + desvioFccj + desvioSubst + desvioAlim + desvioPre + desvioAbono + excessoTetoOrdinario + excessoLimiteHE) * 100) / 100;
+
+            let displayedPadrao = matchedGrade.padrao;
+            if (vencPropInfo) {
+                if (vencPropInfo.tipo === "PROGRESSAO" || vencPropInfo.tipo === "TRANSICAO_FERIAS") {
+                    displayedPadrao = vencPropInfo.padrao;
+                } else if (vencPropInfo.tipo === "FRACAO_DIAS") {
+                    displayedPadrao = `${matchedGrade.padrao} (${vencPropInfo.dias}d)`;
+                }
+            }
+
+            if (!hasCriticalError && !hasAttentionOnly) {
                 findings.push({
                     id: server.id,
                     nome: server.nome,
                     cpf: server.cpf,
+                    data_nascimento: server.data_nascimento,
+                    idade_calculada: serverAgeInfo.idadeAnos,
                     carreira: normalizedCareer,
                     classe: matchedGrade.classe,
-                    padrao: matchedGrade.padrao,
+                    padrao: displayedPadrao,
                     status: "CONFORME",
                     venc_esperado: expectedVenc,
                     venc_pago: paidVenc,
@@ -1213,10 +2229,35 @@ async function runDeterministicAudit() {
                     gaj_paga: paidGaj,
                     gas_esperada: expectedGas,
                     gas_paga: paidGas,
-                    aq_esperado: expectedAq,
-                    aq_pago: paidAq,
-                    aq_status: "CONFORME",
-                    prop_venc_info: null,
+                    aq_tit_esperado: expectedAqTit,
+                    aq_tit_pago: paidAqTit,
+                    aq_tit_status: "CONFORME",
+                    aq_trein_esperado: expectedAqTrein,
+                    aq_trein_pago: paidAqTrein,
+                    aq_trein_status: "CONFORME",
+                    fccj_cargo: fccjCargo,
+                    fccj_modalidade: fccjModalidade,
+                    fccj_esperado: expectedFccj,
+                    fccj_pago: paidFccj,
+                    fccj_status: fccjStatus,
+                    fccj_dias: fccjDias,
+                    subst_paga: paidSubst,
+                    subst_esperada: substEsperada,
+                    subst_status: substStatus,
+                    subst_info: substInfo,
+                    alim_pago: paidAlim,
+                    alim_esperado: alimEsperado,
+                    alim_status: alimStatus,
+                    alim_dias: alimDias,
+                    pre_pago: paidPre,
+                    pre_esperado: preEsperado,
+                    pre_status: preStatus,
+                    pre_dias: preDias,
+                    pre_cotas: preCotas,
+                    abono_pago: paidAbonoTotal,
+                    abono_esperado: abonoEsperado,
+                    abono_status: abonoStatus,
+                    abono_dias: abonoDias,
                     soma_ordinaria: somaRemuneratoriaOrdinaria,
                     soma_he: somaHorasExtras,
                     soma_outras: somaOutrasVerbas,
@@ -1227,7 +2268,16 @@ async function runDeterministicAudit() {
                     has_venc_error: false,
                     has_gaj_error: false,
                     has_gas_error: false,
+                    has_aq_tit_error: false,
+                    has_aq_trein_error: false,
+                    has_fccj_error: false,
+                    has_subst_error: false,
+                    has_alim_error: false,
+                    has_pre_error: false,
+                    has_abono_error: false,
                     has_cadastral_error: false,
+                    has_compulsoria_error: false,
+                    has_compulsoria_atencao: false,
                     has_teto_error: false,
                     has_he_error: false,
                     detalhe: `
@@ -1240,11 +2290,27 @@ async function runDeterministicAudit() {
             } else {
                 let errorDetails = [];
 
+                if (hasCompulsoriaError) {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-cake-candles"></i> APOSENTADORIA COMPULSÓRIA</span>
+                            <div class="audit-issue__math">Idade: <strong>${serverAgeInfo.idadeAnos} anos</strong> | Limite constitucional de 75 anos ultrapassado antes da competência</div>
+                        </div>
+                    `);
+                } else if (hasCompulsoriaAtencao) {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-cake-candles"></i> APOSENTADORIA COMPULSÓRIA</span>
+                            <div class="audit-issue__math">Idade: <strong>75 anos</strong> | Completou a idade limite no mês da folha (verificar vacância)</div>
+                        </div>
+                    `);
+                }
+
                 if (possuiExcessoTetoOrdinario) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-gavel" style="margin-right: 6px;"></i> TETO ORDINÁRIO (STF)</span>
-                            <div class="audit-issue__math">Pago: <strong>R$ ${somaRemuneratoriaOrdinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Teto: <strong>R$ 46.366,19</strong></div>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-gavel"></i> TETO ORDINÁRIO (STF)</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(somaRemuneratoriaOrdinaria)}</strong> | Teto: <strong>R$ 46.366,19</strong></div>
                         </div>
                     `);
                 }
@@ -1252,96 +2318,295 @@ async function runDeterministicAudit() {
                 if (possuiExcessoHE) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-clock" style="margin-right: 6px;"></i> LIMITE HORAS EXTRAS (TSE)</span>
-                            <div class="audit-issue__math">Pago: <strong>R$ ${somaHorasExtras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Limite: <strong>R$ 17.000,00</strong></div>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-clock"></i> LIMITE HORAS EXTRAS (TSE)</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(somaHorasExtras)}</strong> | Limite: <strong>R$ 17.000,00</strong></div>
                         </div>
                     `);
                 }
-                
-                if (propVencInfo !== null) {
+
+                if (isVencProp) {
+                    const info = vencPropInfo;
+                    let descProp = `${info.dias} dias de efetivo exercício (${info.classe}-${info.padrao})`;
+                    if (info.tipo === "TRANSICAO_FERIAS") {
+                        descProp = `Transição ${info.padrao} c/ férias`;
+                    } else if (info.tipo === "PROGRESSAO") {
+                        descProp = `Progressão: ${info.diasAnt}d em ${info.gradeAnt.classe}${info.gradeAnt.padrao} + ${info.diasNovo}d em ${info.gradeNovo.classe}${info.gradeNovo.padrao}`;
+                    }
+
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-clock" style="margin-right: 6px;"></i> VENCIMENTO E GAJ PROPORCIONAL</span>
-                            <div class="audit-issue__math">Pago: <strong>R$ ${(paidVenc + paidGaj).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${propVencInfo.days} dias de ${propVencInfo.refLabel} • ${matchedGrade.classe}-${matchedGrade.padrao})</div>
+                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-money-bill-wave"></i> VENCIMENTO / GAJ</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidVenc + paidGaj)}</strong> (${descProp})</div>
                         </div>
                     `);
-                } else {
-                    if (!isVencConforming) {
-                        errorDetails.push(`
-                            <div class="audit-issue">
-                                <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave" style="margin-right: 6px;"></i> VENCIMENTO</span>
-                                <div class="audit-issue__math">Pago: <strong>R$ ${paidVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                            </div>
-                        `);
-                    }
-                    
-                    if (!isGajConforming) {
-                        errorDetails.push(`
-                            <div class="audit-issue">
-                                <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-coins" style="margin-right: 6px;"></i> GAJ (140%)</span>
-                                <div class="audit-issue__math">Paga: <strong>R$ ${paidGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
-                            </div>
-                        `);
-                    }
+                } else if (!isVencConforming) {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> VENCIMENTO</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidVenc)}</strong> | Esperado: <strong>R$ ${formatMoeda(expectedVenc)}</strong></div>
+                        </div>
+                    `);
                 }
-                
+
+                if (!isVencProp && !isGajConforming) {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-coins"></i> GAJ (140%)</span>
+                            <div class="audit-issue__math">Paga: <strong>R$ ${formatMoeda(paidGaj)}</strong> | Esperada: <strong>R$ ${formatMoeda(expectedGaj)}</strong></div>
+                        </div>
+                    `);
+                }
+
                 if (!isGasConforming) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-shield-halved" style="margin-right: 6px;"></i> GAS (35%)</span>
-                            <div class="audit-issue__math">Paga: <strong>R$ ${paidGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperada: <strong>R$ ${expectedGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-shield-halved"></i> GAS (35%)</span>
+                            <div class="audit-issue__math">Paga: <strong>R$ ${formatMoeda(paidGas)}</strong> | Esperada: <strong>R$ ${formatMoeda(expectedGas)}</strong></div>
                         </div>
                     `);
                 }
-                
-                if (aqStatus === "PROPORCIONAL") {
+
+                if (aqTitStatus === "PROPORCIONAL") {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-graduation-cap" style="margin-right: 6px;"></i> ADICIONAL QUALIFICAÇÃO</span>
-                            <div class="audit-issue__math">Pago: <strong>R$ ${paidAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${propCheck.days} dias de ${propCheck.refLabel})</div>
+                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-graduation-cap"></i> AQ TITULAÇÃO</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAqTit)}</strong> | Esperado: <strong>R$ ${formatMoeda(expectedAqTit)}</strong> (Proporcional)</div>
                         </div>
                     `);
-                } else if (aqStatus === "DIVERGENTE") {
+                } else if (aqTitStatus === "DIVERGENTE") {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-graduation-cap" style="margin-right: 6px;"></i> ADICIONAL QUALIFICAÇÃO</span>
-                            <div class="audit-issue__math">Pago: <strong>R$ ${paidAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Esperado: <strong>R$ ${expectedAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></div>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-graduation-cap"></i> AQ TITULAÇÃO</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAqTit)}</strong> | Esperado: <strong>R$ ${formatMoeda(expectedAqTit)}</strong></div>
                         </div>
                     `);
                 }
-                
+
+                if (aqTreinStatus === "PROPORCIONAL") {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-certificate"></i> AQ TREINAMENTO</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAqTrein)}</strong> | Esperado: <strong>R$ ${formatMoeda(expectedAqTrein)}</strong> (Proporcional)</div>
+                        </div>
+                    `);
+                } else if (aqTreinStatus === "DIVERGENTE") {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-certificate"></i> AQ TREINAMENTO</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAqTrein)}</strong> | Esperado: <strong>R$ ${formatMoeda(expectedAqTrein)}</strong></div>
+                        </div>
+                    `);
+                }
+
+                // FC / CJ: Tratamento de Alertas de Atenção e Divergência
+                if (fccjStatus === "ATENCAO" || fccjStatus === "PROPORCIONAL") {
+                    if (fccjDivergenceType === "DESCOMPASSO") {
+                        errorDetails.push(`
+                            <div class="audit-issue">
+                                <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-briefcase"></i> DESCOMPASSO FC/CJ</span>
+                                <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidFccj)}</strong> (Ref. ${fccjCargoCorrespondente}) | Cadastro: <strong>${fccjCargo}</strong></div>
+                            </div>
+                        `);
+                    } else if (fccjDivergenceType === "NAO_PAGA") {
+                        errorDetails.push(`
+                            <div class="audit-issue">
+                                <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-briefcase"></i> COMISSÃO NÃO PAGA</span>
+                                <div class="audit-issue__math">Pago: <strong>R$ 0,00</strong> | Cadastro: <strong>${fccjCargo}</strong> (Verificar dispensa/afastamento)</div>
+                            </div>
+                        `);
+                    } else if (fccjDivergenceType === "SEM_SIGLA") {
+                        errorDetails.push(`
+                            <div class="audit-issue">
+                                <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-briefcase"></i> COMISSÃO SEM SIGLA</span>
+                                <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidFccj)}</strong> (Ref. ${fccjCargoCorrespondente || 'Comissão'}) | Cadastro: <strong>Sem sigla ativa</strong></div>
+                            </div>
+                        `);
+                    } else {
+                        errorDetails.push(`
+                            <div class="audit-issue">
+                                <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-briefcase"></i> ${fccjCargo || 'FC/CJ'}</span>
+                                <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidFccj)}</strong> (${fccjDias} dias de exercício) | Integral: <strong>R$ ${formatMoeda(expectedFccj)}</strong></div>
+                            </div>
+                        `);
+                    }
+                } else if (fccjStatus === "DIVERGENTE") {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-briefcase"></i> ${fccjCargo || 'FC/CJ'}</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidFccj)}</strong> | Esperado: <strong>R$ ${formatMoeda(expectedFccj)}</strong></div>
+                        </div>
+                    `);
+                }
+
+                if (APP_CONFIG.features.auditSubstituicao) {
+                    if (substStatus === "PROPORCIONAL" && substInfo) {
+                        const descSubst = substInfo.tipo === "DIFERENCA"
+                            ? `${substInfo.dias}d de ${substInfo.cargoSubstituido} [Dif. s/ ${substInfo.cargoTitular}]`
+                            : `${substInfo.dias}d de ${substInfo.cargoSubstituido}`;
+
+                        errorDetails.push(`
+                            <div class="audit-issue">
+                                <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-people-arrows"></i> SUBSTITUIÇÃO</span>
+                                <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidSubst)}</strong> (${descSubst})</div>
+                            </div>
+                        `);
+                    } else if (substStatus === "DIVERGENTE") {
+                        errorDetails.push(`
+                            <div class="audit-issue">
+                                <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-people-arrows"></i> SUBSTITUIÇÃO</span>
+                                <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidSubst)}</strong> | Não coincide com diárias de FC ou CJ</div>
+                            </div>
+                        `);
+                    }
+                }
+
+                if (alimStatus === "PROPORCIONAL") {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-utensils"></i> AUX. ALIMENTAÇÃO</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAlim)}</strong> (${alimDias} dias proporcionais)</div>
+                        </div>
+                    `);
+                } else if (alimStatus === "DIVERGENTE") {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-utensils"></i> AUX. ALIMENTAÇÃO</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAlim)}</strong> | Esperado: <strong>R$ ${formatMoeda(VALOR_AUXILIO_ALIMENTACAO_2026)}</strong></div>
+                        </div>
+                    `);
+                }
+
+                if (preStatus === "PROPORCIONAL") {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-child"></i> PRÉ-ESCOLAR</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidPre)}</strong> (${preDias} dias proporcionais)</div>
+                        </div>
+                    `);
+                } else if (preStatus === "DIVERGENTE") {
+                    errorDetails.push(`
+                        <div class="audit-issue">
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-child"></i> PRÉ-ESCOLAR</span>
+                            <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidPre)}</strong> | Não fecha com cotas da tabela</div>
+                        </div>
+                    `);
+                }
+
+                // Abono de Permanência: Distinção Clara entre Atenção e Divergência
+                if (APP_CONFIG.features.auditAbono && paidAbonoTotal > 0) {
+                    if (abonoInfo && abonoInfo.tipo === "COMPULSORIA_ULTRAPASSADA") {
+                        errorDetails.push(`
+                            <div class="audit-issue">
+                                <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-award"></i> ABONO COMPULSÓRIA</span>
+                                <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAbonoTotal)}</strong> | Recebimento indevido após atingir a idade limite de 75 anos</div>
+                            </div>
+                        `);
+                    } else if (abonoStatus === "DIVERGENTE") {
+                        if (abonoInfo && abonoInfo.tipo === "SEM_RETENCAO") {
+                            errorDetails.push(`
+                                <div class="audit-issue">
+                                    <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-award"></i> ABONO SEM DESCONTO</span>
+                                    <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAbonoTotal)}</strong> | Reembolso sem retenção previdenciária no contracheque</div>
+                                </div>
+                            `);
+                        } else if (abonoInfo && abonoInfo.tipo === "EXCESSO") {
+                            errorDetails.push(`
+                                <div class="audit-issue">
+                                    <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-award"></i> ABONO EM EXCESSO</span>
+                                    <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAbonoTotal)}</strong> | Excede o desconto de previdência em R$ ${formatMoeda(abonoDesvioCalculado)}</div>
+                                </div>
+                            `);
+                        } else {
+                            errorDetails.push(`
+                                <div class="audit-issue">
+                                    <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-award"></i> ABONO PERMANÊNCIA</span>
+                                    <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAbonoTotal)}</strong> | Base devida: <strong>R$ ${formatMoeda(abonoEsperado)}</strong></div>
+                                </div>
+                            `);
+                        }
+                    } else if (abonoStatus === "ATENCAO") {
+                        if (paidAbonoRetroativo > 0) {
+                            errorDetails.push(`
+                                <div class="audit-issue">
+                                    <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-award"></i> ABONO RETROATIVO</span>
+                                    <div class="audit-issue__math">Passivo: <strong>R$ ${formatMoeda(paidAbonoRetroativo)}</strong> | Recomenda-se conferir processo de concessão</div>
+                                </div>
+                            `);
+                        }
+                        if (abonoInfo && abonoInfo.isProportional) {
+                            errorDetails.push(`
+                                <div class="audit-issue">
+                                    <span class="audit-issue__badge badge badge--warning"><i class="fa-solid fa-award"></i> ABONO PROPORCIONAL</span>
+                                    <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidAbonoCorrente)}</strong> (${abonoDias} dias de direito no mês)</div>
+                                </div>
+                            `);
+                        }
+                    }
+                }
+
                 if (cadastralIssue) {
                     errorDetails.push(`
                         <div class="audit-issue">
-                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-circle-exclamation" style="margin-right: 6px;"></i> ATRIBUIÇÃO FC/CJ</span>
+                            <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-circle-exclamation"></i> ATRIBUIÇÃO FC/CJ</span>
                             <div class="audit-issue__math">${cadastralIssue}</div>
                         </div>
                     `);
                 }
 
-                const desvioAq = paidAq - expectedAq;
-                const desvioFinanceiro = (paidVenc - expectedVenc) + (paidGaj - expectedGaj) + (paidGas - expectedGas) + desvioAq + excessoTetoOrdinario + excessoLimiteHE;
                 const detailHtml = errorDetails.join('<div class="audit-issue-divider"></div>');
-                const rowStatus = hasCriticalError ? "DIVERGENTE" : "PROPORCIONAL";
+                const rowStatus = hasCriticalError ? "DIVERGENTE" : (hasAttentionOnly ? "ATENCAO" : "CONFORME");
 
                 findings.push({
                     id: server.id,
                     nome: server.nome,
                     cpf: server.cpf,
+                    data_nascimento: server.data_nascimento,
+                    idade_calculada: serverAgeInfo.idadeAnos,
                     carreira: normalizedCareer,
                     classe: matchedGrade.classe,
-                    padrao: matchedGrade.padrao,
+                    padrao: displayedPadrao,
                     status: rowStatus,
+                    venc_prop_info: vencPropInfo,
+                    is_venc_prop: isVencProp,
                     venc_esperado: expectedVenc,
                     venc_pago: paidVenc,
                     gaj_esperada: expectedGaj,
                     gaj_paga: paidGaj,
                     gas_esperada: expectedGas,
                     gas_paga: paidGas,
-                    aq_esperado: expectedAq,
-                    aq_pago: paidAq,
-                    aq_status: aqStatus,
-                    prop_venc_info: propVencInfo,
+                    aq_tit_esperado: expectedAqTit,
+                    aq_tit_pago: paidAqTit,
+                    aq_tit_status: aqTitStatus,
+                    aq_trein_esperado: expectedAqTrein,
+                    aq_trein_pago: paidAqTrein,
+                    aq_trein_status: aqTreinStatus,
+                    fccj_cargo: fccjCargo,
+                    fccj_modalidade: fccjModalidade,
+                    fccj_esperado: expectedFccj,
+                    fccj_pago: paidFccj,
+                    fccj_status: fccjStatus,
+                    fccj_dias: fccjDias,
+                    fccj_divergence_type: fccjDivergenceType,
+                    fccj_cargo_correspondente: fccjCargoCorrespondente,
+                    fccj_tipo_correspondente: fccjTipoCorrespondente,
+                    subst_paga: paidSubst,
+                    subst_esperada: substEsperada,
+                    subst_status: substStatus,
+                    subst_info: substInfo,
+                    alim_pago: paidAlim,
+                    alim_esperado: alimEsperado,
+                    alim_status: alimStatus,
+                    alim_dias: alimDias,
+                    pre_pago: paidPre,
+                    pre_esperado: preEsperado,
+                    pre_status: preStatus,
+                    pre_dias: preDias,
+                    pre_cotas: preCotas,
+                    abono_pago: paidAbonoTotal,
+                    abono_esperado: abonoEsperado,
+                    abono_status: abonoStatus,
+                    abono_dias: abonoDias,
+                    abono_info: abonoInfo,
                     soma_ordinaria: somaRemuneratoriaOrdinaria,
                     soma_he: somaHorasExtras,
                     soma_outras: somaOutrasVerbas,
@@ -1352,7 +2617,16 @@ async function runDeterministicAudit() {
                     has_venc_error: hasVencError,
                     has_gaj_error: hasGajError,
                     has_gas_error: hasGasError,
+                    has_aq_tit_error: hasAqTitError,
+                    has_aq_trein_error: hasAqTreinError,
+                    has_fccj_error: hasFccjError,
+                    has_subst_error: hasSubstError,
+                    has_alim_error: hasAlimError,
+                    has_pre_error: hasPreError,
+                    has_abono_error: hasAbonoError,
                     has_cadastral_error: hasCadastralError,
+                    has_compulsoria_error: hasCompulsoriaError,
+                    has_compulsoria_atencao: hasCompulsoriaAtencao,
                     has_teto_error: hasTetoError,
                     has_he_error: hasHeError,
                     detalhe: detailHtml,
@@ -1367,6 +2641,8 @@ async function runDeterministicAudit() {
                 id: server.id,
                 nome: server.nome,
                 cpf: server.cpf,
+                data_nascimento: server.data_nascimento,
+                idade_calculada: null,
                 carreira: normalizedCareer,
                 classe: "Incompatível",
                 padrao: "Incompatível",
@@ -1377,9 +2653,30 @@ async function runDeterministicAudit() {
                 gaj_paga: paidGaj,
                 gas_esperada: 0,
                 gas_paga: paidGas,
-                aq_esperado: 0,
-                aq_pago: paidAq,
-                aq_status: "DIVERGENTE",
+                aq_tit_esperado: 0,
+                aq_tit_pago: paidAqTit,
+                aq_tit_status: "DIVERGENTE",
+                aq_trein_esperado: 0,
+                aq_trein_pago: paidAqTrein,
+                aq_trein_status: "DIVERGENTE",
+                fccj_cargo: "",
+                fccj_modalidade: "",
+                fccj_esperado: 0,
+                fccj_pago: 0,
+                fccj_status: "CONFORME",
+                fccj_dias: 30,
+                subst_paga: 0,
+                subst_esperada: 0,
+                subst_status: "CONFORME",
+                alim_pago: paidAlim,
+                alim_esperado: 0,
+                alim_status: "CONFORME",
+                pre_pago: paidPre,
+                pre_esperado: 0,
+                pre_status: "CONFORME",
+                abono_pago: paidAbonoTotal,
+                abono_esperado: 0,
+                abono_status: "CONFORME",
                 soma_ordinaria: somaRemuneratoriaOrdinaria,
                 soma_he: somaHorasExtras,
                 soma_outras: somaOutrasVerbas,
@@ -1390,13 +2687,22 @@ async function runDeterministicAudit() {
                 has_venc_error: true,
                 has_gaj_error: false,
                 has_gas_error: false,
+                has_aq_tit_error: false,
+                has_aq_trein_error: false,
+                has_fccj_error: false,
+                has_subst_error: false,
+                has_alim_error: false,
+                has_pre_error: false,
+                has_abono_error: false,
                 has_cadastral_error: false,
+                has_compulsoria_error: false,
+                has_compulsoria_atencao: false,
                 has_teto_error: false,
                 has_he_error: false,
                 detalhe: `
                     <div class="audit-issue">
-                        <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave" style="margin-right: 6px;"></i> VENCIMENTO</span>
-                        <div class="audit-issue__math">Pago: <strong>R$ ${paidVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> | Não consta na tabela</div>
+                        <span class="audit-issue__badge badge badge--error"><i class="fa-solid fa-money-bill-wave"></i> VENCIMENTO</span>
+                        <div class="audit-issue__math">Pago: <strong>R$ ${formatMoeda(paidVenc)}</strong> | Não consta na tabela</div>
                     </div>
                 `,
                 desvio: desvioTotal
@@ -1406,24 +2712,79 @@ async function runDeterministicAudit() {
 
     AppState.auditFindings = findings;
     
-    const conformingRubricsCount = Math.max(0, totalActiveRubrics - divergentRubricsCount - proportionalRubricsCount);
+    const conformingRubricsCount = Math.max(0, totalActiveRubrics - divergentRubricsCount - attentionRubricsCount);
 
-    updateAuditDashboardUI(totalActiveRubrics, totalNonAuditedRubrics, totalRubricsInFile, countActiveServers, countAfastadosServers, countInactiveServers, countOtherServers, totalServersInFile, conformingRubricsCount, proportionalRubricsCount, divergentRubricsCount);
+    let totalGrossAllIncome = 0;
+    for (const id in AppState.pivotedServers) {
+        const s = AppState.pivotedServers[id];
+        const grossServer = s.detalheRubricas
+            .filter(r => r.tipoRD === 1)
+            .reduce((acc, r) => acc + r.valor, 0);
+        totalGrossAllIncome += grossServer;
+    }
+
+    let totalAuditedGrossIncome = 0;
+    let totalDiscrepantAmount = 0;
+    let totalAttentionAmount = 0;
+
+    findings.forEach(f => {
+        if (f.status !== "NAO_ANALISADO") {
+            const server = AppState.pivotedServers[f.id];
+            if (server) {
+                const grossServer = server.detalheRubricas
+                    .filter(r => r.tipoRD === 1)
+                    .reduce((acc, r) => acc + r.valor, 0);
+                totalAuditedGrossIncome += grossServer;
+            }
+
+            if (f.status === "DIVERGENTE") {
+                totalDiscrepantAmount += f.desvio;
+            } else if (f.status === "ATENCAO" || f.status === "PROPORCIONAL") {
+                totalAttentionAmount += f.desvio;
+            }
+        }
+    });
+
+    const totalNonAuditedGrossIncome = Math.max(0, totalGrossAllIncome - totalAuditedGrossIncome);
+    const totalConformingAmount = Math.max(0, totalAuditedGrossIncome - totalDiscrepantAmount - totalAttentionAmount);
+
+    updateAuditDashboardUI(
+        totalActiveRubrics, 
+        totalNonAuditedRubrics, 
+        totalRubricsInFile, 
+        countActiveServers, 
+        countAfastadosServers, 
+        countInactiveServers, 
+        countOtherServers, 
+        totalServersInFile, 
+        conformingRubricsCount, 
+        attentionRubricsCount, 
+        divergentRubricsCount,
+        totalConformingAmount,
+        totalAttentionAmount,
+        totalDiscrepantAmount,
+        totalGrossAllIncome,
+        totalAuditedGrossIncome,
+        totalNonAuditedGrossIncome
+    );
     filterAndPaginateFindings();
-    renderComplianceChart(conformingRubricsCount, proportionalRubricsCount, divergentRubricsCount);
+    renderComplianceChart(conformingRubricsCount, attentionRubricsCount, divergentRubricsCount);
 
     Swal.close();
     switchView("tab-auditoria");
 }
 
 /* ==========================================================================
-   === [CAPÍTULO] RENDERIZAÇÃO DE TELA, PAGINAÇÃO E EXPORTAÇÃO ===
+   === [CAPÍTULO] RENDERIZAÇÃO DE TELA, MODAL E EXPORTAÇÃO ===
    ========================================================================== */
 
-function updateAuditDashboardUI(auditedRubrics, nonAuditedRubrics, totalRubricsAll, countActive, countAfastados, countInactive, countOthers, totalServersInFile, conformingRubrics, proportionalRubrics, discrepantRubrics) {
+function updateAuditDashboardUI(auditedRubrics, nonAuditedRubrics, totalRubricsAll, countActive, countAfastados, countInactive, countOthers, totalServersInFile, conformingRubrics, attentionRubrics, discrepantRubrics, totalConformingAmount = 0, totalAttentionAmount = 0, totalDiscrepantAmount = 0, totalGrossAllIncome = 0, totalAuditedMoney = 0, totalNonAuditedMoney = 0) {
     const kpiTotalRubricsAll = document.getElementById("kpi-total-rubrics-all");
+    const kpiTotalGrossIncome = document.getElementById("kpi-total-gross-income");
     const kpiAuditedRubrics = document.getElementById("kpi-audited-rubrics");
+    const kpiAuditedMoney = document.getElementById("kpi-audited-money");
     const kpiNonAuditedRubrics = document.getElementById("kpi-nonaudited-rubrics");
+    const kpiNonAuditedMoney = document.getElementById("kpi-nonaudited-money");
     const kpiTotalServersRaw = document.getElementById("kpi-total-servers-raw");
     
     const kpiCountActive = document.getElementById("kpi-count-active");
@@ -1439,9 +2800,16 @@ function updateAuditDashboardUI(auditedRubrics, nonAuditedRubrics, totalRubricsA
     const kpiProportionalPct = document.getElementById("kpi-proportional-rubrics-pct");
     const kpiDiscrepantPct = document.getElementById("kpi-discrepant-rubrics-pct");
 
+    const kpiConformingAmount = document.getElementById("kpi-conforming-amount");
+    const kpiProportionalAmount = document.getElementById("kpi-proportional-amount");
+    const kpiDiscrepantAmount = document.getElementById("kpi-discrepant-amount");
+
     if (kpiTotalRubricsAll) kpiTotalRubricsAll.textContent = totalRubricsAll.toLocaleString('pt-BR');
+    if (kpiTotalGrossIncome) kpiTotalGrossIncome.textContent = `R$ ${formatMoeda(totalGrossAllIncome)}`;
     if (kpiAuditedRubrics) kpiAuditedRubrics.textContent = auditedRubrics.toLocaleString('pt-BR');
+    if (kpiAuditedMoney) kpiAuditedMoney.textContent = `R$ ${formatMoeda(totalAuditedMoney)}`;
     if (kpiNonAuditedRubrics) kpiNonAuditedRubrics.textContent = nonAuditedRubrics.toLocaleString('pt-BR');
+    if (kpiNonAuditedMoney) kpiNonAuditedMoney.textContent = `R$ ${formatMoeda(totalNonAuditedMoney)}`;
     if (kpiTotalServersRaw) kpiTotalServersRaw.textContent = totalServersInFile.toLocaleString('pt-BR');
     
     if (kpiCountActive) kpiCountActive.textContent = countActive.toLocaleString('pt-BR');
@@ -1450,16 +2818,20 @@ function updateAuditDashboardUI(auditedRubrics, nonAuditedRubrics, totalRubricsA
     if (kpiCountOthers) kpiCountOthers.textContent = countOthers.toLocaleString('pt-BR');
 
     if (kpiConformingRubrics) kpiConformingRubrics.textContent = conformingRubrics.toLocaleString('pt-BR');
-    if (kpiProportionalRubrics) kpiProportionalRubrics.textContent = proportionalRubrics.toLocaleString('pt-BR');
+    if (kpiProportionalRubrics) kpiProportionalRubrics.textContent = attentionRubrics.toLocaleString('pt-BR');
     if (kpiDiscrepantRubrics) kpiDiscrepantRubrics.textContent = discrepantRubrics.toLocaleString('pt-BR');
 
     const conformingPct = auditedRubrics > 0 ? ((conformingRubrics / auditedRubrics) * 100).toFixed(1) : "0";
-    const proportionalPct = auditedRubrics > 0 ? ((proportionalRubrics / auditedRubrics) * 100).toFixed(1) : "0";
+    const attentionPct = auditedRubrics > 0 ? ((attentionRubrics / auditedRubrics) * 100).toFixed(1) : "0";
     const discrepantPct = auditedRubrics > 0 ? ((discrepantRubrics / auditedRubrics) * 100).toFixed(1) : "0";
 
     if (kpiConformingPct) kpiConformingPct.textContent = `${conformingPct}%`;
-    if (kpiProportionalPct) kpiProportionalPct.textContent = `${proportionalPct}%`;
+    if (kpiProportionalPct) kpiProportionalPct.textContent = `${attentionPct}%`;
     if (kpiDiscrepantPct) kpiDiscrepantPct.textContent = `${discrepantPct}%`;
+
+    if (kpiConformingAmount) kpiConformingAmount.textContent = `R$ ${formatMoeda(totalConformingAmount)}`;
+    if (kpiProportionalAmount) kpiProportionalAmount.textContent = `R$ ${formatMoeda(totalAttentionAmount)}`;
+    if (kpiDiscrepantAmount) kpiDiscrepantAmount.textContent = `R$ ${formatMoeda(totalDiscrepantAmount)}`;
 
     let auditBanner = document.getElementById("audit-incompatible-banner");
     const auditViewHeader = document.querySelector("#view-auditoria .view-header");
@@ -1468,17 +2840,22 @@ function updateAuditDashboardUI(auditedRubrics, nonAuditedRubrics, totalRubricsA
         if (!auditBanner) {
             auditBanner = document.createElement("div");
             auditBanner.id = "audit-incompatible-banner";
-            auditBanner.style.cssText = "margin-top: 16px; padding: 14px 16px; background-color: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; font-size: 13.5px; color: #92400E; display: flex; align-items: center; gap: 10px; margin-bottom: 10px";
+            auditBanner.className = "notice-banner notice-banner--warning";
             auditViewHeader.appendChild(auditBanner);
         }
         auditBanner.style.display = "flex";
-        auditBanner.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="font-size: 18px; color: #D97706;"></i> <div><strong>Folha de Período Histórico (${AppState.matchedCompetence}):</strong> Não há tabela remuneratória cadastrada para este ano. A análise utilizou a Tabela de Jan/2026 como espelho temporário.</div>`;
+        auditBanner.innerHTML = `
+            <i class="fa-solid fa-triangle-exclamation notice-banner__icon"></i>
+            <div class="notice-banner__content">
+                <strong>Folha de Período Histórico (${AppState.matchedCompetence}):</strong> Não há tabela cadastrada para este ano. A análise utilizou a Tabela de Jan/2026 como espelho temporário.
+            </div>
+        `;
     } else if (auditBanner) {
         auditBanner.style.display = "none";
     }
 }
 
-function renderComplianceChart(conforming, proportional, discrepancies) {
+function renderComplianceChart(conforming, attention, discrepancies) {
     const canvas = document.getElementById("compliance-chart");
     if (!canvas) return;
 
@@ -1487,51 +2864,48 @@ function renderComplianceChart(conforming, proportional, discrepancies) {
     }
 
     const ctx = canvas.getContext("2d");
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    const labelColor = isDark ? "#CBD5E1" : "#1A2733";
+    const realData = [conforming, attention, discrepancies];
+    const total = conforming + attention + discrepancies;
 
-    const realData = [conforming, proportional, discrepancies];
-    const total = conforming + proportional + discrepancies;
-
-    // Ajuste de piso visual para garantir visibilidade de fatias inferiores a 1px
     let displayData = [...realData];
     if (total > 0) {
         const minVisualFloor = Math.max(1, Math.round(total * 0.035));
-        let adjustedProp = (proportional > 0 && proportional < minVisualFloor) ? minVisualFloor : proportional;
+        let adjustedAtt = (attention > 0 && attention < minVisualFloor) ? minVisualFloor : attention;
         let adjustedDisc = (discrepancies > 0 && discrepancies < minVisualFloor) ? minVisualFloor : discrepancies;
-        let adjustedConf = Math.max(0, total - (adjustedProp > 0 ? adjustedProp : 0) - (adjustedDisc > 0 ? adjustedDisc : 0));
+        let adjustedConf = Math.max(0, total - (adjustedAtt > 0 ? adjustedAtt : 0) - (adjustedDisc > 0 ? adjustedDisc : 0));
         
-        displayData = [adjustedConf, adjustedProp, adjustedDisc];
+        displayData = [adjustedConf, adjustedAtt, adjustedDisc];
     }
 
     AppState.chartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Em Conformidade', 'Alertas de Pagamento Proporcional', 'Alertas de Divergência'],
+            labels: ['Em Conformidade', 'Pontos de Atenção', 'Divergências'],
             datasets: [{
                 data: displayData,
                 backgroundColor: ['#10B981', '#F59E0B', '#E11D48'],
                 borderWidth: 0,
-                hoverOffset: 5
+                hoverOffset: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
+                    padding: 8,
+                    titleFont: { size: 11, weight: 'bold' },
+                    bodyFont: { size: 11 },
                     callbacks: {
-                        title: function() {
-                            return "";
+                        title: function(items) {
+                            return items.length > 0 ? items[0].label : "";
                         },
                         label: function(context) {
                             const idx = context.dataIndex;
                             const val = realData[idx];
-                            const pct = total > 0 ? ((val / total) * 100).toFixed(2) : "0";
-                            return ` ${context.label}: ${val.toLocaleString('pt-BR')} (${pct}%)`;
+                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : "0";
+                            return ` ${val.toLocaleString('pt-BR')} lançamentos (${pct}%)`;
                         }
                     }
                 }
@@ -1562,15 +2936,43 @@ function updateSortIcons() {
 function filterAndPaginateFindings() {
     let result = [...AppState.auditFindings];
 
-    // 1. Filtro de Status
     if (AppState.activeFilter === "alerts") {
-        result = result.filter(f => f.status === "DIVERGENTE" || f.status === "PROPORCIONAL" || f.aq_status === "PROPORCIONAL");
+        result = result.filter(f => f.status === "DIVERGENTE" || f.status === "ATENCAO" || f.status === "PROPORCIONAL");
+    } else if (AppState.activeFilter === "atencao" || AppState.activeFilter === "proportional") {
+        result = result.filter(f => f.status === "ATENCAO" || f.status === "PROPORCIONAL");
+    } else if (AppState.activeFilter === "divergent") {
+        result = result.filter(f => f.status === "DIVERGENTE");
     }
 
-    // 2. Busca Rápida (Live Search)
+    if (AppState.alertTypeFilter !== "all") {
+        result = result.filter(item => {
+            switch (AppState.alertTypeFilter) {
+                case "substituicao":
+                    return item.subst_status !== "CONFORME" || item.has_subst_error;
+                case "aq_treinamento":
+                    return item.aq_trein_status !== "CONFORME" || item.has_aq_trein_error;
+                case "aq_titulacao":
+                    return item.aq_tit_status !== "CONFORME" || item.has_aq_tit_error;
+                case "fccj":
+                    return item.fccj_status !== "CONFORME" || item.has_fccj_error;
+                case "venc_gaj":
+                    return item.has_venc_error || item.has_gaj_error || item.has_gas_error || item.is_venc_prop;
+                case "beneficios":
+                    return item.alim_status !== "CONFORME" || item.pre_status !== "CONFORME" || item.has_alim_error || item.has_pre_error;
+                case "abono":
+                    return item.abono_status !== "CONFORME" || item.has_abono_error;
+                case "tetos":
+                    return item.has_teto_error || item.has_he_error;
+                case "cadastral":
+                    return item.has_cadastral_error || item.has_compulsoria_error || item.has_compulsoria_atencao;
+                default:
+                    return true;
+            }
+        });
+    }
+
     const query = AppState.searchQuery.trim().toLowerCase();
     if (query !== "") {
-        // Normaliza o texto da busca para aceitar tanto ponto quanto vírgula nas casas decimais
         const queryNumerica = query.replace(".", ",");
 
         result = result.filter(item => {
@@ -1580,7 +2982,6 @@ function filterAndPaginateFindings() {
             const carreiraMatch = (item.carreira || "").toLowerCase().includes(query);
             const padraoMatch = `${item.classe}-${item.padrao}`.toLowerCase().includes(query);
             
-            // Converte o valor do desvio para o padrão visual brasileiro (ex: "9,22")
             const desvioStr = item.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
             const desvioMatch = desvioStr.includes(queryNumerica) || item.desvio.toFixed(2).includes(query);
             
@@ -1588,7 +2989,6 @@ function filterAndPaginateFindings() {
         });
     }
 
-    // 3. Ordenação
     const field = AppState.sortField;
     const direction = AppState.sortDirection === "asc" ? 1 : -1;
 
@@ -1633,7 +3033,7 @@ function renderAuditTable() {
         tableBody.innerHTML = `
             <tr>
                 <td colspan="9" class="td-placeholder">
-                    <i class="fa-solid fa-circle-check" style="color: #10B981; font-size: 28px; display: block; margin-bottom: 12px;"></i>
+                    <i class="fa-solid fa-circle-check" style="color: var(--color-start); font-size: 28px; display: block; margin-bottom: 12px;"></i>
                     Excelente! Nenhum registro encontrado para os critérios de busca e filtro ativos.
                 </td>
             </tr>
@@ -1654,11 +3054,10 @@ function renderAuditTable() {
 
     pageSlice.forEach(item => {
         const row = document.createElement("tr");
-
         const gradeStr = item.classe !== "N/A" && item.classe !== "Incompatível" ? `${item.classe}-${item.padrao}` : "N/A";
         
         let desvioStyleColor = "var(--text2)";
-        if (item.status === "PROPORCIONAL") desvioStyleColor = "var(--color-warning)";
+        if (item.status === "ATENCAO" || item.status === "PROPORCIONAL") desvioStyleColor = "var(--color-warning)";
         else if (item.desvio > 0.1) desvioStyleColor = "var(--color-conclusion)";
         else if (item.desvio < -0.1) desvioStyleColor = "var(--color-start)";
 
@@ -1666,12 +3065,12 @@ function renderAuditTable() {
             <td data-label="Matrícula"><strong>${item.id}</strong></td>
             <td data-label="Cargo Folha">${item.carreira}</td>
             <td data-label="Classe / Padrão"><span class="badge badge--neutral">${gradeStr}</span></td>
-            <td data-label="Remuneração Ordinária">R$ ${item.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td data-label="Horas Extras">R$ ${item.soma_he.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td data-label="Outras Verbas">R$ ${item.soma_outras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td data-label="Descontos">${item.soma_descontos > 0 ? '- ' : ''}R$ ${item.soma_descontos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+            <td data-label="Remuneração Ordinária">R$ ${formatMoeda(item.soma_ordinaria)}</td>
+            <td data-label="Horas Extras">R$ ${formatMoeda(item.soma_he)}</td>
+            <td data-label="Outras Verbas">R$ ${formatMoeda(item.soma_outras)}</td>
+            <td data-label="Descontos">${item.soma_descontos > 0 ? '- ' : ''}R$ ${formatMoeda(item.soma_descontos)}</td>
             <td data-label="Inconsistência Detalhada" class="data-table__cell--detail">${item.detalhe}</td>
-            <td data-label="Desvio Financeiro"><strong style="color: ${desvioStyleColor}">R$ ${item.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+            <td data-label="Desvio Potencial"><strong style="color: ${desvioStyleColor}">R$ ${formatMoeda(item.desvio)}</strong></td>
         `;
 
         row.style.cursor = "pointer";
@@ -1705,86 +3104,94 @@ function openAuditDetailModal(serverId) {
     const maskedCpf = server.cpf ? server.cpf.replace(/(\d{3})\d{3}\d{3}(\d{2})/, "$1.***.***-$2") : "***.***.***-**";
     const gradeStr = finding.classe !== "N/A" && finding.classe !== "Incompatível" ? `${finding.classe}-${finding.padrao}` : "Não enquadrado";
     
-    let statusBadgeHtml = `<span class="badge badge--success" style="font-size: 13px; padding: 6px 12px;">Conforme</span>`;
-    if (finding.status === "PROPORCIONAL") {
-        statusBadgeHtml = `<span class="badge badge--warning" style="font-size: 13px; padding: 6px 12px;">Pagamento Proporcional</span>`;
+    let statusBadgeHtml = `<span class="badge badge--success">Conforme</span>`;
+    if (finding.status === "ATENCAO" || finding.status === "PROPORCIONAL") {
+        statusBadgeHtml = `<span class="badge badge--warning">Alerta de Atenção</span>`;
     } else if (finding.status === "DIVERGENTE") {
-        statusBadgeHtml = `<span class="badge badge--error" style="font-size: 13px; padding: 6px 12px;">Divergente</span>`;
+        statusBadgeHtml = `<span class="badge badge--error">Alerta de Divergência</span>`;
     } else if (finding.status === "NAO_ANALISADO") {
-        statusBadgeHtml = `<span class="badge badge--neutral" style="font-size: 13px; padding: 6px 12px;">Não Analisado</span>`;
+        statusBadgeHtml = `<span class="badge badge--neutral">Não Analisado</span>`;
     }
 
-    // Geração do Bloco 1: Detalhamento de Lançamentos em Folha (Borda Inferior Padronizada)
     let rubricsHtml = "";
     server.detalheRubricas.forEach((rub, rIdx) => {
         const tagFolha = rub.tipoComp === 1
-            ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #E0E7FF; color: #3730A3;">Folha Suplementar</span>`
-            : `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #E2E8F0; color: #1E293B;">Folha Regular</span>`;
+            ? `<span class="badge badge--neutral">Folha Suplementar</span>`
+            : `<span class="badge badge--neutral">Folha Regular</span>`;
 
-        let tagTetoClass = "";
         let tagTetoHtml = "";
         if (rub.tipoRD === 1) {
-            if (isHorasExtras(rub.descricao)) {
-                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #FEF3C7; color: #92400E;"><i class="fa-solid fa-clock" style="font-size: 9px; margin-right: 3px;"></i>Teto HE</span>`;
-            } else if (isFerias(rub.descricao)) {
-                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (Férias)</span>`;
-            } else if (isGratificacaoNatalina(rub.descricao)) {
-                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (13º Salário)</span>`;
-            } else if (isAbonoPermanencia(rub.codigo, rub.descricao)) {
-                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #ECFDF5; color: #065F46;">Fora do Teto (Abono Perm.)</span>`;
-            } else if (isGECC(rub.descricao)) {
-                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (GECC)</span>`;
-            } else if (isBeneficioIndenizatorio(rub.codigo, rub.descricao)) {
-                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #F1F5F9; color: #64748B;">Fora do Teto (Indenizatória)</span>`;
-            } else {
-                tagTetoClass = "rubric-item-teto-ordinario";
-                tagTetoHtml = `<span class="badge badge--neutral" style="font-size: 11px; padding: 2px 6px; background: #DBEAFE; color: #1E40AF; font-weight: 700;"><i class="fa-solid fa-calculator" style="font-size: 9px; margin-right: 3px;"></i>Teto Ordinário</span>`;
+                if (isHorasExtras(rub.descricao)) {
+                    tagTetoHtml = `<span class="badge badge--warning"><i class="fa-solid fa-clock"></i> Teto HE</span>`;
+                } else if (isFerias(rub.descricao)) {
+                    tagTetoHtml = `<span class="badge badge--neutral">Fora do Teto (Férias)</span>`;
+                } else if (isGratificacaoNatalina(rub.descricao)) {
+                    tagTetoHtml = `<span class="badge badge--neutral">Fora do Teto (13º)</span>`;
+                } else if (isAbonoPermanencia(rub.codigo, rub.descricao)) {
+                    tagTetoHtml = `<span class="badge badge--success">Fora do Teto (Abono Perm.)</span>`;
+                } else if (isGECC(rub.descricao)) {
+                    tagTetoHtml = `<span class="badge badge--neutral">Fora do Teto (GECC)</span>`;
+                } else if (isGAACTA(rub.descricao)) {
+                    tagTetoHtml = `<span class="badge badge--neutral">Fora do Teto (GAACTA)</span>`;
+                } else if (isBeneficioIndenizatorio(rub.codigo, rub.descricao)) {
+                    tagTetoHtml = `<span class="badge badge--neutral">Fora do Teto (Indenizatória)</span>`;
+                } else {
+                    tagTetoHtml = `<span class="badge badge--primary"><i class="fa-solid fa-calculator"></i> Teto Ordinário</span>`;
+                }
             }
-        }
+
+        const isDeduction = rub.tipoRD === 2;
 
         rubricsHtml += `
-            <div class="modal-rubric-row ${tagTetoClass}" id="rubric-row-${rIdx}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; font-size: 14.5px; border-bottom: 1px solid var(--border); transition: background 0.15s ease;">
-                <div style="text-align: left;">
-                    <strong style="color: var(--text);">${rub.codigo}</strong> - <span style="color: var(--text2);">${rub.descricao}</span>
-                    <div style="margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap;">${tagFolha}${tagTetoHtml}</div>
+            <div class="audit-rubric-row" id="rubric-row-${rIdx}">
+                <div class="audit-rubric-row__info">
+                    <strong class="audit-rubric-row__code">${rub.codigo}</strong> - <span class="audit-rubric-row__desc">${rub.descricao}</span>
+                    <div class="audit-rubric-row__tags">${tagFolha}${tagTetoHtml}</div>
                 </div>
-                <strong style="color: ${rub.tipoRD === 1 ? 'var(--text)' : 'var(--color-conclusion)'}; white-space: nowrap; margin-left: 12px;">
-                    ${rub.tipoRD === 1 ? '' : '- '}R$ ${rub.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <strong class="audit-rubric-row__val ${isDeduction ? 'audit-rubric-row__val--deduction' : 'audit-rubric-row__val--income'}">
+                    ${isDeduction ? '- ' : ''}R$ ${formatMoeda(rub.valor)}
                 </strong>
             </div>
         `;
     });
 
-    const compInfo = getCompetenceMonthsInfo(AppState.matchedCompetence);
-    const isVencConforming = Math.abs(finding.venc_pago - finding.venc_esperado) < 0.1;
-    const isGajConforming = Math.abs(finding.gaj_paga - finding.gaj_esperada) < 0.1;
-    const isGasConforming = Math.abs(finding.gas_paga - finding.gas_esperada) < 0.1;
+    const isVencConforming = Math.abs(finding.venc_pago - finding.venc_esperado) < 0.20;
+    const isGajConforming = Math.abs(finding.gaj_paga - finding.gaj_esperada) < 0.20;
+    const isGasConforming = Math.abs(finding.gas_paga - finding.gas_esperada) < 0.15;
     const isTetoOrdConforming = finding.excesso_teto_ordinario <= 0.01;
     const isHeConforming = finding.excesso_he <= 0.01;
 
-    let vencStatusType = isVencConforming;
+    const diffVenc = finding.venc_pago - finding.venc_esperado;
     let noteVenc = "";
-    if (finding.prop_venc_info) {
-        vencStatusType = "PROPORCIONAL";
-        noteVenc = `Pagamento proporcional a <strong>${finding.prop_venc_info.days} dias</strong> referente a <strong>${finding.prop_venc_info.refLabel}</strong> sobre o padrão <strong>${gradeStr}</strong>. Base diária considerada: ${finding.prop_venc_info.days}/${finding.prop_venc_info.divisor} avos.`;
+    if (finding.venc_prop_info) {
+        const info = finding.venc_prop_info;
+        const baseDivisorTxt = info.baseRotulo ? ` — ${info.baseRotulo}` : (info.divisor ? ` — base: ${info.divisor} dias` : '');
+
+        if (info.cargoIncompativel) {
+            noteVenc = `Atenção: O servidor está cadastrado como <strong>${normalizedCareer}</strong>, mas o valor de <strong>R$ ${formatMoeda(finding.venc_pago)}</strong> corresponde a <strong>${info.dias} dias de ${info.cargoEsperado} (${info.classe}-${info.padrao})${baseDivisorTxt}</strong>. Verifique se o cargo no cadastro está correto.`;
+        } else if (info.tipo === "TRANSICAO_FERIAS") {
+            noteVenc = `O Vencimento pago de <strong>R$ ${formatMoeda(finding.venc_pago)}</strong> situa-se entre os padrões <strong>${info.gradeAnt.classe}-${info.gradeAnt.padrao} (R$ ${formatMoeda(info.gradeAnt.vencimento)})</strong> e <strong>${info.gradeNovo.classe}-${info.gradeNovo.padrao} (R$ ${formatMoeda(info.gradeNovo.vencimento)})</strong> com proporção de GAJ exata (140%${baseDivisorTxt}). Constam registros de acerto de férias na folha. Recomenda-se conferir a portaria de progressão funcional.`;
+        } else if (info.tipo === "PROGRESSAO") {
+            noteVenc = `Identificado <strong>pagamento proporcional por progressão funcional</strong>: composto por <strong>${info.diasAnt} dias no padrão ${info.gradeAnt.classe}${info.gradeAnt.padrao}</strong> acrescido de <strong>${info.diasNovo} dias no padrão ${info.gradeNovo.classe}${info.gradeNovo.padrao}</strong> (${baseDivisorTxt.replace(/^ — /, '')}). Valor proporcional cumprido.`;
+        } else {
+            noteVenc = `Identificado <strong>pagamento proporcional de Vencimento Básico</strong> no valor de <strong>R$ ${formatMoeda(finding.venc_pago)}</strong>, referente a <strong>${info.dias} dias de efetivo exercício</strong> no padrão ${info.classe}-${info.padrao}${baseDivisorTxt}.`;
+        }
     } else if (!isVencConforming) {
-        const diffVenc = finding.venc_pago - finding.venc_esperado;
         noteVenc = `
-            O vencimento básico de <strong>R$ ${finding.venc_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> pago difere do previsto na Tabela Remuneratória Oficial do TSE para o padrão <strong>${gradeStr}</strong> (esperado: <strong>R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
-            Diferença calculada: <strong style="color: var(--color-conclusion);">R$ ${diffVenc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>.
+            O vencimento básico de <strong>R$ ${formatMoeda(finding.venc_pago)}</strong> difere do previsto na Tabela Oficial do TSE para o padrão <strong>${gradeStr}</strong> (esperado: <strong>R$ ${formatMoeda(finding.venc_esperado)}</strong>). 
+            Diferença calculada: <strong style="color: var(--color-conclusion);">R$ ${formatMoeda(diffVenc)}</strong>.
         `;
     }
 
-    let gajStatusType = isGajConforming;
+    const diffGaj = finding.gaj_paga - finding.gaj_esperada;
     let noteGaj = "";
-    if (finding.prop_venc_info && isGajConforming) {
-        gajStatusType = "PROPORCIONAL";
-        noteGaj = `Cálculo de 140% incidente sobre o Vencimento Básico proporcional apurado (<strong>${finding.prop_venc_info.days} dias</strong> de <strong>${finding.prop_venc_info.refLabel}</strong>).`;
+    if (finding.venc_prop_info) {
+        const baseDivisorGaj = finding.venc_prop_info.baseRotulo ? ` (${finding.venc_prop_info.baseRotulo})` : '';
+        noteGaj = `A Gratificação Judiciária (GAJ de 140%) foi calculada e paga em exata conformidade sobre a fração proporcional do Vencimento Básico apurado${baseDivisorGaj}.`;
     } else if (!isGajConforming) {
-        const diffGaj = finding.gaj_paga - finding.gaj_esperada;
         noteGaj = `
-            A GAJ paga de <strong>R$ ${finding.gaj_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge de 140% sobre o Vencimento Básico do padrão <strong>${gradeStr}</strong> (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 140% = <strong>R$ ${finding.gaj_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
-            Desvio de <strong style="color: var(--color-conclusion);">R$ ${diffGaj.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 13 da Lei nº 11.416/2006).
+            A GAJ paga de <strong>R$ ${formatMoeda(finding.gaj_paga)}</strong> diverge de 140% sobre o Vencimento Básico do padrão <strong>${gradeStr}</strong> (R$ ${formatMoeda(finding.venc_esperado)} &times; 140% = <strong>R$ ${formatMoeda(finding.gaj_esperada)}</strong>). 
+            Desvio de <strong style="color: var(--color-conclusion);">R$ ${formatMoeda(diffGaj)}</strong>. (Art. 13 da Lei nº 11.416/2006).
         `;
     }
     
@@ -1792,69 +3199,181 @@ function openAuditDetailModal(serverId) {
     if (!isGasConforming) {
         const diffGas = finding.gas_paga - finding.gas_esperada;
         noteGas = `
-            A GAS paga de <strong>R$ ${finding.gas_paga.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> diverge do percentual de 35% sobre o Vencimento Básico (R$ ${finding.venc_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} &times; 35% = <strong>R$ ${finding.gas_esperada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>). 
-            Divergência: <strong style="color: var(--color-conclusion);">R$ ${diffGas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Artigo 17 da Lei nº 11.416/2006).
+            A GAS paga de <strong>R$ ${formatMoeda(finding.gas_paga)}</strong> diverge do percentual de 35% sobre o Vencimento Básico. 
+            Divergência: <strong style="color: var(--color-conclusion);">R$ ${formatMoeda(diffGas)}</strong>. (Art. 17 da Lei nº 11.416/2006).
         `;
     }
 
-    let noteAq = "";
-    if (finding.aq_status === "PROPORCIONAL") {
-        const diffAq = finding.aq_pago - finding.aq_esperado;
-        const propCheck = checkAqProportionalAdjustment(finding.aq_pago, finding.aq_esperado, activeVR, compInfo);
-        const daysText = propCheck.days > 0 ? `${propCheck.days} dias proporcionais (${propCheck.refLabel})` : `fração proporcional de dias`;
+    let noteAqTit = "";
+    if (finding.aq_tit_status === "PROPORCIONAL") {
+        const diffAqTit = finding.aq_tit_pago - finding.aq_tit_esperado;
+        const propCheck = checkAqTitProportionalAdjustment(finding.aq_tit_pago, finding.aq_tit_esperado, activeVR);
+        const baseDivisorTxt = propCheck.baseRotulo ? ` — base: ${propCheck.baseRotulo}` : (propCheck.divisor ? ` — base: ${propCheck.divisor} dias` : '');
+        const daysText = propCheck.days > 0 ? `${propCheck.days} dias proporcionais` : `dias proporcionais`;
 
-        if (finding.aq_esperado === 0) {
-            noteAq = `Pagamento de <strong>R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> correspondente a <strong>${daysText}</strong> de nova averbação calculada na ordem de prioridade temporal.`;
+        if (finding.aq_tit_esperado === 0) {
+            noteAqTit = `Identificado <strong>pagamento proporcional</strong> de <strong>R$ ${formatMoeda(finding.aq_tit_pago)}</strong> (${daysText}${baseDivisorTxt}) por novo título averbado no mês.`;
         } else {
-            noteAq = `Pagamento composto pelo patamar regular de <strong>${(finding.aq_esperado / activeVR).toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong> acrescido de <strong>R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> correspondente a <strong>${daysText}</strong> de averbação retroativa.`;
+            noteAqTit = `Valor composto pelo patamar integral de <strong>${(finding.aq_tit_esperado / activeVR).toFixed(2)} VR (R$ ${formatMoeda(finding.aq_tit_esperado)})</strong> acrescido de <strong>pagamento proporcional</strong> de <strong>R$ ${formatMoeda(diffAqTit)}</strong> (${daysText}${baseDivisorTxt}).`;
         }
-    } else if (finding.aq_status === "DIVERGENTE") {
-        const calculatedCoefficient = finding.aq_pago / activeVR;
-        const expectedCoefficient = finding.aq_esperado / activeVR;
-        const diffAq = finding.aq_pago - finding.aq_esperado;
+    } else if (finding.aq_tit_status === "DIVERGENTE") {
+        const coefPagoTit = finding.aq_tit_pago / activeVR;
+        const coefEspTit = finding.aq_tit_esperado / activeVR;
+        const diffTit = finding.aq_tit_pago - finding.aq_tit_esperado;
 
-        if (calculatedCoefficient < 0.2) {
-            noteAq = `O servidor recebeu <strong>R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${calculatedCoefficient.toFixed(2)} VR). Este valor é inferior ao bloco mínimo de 120h (0,20 VR = R$ ${(0.20 * activeVR).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) e <strong>não corresponde a frações de dias regulamentares (pro rata die)</strong>, configurando pagamento em desacordo com as tabelas legais.`;
+        if (coefPagoTit > 5.0) {
+            noteAqTit = `Recebimento de <strong>R$ ${formatMoeda(finding.aq_tit_pago)}</strong> (${coefPagoTit.toFixed(2)} VR), ultrapassando o teto de 5,0 VR (Doutorado) que absorve todos os demais títulos (Art. 15, § 1º-B da Lei nº 11.416/2006).`;
+        } else if (coefPagoTit > 2.0 && coefPagoTit < 3.5) {
+            noteAqTit = `A soma de títulos menores alcançou <strong>${coefPagoTit.toFixed(2)} VR</strong>, ultrapassando o teto legal de <strong>2,0 VR (R$ ${formatMoeda(2.0 * activeVR)})</strong> sem registro de Mestrado ou Doutorado (Art. 15, § 1º-C da Lei nº 11.416/2006).`;
         } else {
-            noteAq = `O servidor recebeu <strong>R$ ${finding.aq_pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${calculatedCoefficient.toFixed(2)} VR). O patamar legal reconhecido é de <strong>${expectedCoefficient.toFixed(2)} VR (R$ ${finding.aq_esperado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</strong>. A diferença em excesso de <strong>R$ ${diffAq.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> (${(calculatedCoefficient - expectedCoefficient).toFixed(2)} VR) <strong>não corresponde a frações diárias regulamentares (pro rata die)</strong>, configurando divergência cadastral a ser verificada e ajustada.`;
+            noteAqTit = `Recebimento de <strong>R$ ${formatMoeda(finding.aq_tit_pago)}</strong> (${coefPagoTit.toFixed(2)} VR). O patamar reconhecido é de <strong>${coefEspTit.toFixed(2)} VR (R$ ${formatMoeda(finding.aq_tit_esperado)})</strong>. A diferença de <strong>R$ ${formatMoeda(diffTit)}</strong> não corresponde a proporção de dias do calendário.`;
         }
     }
 
-    // Memória de Cálculo Discriminada para o Teto Constitucional Ordinário (Estilo Suavizado)
+    let noteAqTrein = "";
+    if (finding.aq_trein_status === "PROPORCIONAL") {
+        const diffAqTrein = finding.aq_trein_pago - finding.aq_trein_esperado;
+        const propCheck = checkAqTreinProportionalAdjustment(finding.aq_trein_pago, finding.aq_trein_esperado, activeVR);
+        const baseDivisorTxt = propCheck.baseRotulo ? ` — base: ${propCheck.baseRotulo}` : (propCheck.divisor ? ` — base: ${propCheck.divisor} dias` : '');
+        const daysText = propCheck.days > 0 ? `${propCheck.days} dias proporcionais` : `dias proporcionais`;
+
+        if (finding.aq_trein_esperado === 0) {
+            noteAqTrein = `Identificado <strong>pagamento proporcional</strong> de <strong>R$ ${formatMoeda(finding.aq_trein_pago)}</strong> (${daysText}${baseDivisorTxt}) por capacitação homologada no mês.`;
+        } else {
+            noteAqTrein = `Valor composto pelo patamar integral de <strong>${(finding.aq_trein_esperado / activeVR).toFixed(2)} VR (R$ ${formatMoeda(finding.aq_trein_esperado)})</strong> acrescido de <strong>pagamento proporcional</strong> de <strong>R$ ${formatMoeda(diffAqTrein)}</strong> (${daysText}${baseDivisorTxt}).`;
+        }
+    } else if (finding.aq_trein_status === "DIVERGENTE") {
+        const coefPagoTrein = finding.aq_trein_pago / activeVR;
+        const coefEspTrein = finding.aq_trein_esperado / activeVR;
+        const diffTrein = finding.aq_trein_pago - finding.aq_trein_esperado;
+
+        if (coefPagoTrein > 0.60) {
+            noteAqTrein = `Total pago de treinamento (<strong>R$ ${formatMoeda(finding.aq_trein_pago)}</strong> = ${coefPagoTrein.toFixed(2)} VR) ultrapassa o teto legal de <strong>0,60 VR (R$ ${formatMoeda(0.60 * activeVR)})</strong> (Art. 15, V da Lei nº 11.416/2006).`;
+        } else {
+            noteAqTrein = `Recebimento de <strong>R$ ${formatMoeda(finding.aq_trein_pago)}</strong> (${coefPagoTrein.toFixed(2)} VR). Patamar reconhecido: <strong>${coefEspTrein.toFixed(2)} VR (R$ ${formatMoeda(finding.aq_trein_esperado)})</strong>. Diferença de <strong>R$ ${formatMoeda(diffTrein)}</strong> não fecha com fração diária do calendário.`;
+        }
+    }
+
+    let noteFccj = "";
+    if (finding.fccj_cargo || finding.fccj_pago > 0) {
+        const propCheck = checkCommissionProportionalAdjustment(finding.fccj_pago, finding.fccj_esperado);
+        const baseDivisorTxt = propCheck.baseRotulo ? ` — base: ${propCheck.baseRotulo}` : (finding.fccj_divisor ? ` — base: ${finding.fccj_divisor} dias` : '');
+
+        if (finding.fccj_status === "PROPORCIONAL" || (finding.fccj_status === "ATENCAO" && finding.fccj_dias < 30 && !finding.fccj_divergence_type)) {
+            noteFccj = `Identificado <strong>pagamento proporcional</strong> de <strong>R$ ${formatMoeda(finding.fccj_pago)}</strong> (${finding.fccj_dias} dias de exercício${baseDivisorTxt}) no cargo comissionado <strong>${finding.fccj_cargo}</strong> (${finding.fccj_modalidade}). Valor integral de referência: <strong>R$ ${formatMoeda(finding.fccj_esperado)}</strong>.`;
+        } else if (finding.fccj_divergence_type === "DESCOMPASSO") {
+            noteFccj = `O servidor consta cadastrado com a comissão <strong>${finding.fccj_cargo}</strong> (esperado: R$ ${formatMoeda(finding.fccj_esperado)}), porém recebeu na folha o valor de <strong>R$ ${formatMoeda(finding.fccj_pago)}</strong>, correspondente à tabela de <strong>${finding.fccj_cargo_correspondente}</strong> (${finding.fccj_tipo_correspondente}). Essa situação é típica de transição funcional (nomeação ou dispensa ocorrida no final do mês cuja vigência financeira inicia na competência seguinte). Recomenda-se confrontar a data de designação.`;
+        } else if (finding.fccj_divergence_type === "NAO_PAGA") {
+            noteFccj = `O servidor possui a comissão <strong>${finding.fccj_cargo}</strong> ativa no cadastro, mas não houve lançamento da parcela remuneratória no contracheque. Hipóteses prováveis para verificação do auditor: (1) exoneração ou dispensa ocorrida no mês anterior com pendência de atualização cadastral; (2) afastamento ou licença que suspende a retribuição do cargo em comissão; ou (3) cessão para outro órgão com ônus da comissão a cargo do cessionário. Recomenda-se confrontar a data de designação.`;
+        } else if (finding.fccj_divergence_type === "SEM_SIGLA") {
+            noteFccj = `Identificado pagamento de <strong>R$ ${formatMoeda(finding.fccj_pago)}</strong> referente à comissão <strong>${finding.fccj_cargo_correspondente || 'de tabela'}</strong>, entretanto não consta sigla de cargo em comissão ativa no cadastro deste servidor. Recomenda-se verificar se houve designação sem a devida atualização do código de função no cadastro.`;
+        } else if (finding.fccj_status === "DIVERGENTE") {
+            noteFccj = `O valor pago de <strong>R$ ${formatMoeda(finding.fccj_pago)}</strong> diverge do valor da tabela para <strong>${finding.fccj_cargo}</strong> (${finding.fccj_modalidade}: <strong>R$ ${formatMoeda(finding.fccj_esperado)}</strong>) e não corresponde a frações de dias de exercício.`;
+        }
+    }
+
+    let noteSubst = "";
+    if (finding.subst_paga > 0) {
+        if (finding.subst_status === "PROPORCIONAL" && finding.subst_info) {
+            const info = finding.subst_info;
+            const divisorTxt = info.baseRotulo ? ` — base: ${info.baseRotulo}` : (info.divisor ? ` — base: mês de ${info.divisor} dias` : '');
+            if (info.tipo === "DIFERENCA") {
+                noteSubst = `Identificado pagamento de <strong>substituição eventual por diferença</strong> de <strong>R$ ${formatMoeda(finding.subst_paga)}</strong> (${info.dias} dias de ${info.cargoSubstituido} exercida pelo titular de ${info.cargoTitular}${divisorTxt}). Diferença diária: R$ ${formatMoeda(info.deltaDiaria)}/dia.`;
+            } else {
+                noteSubst = `Identificado pagamento de <strong>substituição eventual plena</strong> de <strong>R$ ${formatMoeda(finding.subst_paga)}</strong> (${info.dias} dias de substituição de ${info.cargoSubstituido}${divisorTxt}). Diária: R$ ${formatMoeda(info.diariaSuperior)}/dia.`;
+            }
+        } else {
+            noteSubst = `O valor de substituição de <strong>R$ ${formatMoeda(finding.subst_paga)}</strong> não coincide com diárias oficiais de FC ou CJ do tribunal.`;
+        }
+    }
+
+    let noteAlim = "";
+    if (finding.alim_pago > 0) {
+        const alimCheck = checkBeneficioProportionalAdjustment(finding.alim_pago, VALOR_AUXILIO_ALIMENTACAO_2026);
+        const divisorUtilizado = alimCheck.divisor || 30;
+        const baseDivisorTxt = alimCheck.baseRotulo ? ` (${alimCheck.baseRotulo})` : ` (base: mês de ${divisorUtilizado} dias)`;
+
+        if (finding.alim_status === "PROPORCIONAL") {
+            noteAlim = `Pagamento proporcional de Auxílio-Alimentação no valor de <strong>R$ ${formatMoeda(finding.alim_pago)}</strong> (${finding.alim_dias} dias de vínculo ativo). Diária: R$ ${formatMoeda(VALOR_AUXILIO_ALIMENTACAO_2026 / divisorUtilizado)}/dia${baseDivisorTxt}.`;
+        } else if (finding.alim_status === "DIVERGENTE") {
+            noteAlim = `O valor de Auxílio-Alimentação de <strong>R$ ${formatMoeda(finding.alim_pago)}</strong> difere do valor integral de <strong>R$ ${formatMoeda(VALOR_AUXILIO_ALIMENTACAO_2026)}</strong>.`;
+        }
+    }
+
+    let notePre = "";
+    if (finding.pre_pago > 0) {
+        const preCheck = checkBeneficioProportionalAdjustment(finding.pre_pago, VALOR_ASSISTENCIA_PRE_ESCOLAR_2026);
+        const baseDivisorTxt = preCheck.baseRotulo ? ` — base: ${preCheck.baseRotulo}` : '';
+
+        if (finding.pre_status === "PROPORCIONAL") {
+            notePre = `Pagamento proporcional de Assistência Pré-Escolar de <strong>R$ ${formatMoeda(finding.pre_pago)}</strong> (${finding.pre_dias} dias proporcionais${baseDivisorTxt}).`;
+        } else if (finding.pre_status === "DIVERGENTE") {
+            notePre = `O valor de Pré-Escolar de <strong>R$ ${formatMoeda(finding.pre_pago)}</strong> não fecha com cotas integrais (R$ ${formatMoeda(VALOR_ASSISTENCIA_PRE_ESCOLAR_2026)}/dependente) nem frações diárias do calendário.`;
+        }
+    }
+
+    let noteAbono = "";
+    if (finding.abono_pago > 0) {
+        const info = finding.abono_info;
+        if (info && info.tipo === "COMPULSORIA_ULTRAPASSADA") {
+            noteAbono = `Recebimento indevido de Abono de Permanência no valor de <strong>R$ ${formatMoeda(finding.abono_pago)}</strong> após atingir a idade limite constitucional da aposentadoria compulsória (75 anos — Art. 40, § 1º, II e § 19 da CF/88 c/c EC nº 88/2015). O benefício e o vínculo estatutário cessam compulsoriamente aos 75 anos.`;
+        } else if (info && info.tipo === "SEM_RETENCAO") {
+            noteAbono = `Identificado pagamento de Abono de Permanência no valor de <strong>R$ ${formatMoeda(finding.abono_pago)}</strong> sem que tenha havido qualquer retenção ou desconto de contribuição previdenciária no contracheque.`;
+        } else if (info && info.tipo === "EXCESSO") {
+            noteAbono = `O valor de Abono de Permanência mensal pago (<strong>R$ ${formatMoeda(finding.abono_pago)}</strong>) é superior ao desconto total de previdência efetuado no mês (R$ ${formatMoeda(info.rppsEsperado)}). Excesso financeiro a ser glosado: <strong style="color: var(--color-conclusion);">R$ ${formatMoeda(info.desvio)}</strong>.`;
+        } else if (info && info.tipo === "PASSIVO_RETROATIVO") {
+            noteAbono = `Identificado pagamento de <strong>Abono de Permanência Retroativo / Exercícios Anteriores</strong> no valor de <strong>R$ ${formatMoeda(finding.abono_pago)}</strong>. Trata-se de valor acumulado legítimo pago com atraso. Recomenda-se confrontar o processo administrativo de concessão.`;
+        } else if (info && info.tipo === "RPPS_EFETIVO") {
+            const complementoRetro = info.abonoRetroativo > 0 ? ` (acrescido de R$ ${formatMoeda(info.abonoRetroativo)} de passivo anterior)` : '';
+            noteAbono = `O Abono de Permanência mensal pago (<strong>R$ ${formatMoeda(finding.abono_pago - (info.abonoRetroativo || 0))}</strong>)${complementoRetro} coincide rigorosamente com a contribuição previdenciária progressiva do cargo efetivo (R$ ${formatMoeda(info.baseEfetivo || 0)}). A diferença em relação ao desconto total do holerite decorre da incidência facultativa sobre FC/CJ (Art. 40, § 19 da CF/88).`;
+        } else if (info && info.tipo === "RPPS_TOTAL") {
+            const complementoRetro = info.abonoRetroativo > 0 ? ` (acrescido de R$ ${formatMoeda(info.abonoRetroativo)} de passivo anterior)` : '';
+            noteAbono = `O valor de Abono de Permanência mensal pago (<strong>R$ ${formatMoeda(finding.abono_pago - (info.abonoRetroativo || 0))}</strong>)${complementoRetro} neutraliza 100% do desconto de previdência total do contracheque (Art. 40, § 19 da CF/88).`;
+        } else if (info && info.tipo === "PROPORCIONAL_EFETIVO") {
+            const baseDivisorTxt = info.baseRotulo ? ` — base: ${info.baseRotulo}` : (info.divisor ? ` — base: ${info.divisor} dias` : '');
+            noteAbono = `Identificado <strong>pagamento proporcional de Abono de Permanência</strong> no valor de <strong>R$ ${formatMoeda(finding.abono_pago)}</strong>, referente a <strong>${finding.abono_dias} dias proporcionais</strong> desde a data de implementação dos requisitos de aposentadoria voluntária no mês${baseDivisorTxt}.`;
+        } else {
+            noteAbono = `O Abono de Permanência pago (<strong>R$ ${formatMoeda(finding.abono_pago)}</strong>) não coincide com a contribuição progressiva do cargo efetivo nem com dias proporcionais regulamentares do calendário.`;
+        }
+    }
+
+    let noteCompulsoria = "";
+    if (finding.has_compulsoria_error) {
+        noteCompulsoria = `Servidor ativo na folha com <strong>${finding.idade_calculada} anos</strong> de idade completados antes do início desta competência. Atingiu o limite de idade da aposentadoria compulsória previsto no Art. 40, § 1º, II da Constituição Federal (EC nº 88/2015). Recomenda-se conferir a publicação da portaria de vacância/aposentadoria.`;
+    } else if (finding.has_compulsoria_atencao) {
+        noteCompulsoria = `Servidor completou <strong>75 anos de idade</strong> no curso desta competência. Mês de transição para a aposentadoria compulsória constitucional (Art. 40, § 1º, II da CF/88).`;
+    }
+
     let tetoCompositionRows = "";
     (finding.rubricas_teto_ordinario || []).forEach(r => {
         tetoCompositionRows += `
-            <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed var(--border); color: var(--text2);">
-                <span><i class="fa-solid fa-angle-right" style="color: var(--text3); margin-right: 6px; font-size: 10px; opacity: 0.6;"></i><span style="font-weight: 600; color: var(--text);">${r.codigo}</span> - ${r.descricao}</span>
-                <span style="font-weight: 600; color: var(--text);">R$ ${r.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            <div class="audit-breakdown__item">
+                <span><i class="fa-solid fa-angle-right" style="color: var(--text3); margin-right: 6px; font-size: 10px; opacity: 0.6;"></i><span class="audit-breakdown__item-code">${r.codigo}</span> - ${r.descricao}</span>
+                <span class="audit-breakdown__item-code">R$ ${formatMoeda(r.valor)}</span>
             </div>
         `;
     });
 
     const noteTetoOrd = `
-        <div style="margin-bottom: 10px;">
-            A remuneração ordinária bruta mensal apurada (<strong>R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) — excluídas horas extras, férias, 13º salário, abono de permanência, GECC e auxílios indenizatórios — ${isTetoOrdConforming ? 'está <strong>em conformidade</strong> com o teto constitucional' : 'ultrapassa o teto constitucional geral do funcionalismo'} (<strong>R$ 46.366,19</strong>).
-            ${!isTetoOrdConforming ? `Excesso bruto sujeito a corte: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_teto_ordinario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 37, XI da CF/88 e Arts. 3º e 4º da Resolução CNJ nº 14/2006).` : ''}
+        <div style="margin-bottom: 12px; font-size: 15px; line-height: 1.6;">
+            A remuneração ordinária bruta apurada (<strong>R$ ${formatMoeda(finding.soma_ordinaria)}</strong>) — excluídas verbas indenizatórias, HE, férias e 13º — ${isTetoOrdConforming ? 'está <strong>em conformidade</strong> com o teto constitucional' : 'ultrapassa o teto constitucional geral do funcionalismo'} (<strong>R$ 46.366,19</strong>).
+            ${!isTetoOrdConforming ? `Excesso sujeito a glosa: <strong style="color: var(--color-conclusion);">R$ ${formatMoeda(finding.excesso_teto_ordinario)}</strong>. (Art. 37, XI da CF/88).` : ''}
         </div>
-        <div style="background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 10px;" id="teto-breakdown-box">
-            <div style="margin-bottom: 8px;">
-                <span style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: var(--primary); letter-spacing: 0.4px;">
-                    Composição da Base Ordinária
-                </span>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 2px;">
+        <div class="audit-breakdown">
+            <div class="audit-breakdown__heading">Composição da Base Ordinária de Incidência</div>
+            <div class="audit-breakdown__list">
                 ${tetoCompositionRows}
-                <div style="display: flex; justify-content: space-between; font-size: 13.5px; padding-top: 8px; margin-top: 4px; border-top: 1.5px solid var(--border);">
-                    <strong style="color: var(--text); font-weight: 700;">Total da Base Ordinária Apurada:</strong>
-                    <strong style="color: var(--primary); font-weight: 800;">R$ ${finding.soma_ordinaria.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                <div class="audit-breakdown__subtotal">
+                    <span>Total da Base Ordinária:</span>
+                    <strong style="color: var(--primary);">R$ ${formatMoeda(finding.soma_ordinaria)}</strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 13px; padding-top: 4px; color: var(--text3);">
+                <div class="audit-breakdown__limit">
                     <span>(-) Teto Constitucional (STF):</span>
-                    <span>R$ ${TETO_CONSTITUCIONAL_STF.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span>R$ ${formatMoeda(TETO_CONSTITUCIONAL_STF)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 13.5px; padding-top: 4px; border-top: 1px solid var(--border);">
-                    <strong style="color: var(--text); font-weight: 700;">(=) Glosa / Excesso de Teto:</strong>
-                    <strong style="color: ${finding.excesso_teto_ordinario > 0.01 ? 'var(--color-conclusion)' : 'var(--color-start)'}; font-weight: 800;">R$ ${finding.excesso_teto_ordinario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                <div class="audit-breakdown__total">
+                    <span>(=) Glosa / Excesso de Teto:</span>
+                    <strong style="color: ${finding.excesso_teto_ordinario > 0.01 ? 'var(--color-conclusion)' : 'var(--color-start)'};">R$ ${formatMoeda(finding.excesso_teto_ordinario)}</strong>
                 </div>
             </div>
         </div>
@@ -1863,69 +3382,170 @@ function openAuditDetailModal(serverId) {
     let noteHe = "";
     if (!isHeConforming) {
         noteHe = `
-            O total pago de serviço extraordinário / horas extras no mês (<strong>R$ ${finding.soma_he.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>) ultrapassa o limite máximo administrativo fixado pelo TSE (<strong>R$ 17.000,00</strong>). 
-            Excesso a ser glosado: <strong style="color: var(--color-conclusion);">R$ ${finding.excesso_he.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. (Art. 3º, IV da Resolução CNJ nº 14/2006 e Regulamento Interno do TSE).
+            O total pago de serviço extraordinário no mês (<strong>R$ ${formatMoeda(finding.soma_he)}</strong>) ultrapassa o limite máximo fixado pelo TSE (<strong>R$ 17.000,00</strong>). 
+            Glosar: <strong style="color: var(--color-conclusion);">R$ ${formatMoeda(finding.excesso_he)}</strong>. (Res. CNJ nº 14/2006).
         `;
     }
 
     const compRow = (label, paid, expected, statusType, iconClass, note = "", forceShowNote = false) => {
-        let color = "#10B981";
+        let modifierClass = "audit-card--conforming";
+        let statusBadgeClass = "audit-card__badge-status--conforming";
+        let noteModifierClass = "";
         let statusText = "Conforme";
-        let cardBg = "var(--bg2)";
-        let cardBorder = "1px solid transparent";
-        let noteBorderColor = "var(--primary)";
 
-        if (statusType === "PROPORCIONAL") {
-            color = "#D97706";
-            statusText = "Pagamento proporcional";
-            cardBg = "rgba(217, 119, 6, 0.06)";
-            cardBorder = "1px solid rgba(217, 119, 6, 0.15)";
-            noteBorderColor = color;
+        if (statusType === "ATENCAO" || statusType === "PROPORCIONAL") {
+            modifierClass = "audit-card--proportional";
+            statusBadgeClass = "audit-card__badge-status--proportional";
+            noteModifierClass = "audit-card__note--warning";
+            statusText = "Atenção";
         } else if (statusType === "DIVERGENTE" || statusType === false) {
-            color = "#E11D48";
+            modifierClass = "audit-card--divergent";
+            statusBadgeClass = "audit-card__badge-status--divergent";
+            noteModifierClass = "audit-card__note--divergent";
             statusText = "Divergente";
-            cardBg = "rgba(225, 29, 72, 0.05)";
-            cardBorder = "1px solid rgba(225, 29, 72, 0.15)";
-            noteBorderColor = color;
         }
         
-        // A nota técnica ganha fundo branco para contrastar com o card colorido e a linha lateral herda a cor do erro
         const noteHtml = ((statusType !== "CONFORME" && statusType !== true && note) || forceShowNote) ? `
-            <div style="margin-top: 10px; padding: 12px 14px; background: var(--surface); border-left: 3px solid ${noteBorderColor}; border-radius: 0 8px 8px 0; font-size: 14px; color: var(--text); line-height: 1.5; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            <div class="audit-card__note ${noteModifierClass}">
                 <strong>Nota Técnica:</strong> ${note}
             </div>
         ` : '';
 
         return `
-            <div style="padding: 14px 16px; background: ${cardBg}; border: ${cardBorder}; border-radius: 10px; margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700; color: var(--text);">
-                    <span style="display: flex; align-items: center;">
-                        <i class="${iconClass}" style="color: var(--text3); font-size: 14px; margin-right: 10px; opacity: 0.85;"></i>
+            <div class="audit-card ${modifierClass}">
+                <div class="audit-card__header">
+                    <span class="audit-card__title">
+                        <i class="${iconClass} audit-card__icon"></i>
                         ${label}
                     </span>
-                    <span style="color: ${color}; font-size: 12px; font-weight: 800; text-transform: uppercase;">${statusText}</span>
+                    <span class="audit-card__badge-status ${statusBadgeClass}">${statusText}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; margin-top: 8px; color: var(--text2);">
-                    <span>Pago: R$ ${paid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                    <span>Esperado / Limite: R$ ${expected.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                <div class="audit-card__values">
+                    <span>Pago: R$ ${formatMoeda(paid)}</span>
+                    <span>Esperado / Limite: R$ ${formatMoeda(expected)}</span>
                 </div>
                 ${noteHtml}
             </div>
         `;
     };
 
+    let vencStatusType = isVencConforming ? "CONFORME" : "DIVERGENTE";
+    if (finding.venc_prop_info) vencStatusType = "ATENCAO";
+
+    let gajStatusType = isGajConforming ? "CONFORME" : "DIVERGENTE";
+    if (finding.venc_prop_info) gajStatusType = "ATENCAO";
+
+    const fccjSectionHtml = (finding.fccj_cargo || finding.fccj_pago > 0) ? `
+        ${compRow(
+            `Comissão / Função (${finding.fccj_cargo || 'FC/CJ'}) — ${finding.fccj_modalidade || 'Integral'}`,
+            finding.fccj_pago,
+            finding.fccj_esperado,
+            finding.fccj_status,
+            "fa-solid fa-briefcase",
+            noteFccj,
+            finding.fccj_status === "ATENCAO" || finding.fccj_status === "PROPORCIONAL"
+        )}
+    ` : '';
+
+    const substSectionHtml = (APP_CONFIG.features.auditSubstituicao && finding.subst_paga > 0) ? `
+        ${compRow(
+            `Substituição de Função/Comissão`,
+            finding.subst_paga,
+            finding.subst_esperada,
+            finding.subst_status,
+            "fa-solid fa-people-arrows",
+            noteSubst,
+            true
+        )}
+    ` : '';
+
+    const alimSectionHtml = (finding.alim_pago > 0) ? `
+        ${compRow(
+            `Auxílio-Alimentação`,
+            finding.alim_pago,
+            finding.alim_esperado,
+            finding.alim_status,
+            "fa-solid fa-utensils",
+            noteAlim,
+            finding.alim_status === "PROPORCIONAL"
+        )}
+    ` : '';
+
+    const preSectionHtml = (finding.pre_pago > 0) ? `
+        ${compRow(
+            `Assistência Pré-Escolar`,
+            finding.pre_pago,
+            finding.pre_esperado,
+            finding.pre_status,
+            "fa-solid fa-child",
+            notePre,
+            finding.pre_status === "PROPORCIONAL"
+        )}
+    ` : '';
+
+    const abonoSectionHtml = (APP_CONFIG.features.auditAbono && finding.abono_pago > 0) ? `
+        ${compRow(
+            `Abono de Permanência`,
+            finding.abono_pago,
+            finding.abono_esperado,
+            finding.abono_status,
+            "fa-solid fa-award",
+            noteAbono,
+            true
+        )}
+    ` : '';
+
+    const compulsoriaSectionHtml = (finding.has_compulsoria_error || finding.has_compulsoria_atencao) ? `
+        <div class="audit-card ${finding.has_compulsoria_error ? 'audit-card--divergent' : 'audit-card--proportional'}">
+            <div class="audit-card__header">
+                <span class="audit-card__title">
+                    <i class="fa-solid fa-cake-candles audit-card__icon"></i>
+                    Aposentadoria Compulsória (75 Anos — EC nº 88/2015)
+                </span>
+                <span class="audit-card__badge-status ${finding.has_compulsoria_error ? 'audit-card__badge-status--divergent' : 'audit-card__badge-status--proportional'}">
+                    ${finding.has_compulsoria_error ? 'Divergente' : 'Atenção'}
+                </span>
+            </div>
+            <div class="audit-card__values">
+                <span>Idade na Competência: <strong>${finding.idade_calculada} anos</strong></span>
+                <span>Limite Constitucional: <strong>75 anos</strong></span>
+            </div>
+            <div class="audit-card__note ${finding.has_compulsoria_error ? 'audit-card__note--divergent' : 'audit-card__note--warning'}">
+                <strong>Nota Técnica:</strong> ${noteCompulsoria}
+            </div>
+        </div>
+    ` : '';
+
     const reconciliaHtml = `
-        ${compRow("Vencimento Básico", finding.venc_pago, finding.venc_esperado, vencStatusType, "fa-solid fa-money-bill-wave", noteVenc)}
-        ${compRow("Gratificação Judiciária (GAJ)", finding.gaj_paga, finding.gaj_esperada, gajStatusType, "fa-solid fa-coins", noteGaj)}
+        ${compulsoriaSectionHtml}
+        ${compRow("Vencimento Básico", finding.venc_pago, finding.venc_esperado, vencStatusType, "fa-solid fa-money-bill-wave", noteVenc, !!finding.venc_prop_info)}
+        ${compRow("Gratificação Judiciária (GAJ)", finding.gaj_paga, finding.gaj_esperada, gajStatusType, "fa-solid fa-coins", noteGaj, !!finding.venc_prop_info)}
         ${compRow("Gratificação de Segurança (GAS)", finding.gas_paga, finding.gas_esperada, isGasConforming, "fa-solid fa-shield-halved", noteGas)}
-        ${compRow("Adicional de Qualificação (AQ)", finding.aq_pago, finding.aq_esperado, finding.aq_status, "fa-solid fa-graduation-cap", noteAq)}
+        ${fccjSectionHtml}
+        ${substSectionHtml}
+        ${compRow("Adicional de Qualificação — Titulação", finding.aq_tit_pago, finding.aq_tit_esperado, finding.aq_tit_status, "fa-solid fa-graduation-cap", noteAqTit, finding.aq_tit_status === "PROPORCIONAL")}
+        ${compRow("Adicional de Qualificação — Treinamento", finding.aq_trein_pago, finding.aq_trein_esperado, finding.aq_trein_status, "fa-solid fa-certificate", noteAqTrein, finding.aq_trein_status === "PROPORCIONAL")}
+        ${alimSectionHtml}
+        ${preSectionHtml}
+        ${abonoSectionHtml}
         ${compRow("Teto Constitucional Ordinário", finding.soma_ordinaria, TETO_CONSTITUCIONAL_STF, isTetoOrdConforming, "fa-solid fa-gavel", noteTetoOrd, true)}
         ${compRow("Limite de Horas Extras (TSE)", finding.soma_he, LIMITE_HORAS_EXTRAS_TSE, isHeConforming, "fa-solid fa-clock", noteHe)}
     `;
 
     const tableReferenceBadge = AppState.isIncompatibleCompetence 
-        ? `<span class="badge badge--neutral" style="font-size: 11px; padding: 3px 8px; background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B;"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 4px;"></i>Referência: Tabela Espelho Jan/2026</span>`
-        : `<span class="badge badge--neutral" style="font-size: 11px; padding: 3px 8px; color: var(--text2); background: var(--bg2); border: 1px solid var(--border);"><i class="fa-solid fa-scale-balanced" style="margin-right: 5px; color: var(--primary);"></i>Parâmetro: ${activeConfig.label}</span>`;
+        ? `<span class="badge badge--warning"><i class="fa-solid fa-triangle-exclamation"></i> Tabela Espelho Jan/2026</span>`
+        : `<span class="badge badge--neutral"><i class="fa-solid fa-scale-balanced" style="color: var(--primary);"></i> ${activeConfig.label}</span>`;
+
+    let footerValueColor = "var(--color-start)";
+    if (finding.desvio !== 0) {
+        footerValueColor = (finding.status === "ATENCAO" || finding.status === "PROPORCIONAL") ? "var(--color-warning)" : "var(--color-conclusion)";
+    }
+
+    const nascFormatada = server.data_nascimento || "Não Informada";
+    const idadeVal = (finding.idade_calculada !== undefined && finding.idade_calculada !== null) 
+        ? finding.idade_calculada 
+        : (server.idade_calculada !== undefined && server.idade_calculada !== null ? server.idade_calculada : null);
+    const idadeTexto = idadeVal !== null ? `${idadeVal} anos` : "Idade não apurada";
 
     Swal.fire({
         width: '840px',
@@ -1935,76 +3555,75 @@ function openAuditDetailModal(serverId) {
         background: 'var(--surface)',
         color: 'var(--text)',
         html: `
-            <div style="font-family: var(--font-main); color: var(--text); padding-top: 6px; text-align: left;">
+            <div class="audit-modal">
                 
-                <!-- SEÇÃO 1: CABEÇALHO COM MODO ANONIMIZADO / PRIVACIDADE -->
-                <div style="border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
-                        <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                                <h3 style="font-size: 22px; font-weight: 800; color: var(--text); margin: 0;">
-                                    Matrícula: <span style="color: var(--primary);">${server.id}</span>
+                <div class="audit-modal__header">
+                    <div class="audit-modal__header-row">
+                        <div class="audit-modal__identity">
+                            <div class="audit-modal__title-row">
+                                <h3 class="audit-modal__title">
+                                    Matrícula: <span>${server.id}</span>
                                 </h3>
-                                <button class="btn btn--secondary btn--compact" id="btn-toggle-privacy-detail" style="font-size: 11.5px; height: 28px; padding: 4px 10px; gap: 6px;">
+                                <button class="btn btn--secondary btn--compact" id="btn-toggle-privacy-detail" aria-label="Alternar dados pessoais">
                                     <i class="fa-solid fa-eye" id="privacy-eye-icon"></i>
                                     <span id="privacy-btn-text">Revelar Dados Pessoais</span>
                                 </button>
                             </div>
 
-                            <!-- Bloco de Dados Pessoais com Anonimização -->
-                            <div id="privacy-personal-box" style="margin-top: 6px; font-size: 14.5px; color: var(--text2);">
-                                <span id="label-server-name" style="font-weight: 700; color: var(--text3);">Nome: ••••••••••••••••••</span>
-                                <span style="margin: 0 6px; color: var(--border);">|</span>
-                                <span id="label-server-cpf" style="color: var(--text3);">CPF: ${maskedCpf}</span>
+                            <div class="audit-modal__privacy-box" id="privacy-personal-box">
+                                <span id="label-server-name">Nome: ••••••••••••••••••</span>
+                                <span class="audit-modal__divider-dot">|</span><br>
+                                <span id="label-server-cpf">CPF: ${maskedCpf}</span>
+                                <span class="audit-modal__divider-dot">|</span>
+                                <span id="label-server-nasc">Data de Nasc.: ••/••/•••• (•• anos)</span>
                             </div>
 
-                            <p style="font-size: 14px; color: var(--text2); font-weight: 600; margin-top: 6px;">
-                                ${normalizedCareer} • Padrão ${gradeStr}
+                            <p class="audit-modal__subtitle">
+                                ${normalizedCareer} • Padrão ${gradeStr} ${finding.fccj_cargo ? `• <strong>${finding.fccj_cargo}</strong>` : ''}
                             </p>
                         </div>
-                        <div style="text-align: right; flex-shrink: 0;">
+                        <div>
                             ${statusBadgeHtml}
                         </div>
                     </div>
                 </div>
 
-                <!-- SEÇÃO 2: RAIO-X DE LANÇAMENTOS COM ALTURA AMPLIADA -->
-                <br>
-                <div style="margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">
+                <div class="audit-modal__section">
+                    <div class="audit-modal__section-header">
+                        <h4 class="audit-modal__section-title">
                             1. Detalhamento de Lançamentos em Folha
                         </h4>
-                        <span style="font-size: 12px; color: var(--text3); font-weight: 600;">
+                        <span class="badge badge--neutral">
                             ${server.detalheRubricas.length} rubricas registradas
                         </span>
                     </div>
-                    <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; background: var(--surface2);" id="modal-rubrics-container">
+                    <div class="audit-modal__rubrics-box" id="modal-rubrics-container">
                         ${rubricsHtml}
                     </div>
                 </div>
 
-                <!-- SEÇÃO 3: CONCILIAÇÃO LEGAL E MEMÓRIA DE CÁLCULO -->
-                <br>
-                <div style="margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                        <h4 style="font-size: 14px; font-weight: 700; color: var(--text3); text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">
+                <div class="audit-modal__section">
+                    <div class="audit-modal__section-header">
+                        <h4 class="audit-modal__section-title">
                             2. Conciliação contra Tabelas e Limites Legais
                         </h4>
                         ${tableReferenceBadge}
                     </div>
-                    <div style="display: flex; flex-direction: column;">
+                    <div>
                         ${reconciliaHtml}
                     </div>
                 </div>
 
-                <!-- PAINEL DE SALDO CONSOLIDADO -->
-                <div style="padding: 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                <div class="audit-modal__footer">
                     <div>
-                        <span style="font-size: 12.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; display: block;">Saldo do Desvio Financeiro Consolidado</span>
-                        <span style="font-size: 13.5px; color: var(--text2); display: block; margin-top: 2px;">Fundamentação: Art. 37, XI da CF/88, Res. CNJ nº 14/2006 e Regulamentos do TSE</span>
+                        <span class="audit-modal__footer-label">
+                            ${(finding.status === "ATENCAO" || finding.status === "PROPORCIONAL") ? 'Materialidade sob Exame (Valores Proporcionais / Transição)' : 'Saldo do Desvio Potencial Consolidado'}
+                        </span>
+                        <span class="audit-modal__footer-sub">
+                            ${(finding.status === "ATENCAO" || finding.status === "PROPORCIONAL") ? 'Montante sujeito à ratificação formal mediante conferência de ato no SEI ou registro de frequência' : 'Fundamentação: Art. 37, XI e Art. 40 da CF/88, Lei nº 11.416/2006, Res. CNJ nº 14/2006 e Regulamentos do TSE'}
+                        </span>
                     </div>
-                    <strong style="font-size: 22px; color: ${finding.desvio === 0 ? 'var(--color-start)' : (finding.status === 'PROPORCIONAL' ? 'var(--color-warning)' : 'var(--color-conclusion)')}">R$ ${finding.desvio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                    <strong class="audit-modal__footer-value" style="color: ${footerValueColor};">R$ ${formatMoeda(finding.desvio)}</strong>
                 </div>
             </div>
         `,
@@ -2015,6 +3634,7 @@ function openAuditDetailModal(serverId) {
             const btnText = document.getElementById("privacy-btn-text");
             const nameLabel = document.getElementById("label-server-name");
             const cpfLabel = document.getElementById("label-server-cpf");
+            const nascLabel = document.getElementById("label-server-nasc");
 
             if (privacyBtn) {
                 privacyBtn.addEventListener("click", () => {
@@ -2026,6 +3646,10 @@ function openAuditDetailModal(serverId) {
                         nameLabel.style.color = "var(--text)";
                         cpfLabel.textContent = `CPF: ${formattedCpf}`;
                         cpfLabel.style.color = "var(--text)";
+                        if (nascLabel) {
+                            nascLabel.textContent = `Data de Nasc.: ${nascFormatada} (${idadeTexto})`;
+                            nascLabel.style.color = "var(--text)";
+                        }
                     } else {
                         eyeIcon.className = "fa-solid fa-eye";
                         btnText.textContent = "Revelar Dados Pessoais";
@@ -2033,6 +3657,10 @@ function openAuditDetailModal(serverId) {
                         nameLabel.style.color = "var(--text3)";
                         cpfLabel.textContent = `CPF: ${maskedCpf}`;
                         cpfLabel.style.color = "var(--text3)";
+                        if (nascLabel) {
+                            nascLabel.textContent = "Data de Nasc.: ••/••/•••• (•• anos)";
+                            nascLabel.style.color = "var(--text3)";
+                        }
                     }
                 });
             }
@@ -2064,22 +3692,22 @@ function renderPaginationUI(start, end, total) {
         <div class="table-pagination">
             <span class="table-pagination__info">Mostrando ${start} a ${end} de ${total} registros analisados</span>
             <div class="table-pagination__controls">
-                <button class="btn btn--secondary btn--compact table-pagination__btn" id="btn-page-first" ${AppState.currentPage === 1 ? 'disabled style="opacity: 0.5; cursor: default;"' : ''}>
+                <button class="btn btn--secondary btn--compact table-pagination__btn" id="btn-page-first" ${AppState.currentPage === 1 ? 'disabled style="opacity: 0.5; cursor: default;"' : ''} aria-label="Primeira Página">
                     <i class="fa-solid fa-angles-left"></i>
                 </button>
-                <button class="btn btn--secondary btn--compact table-pagination__btn" id="btn-page-prev" ${AppState.currentPage === 1 ? 'disabled style="opacity: 0.5; cursor: default;"' : ''}>
+                <button class="btn btn--secondary btn--compact table-pagination__btn" id="btn-page-prev" ${AppState.currentPage === 1 ? 'disabled style="opacity: 0.5; cursor: default;"' : ''} aria-label="Página Anterior">
                     <i class="fa-solid fa-angle-left"></i>
                 </button>
                 <span class="table-pagination__indicator">Página <strong>${AppState.currentPage}</strong> de ${totalPages}</span>
-                <button class="btn btn--secondary btn--compact table-pagination__btn" id="btn-page-next" ${AppState.currentPage === totalPages ? 'disabled style="opacity: 0.5; cursor: default;"' : ''}>
+                <button class="btn btn--secondary btn--compact table-pagination__btn" id="btn-page-next" ${AppState.currentPage === totalPages ? 'disabled style="opacity: 0.5; cursor: default;"' : ''} aria-label="Próxima Página">
                     <i class="fa-solid fa-angle-right"></i>
                 </button>
-                <button class="btn btn--secondary btn--compact table-pagination__btn" id="btn-page-last" ${AppState.currentPage === totalPages ? 'disabled style="opacity: 0.5; cursor: default;"' : ''}>
+                <button class="btn btn--secondary btn--compact table-pagination__btn" id="btn-page-last" ${AppState.currentPage === totalPages ? 'disabled style="opacity: 0.5; cursor: default;"' : ''} aria-label="Última Página">
                     <i class="fa-solid fa-angles-right"></i>
                 </button>
             </div>
             <div class="table-pagination__size">
-                <select class="table-pagination__select" id="select-page-size">
+                <select class="table-pagination__select" id="select-page-size" aria-label="Registros por página">
                     <option value="10" ${AppState.itemsPerPage === 10 ? 'selected' : ''}>10 registros por página</option>
                     <option value="25" ${AppState.itemsPerPage === 25 ? 'selected' : ''}>25 registros por página</option>
                     <option value="50" ${AppState.itemsPerPage === 50 ? 'selected' : ''}>50 registros por página</option>
@@ -2134,8 +3762,21 @@ function exportAuditToXLSX() {
             "Identificação Única": item.id,
             "Nome do Servidor": item.nome,
             "CPF": item.cpf,
+            "Data de Nascimento": item.data_nascimento || "Não informada",
+            "Idade na Competência": item.idade_calculada !== null ? item.idade_calculada : "N/A",
             "Carreira": item.carreira,
             "Enquadramento Mapeado": item.classe !== "N/A" ? `${item.classe}-${item.padrao}` : "Incompatível",
+            "Cargo em Comissão / FC": item.fccj_cargo || "Não possui",
+            "Status FC/CJ": item.fccj_status,
+            "Dias Exercício FC/CJ": item.fccj_dias,
+            "Substituição de Função (R$)": item.subst_paga,
+            "Status Substituição": item.subst_status,
+            "Auxílio-Alimentação Pago (R$)": item.alim_pago,
+            "Status Alimentação": item.alim_status,
+            "Assistência Pré-Escolar Paga (R$)": item.pre_pago,
+            "Status Pré-Escolar": item.pre_status,
+            "Abono de Permanência Pago (R$)": item.abono_pago,
+            "Status Abono": item.abono_status,
             "Remuneração Ordinária (R$)": item.soma_ordinaria,
             "Horas Extras no Mês (R$)": item.soma_he,
             "Outras Verbas e Indenizações (R$)": item.soma_outras,
@@ -2146,13 +3787,16 @@ function exportAuditToXLSX() {
             "GAJ Paga (R$)": item.gaj_paga,
             "GAS Esperada (R$)": item.gas_esperada,
             "GAS Paga (R$)": item.gas_paga,
-            "AQ Esperado (R$)": item.aq_esperado,
-            "AQ Pago (R$)": item.aq_pago,
-            "Classificação do AQ": item.aq_status,
+            "AQ Titulação Esperado (R$)": item.aq_tit_esperado,
+            "AQ Titulação Pago (R$)": item.aq_tit_pago,
+            "Status AQ Titulação": item.aq_tit_status,
+            "AQ Treinamento Esperado (R$)": item.aq_trein_esperado,
+            "AQ Treinamento Pago (R$)": item.aq_trein_pago,
+            "Status AQ Treinamento": item.aq_trein_status,
             "Excesso de Teto Ordinário (R$)": item.excesso_teto_ordinario,
             "Excesso Limite Horas Extras (R$)": item.excesso_he,
             "Resultado do Diagnóstico": item.detalhe ? item.detalhe.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() : "Sem inconsistências",
-            "Desvio Financeiro Geral (R$)": item.desvio
+            "Desvio Potencial Geral (R$)": item.desvio
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -2165,7 +3809,6 @@ function exportAuditToXLSX() {
     }
 }
 
-/* --- [Seção] Orquestração Geral de Estados e Eventos --- */
 function formatCompetenceHeader(compStr) {
     if (!compStr || compStr === "N/A") return `Folha Salarial — <span style="color: var(--primary); font-weight: 800;">TSE</span>`;
     const months = [
@@ -2185,8 +3828,6 @@ function formatCompetenceHeader(compStr) {
 
 function initProcessControl() {
     const triggerBtn = document.getElementById("btn-trigger-direct-audit");
-    const filterAllBtn = document.getElementById("btn-filter-all-audited");
-    const filterAlertsBtn = document.getElementById("btn-filter-only-alerts");
     const searchInput = document.getElementById("table-search-input");
     const exportBtn = document.getElementById("btn-export-final-xlsx");
 
@@ -2206,35 +3847,38 @@ function initProcessControl() {
         });
     }
 
-    if (filterAllBtn) {
-        filterAllBtn.addEventListener("click", (e) => {
-            if (filterAlertsBtn) filterAlertsBtn.classList.remove("btn--active");
-            e.currentTarget.classList.add("btn--active");
-            AppState.activeFilter = "all";
+    const statusFilterSelect = document.getElementById("select-status-filter");
+    if (statusFilterSelect) {
+        statusFilterSelect.addEventListener("change", (e) => {
+            AppState.activeFilter = e.target.value;
             AppState.currentPage = 1;
             filterAndPaginateFindings();
         });
     }
 
-    if (filterAlertsBtn) {
-        filterAlertsBtn.addEventListener("click", (e) => {
-            if (filterAllBtn) filterAllBtn.classList.remove("btn--active");
-            e.currentTarget.classList.add("btn--active");
-            AppState.activeFilter = "alerts";
+    const alertTypeSelect = document.getElementById("select-alert-type");
+    if (alertTypeSelect) {
+        alertTypeSelect.addEventListener("change", (e) => {
+            AppState.alertTypeFilter = e.target.value;
+            if (e.target.value !== "all" && AppState.activeFilter === "all") {
+                AppState.activeFilter = "alerts";
+                if (statusFilterSelect) statusFilterSelect.value = "alerts";
+            }
             AppState.currentPage = 1;
             filterAndPaginateFindings();
         });
     }
 
     if (searchInput) {
-        searchInput.addEventListener("input", (e) => {
+        const handleSearchDebounced = debounce((e) => {
             AppState.searchQuery = e.target.value;
             AppState.currentPage = 1;
             filterAndPaginateFindings();
-        });
+        }, 250);
+
+        searchInput.addEventListener("input", handleSearchDebounced);
     }
 
-    // Ouvintes de clique para ordenação nos cabeçalhos
     document.querySelectorAll(".sortable-th").forEach(th => {
         th.addEventListener("click", () => {
             const field = th.getAttribute("data-sort");
@@ -2249,7 +3893,13 @@ function initProcessControl() {
     });
 
     if (exportBtn) {
-        exportBtn.addEventListener("click", exportAuditToXLSX);
+        exportBtn.addEventListener("click", (e) => {
+            if (!APP_CONFIG.features.exportXlsx) {
+                e.preventDefault();
+                return;
+            }
+            exportAuditToXLSX();
+        });
     }
 }
 
@@ -2279,6 +3929,7 @@ function initProcessReset() {
                 AppState.activeTableKey = "2026_JAN";
                 AppState.isIncompatibleCompetence = false;
                 AppState.activeFilter = "alerts";
+                AppState.alertTypeFilter = "all";
                 AppState.searchQuery = "";
                 AppState.sortField = "id";
                 AppState.sortDirection = "asc";
@@ -2302,6 +3953,12 @@ function initProcessReset() {
 
                 if (dashboardTitle) dashboardTitle.textContent = "Carregar Folha Salarial";
                 if (dashboardSubtitle) dashboardSubtitle.textContent = "Selecione o arquivo de folha de pagamento (.xlsx ou .txt)";
+
+                const sFilterSelect = document.getElementById("select-status-filter");
+                if (sFilterSelect) sFilterSelect.value = "alerts";
+
+                const aTypeSelect = document.getElementById("select-alert-type");
+                if (aTypeSelect) aTypeSelect.value = "all";
 
                 if (searchInput) searchInput.value = "";
                 if (uPreviewPanel) uPreviewPanel.style.display = "none";
@@ -2327,7 +3984,6 @@ function initProcessReset() {
                 const paginationContainer = document.getElementById("table-pagination-controls");
                 if (paginationContainer) paginationContainer.innerHTML = "";
 
-                // Reset dos 4 cartões de pré-visualização (Tela 1)
                 const previewServersAudited = document.getElementById("preview-servers-audited");
                 const previewServersNonAudited = document.getElementById("preview-servers-nonaudited");
                 const previewRubricsAudited = document.getElementById("preview-rubrics-audited");
@@ -2338,7 +3994,6 @@ function initProcessReset() {
                 if (previewRubricsAudited) previewRubricsAudited.textContent = "0";
                 if (previewRubricsNonAudited) previewRubricsNonAudited.textContent = "0";
 
-                // Reset dos cartões do diagnóstico (Tela 2)
                 const kpiTotalRubricsAll = document.getElementById("kpi-total-rubrics-all");
                 const kpiAuditedRubrics = document.getElementById("kpi-audited-rubrics");
                 const kpiNonAuditedRubrics = document.getElementById("kpi-nonaudited-rubrics");
@@ -2362,6 +4017,20 @@ function initProcessReset() {
                 if (kpiConformingRubrics) kpiConformingRubrics.textContent = "0";
                 if (kpiProportionalRubrics) kpiProportionalRubrics.textContent = "0";
                 if (kpiDiscrepantRubrics) kpiDiscrepantRubrics.textContent = "0";
+
+                const kpiTotalGrossIncome = document.getElementById("kpi-total-gross-income");
+                const kpiAuditedMoney = document.getElementById("kpi-audited-money");
+                const kpiNonAuditedMoney = document.getElementById("kpi-nonaudited-money");
+                const kpiConformingAmount = document.getElementById("kpi-conforming-amount");
+                const kpiProportionalAmount = document.getElementById("kpi-proportional-amount");
+                const kpiDiscrepantAmount = document.getElementById("kpi-discrepant-amount");
+
+                if (kpiTotalGrossIncome) kpiTotalGrossIncome.textContent = "R$ 0,00";
+                if (kpiAuditedMoney) kpiAuditedMoney.textContent = "R$ 0,00";
+                if (kpiNonAuditedMoney) kpiNonAuditedMoney.textContent = "R$ 0,00";
+                if (kpiConformingAmount) kpiConformingAmount.textContent = "R$ 0,00";
+                if (kpiProportionalAmount) kpiProportionalAmount.textContent = "R$ 0,00";
+                if (kpiDiscrepantAmount) kpiDiscrepantAmount.textContent = "R$ 0,00";
 
                 switchView("tab-dashboard");
                 Swal.fire("Resetado", "Sandbox reiniciada em memória com sucesso.", "success");

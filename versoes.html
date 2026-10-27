@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Versões — FAROL</title>
+    
+    <!-- === IMPORTAÇÕES DE FONTES E ÍCONES === -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- === FOLHA DE ESTILOS UNIFICADA DO SISTEMA === -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="doc-body">
+
+    <!-- === BARRA LATERAL COM ÍNDICE DAS VERSÕES === -->
+    <aside class="doc-sidebar">
+        <div class="doc-sidebar__header">
+            <div class="doc-sidebar__brand">
+                <img src="img/logo7.png" alt="FAROL - Ferramenta de Auditoria e Regularidade da Folha" class="doc-sidebar__logo-img">
+            </div>
+        </div>
+
+        <nav class="doc-sidebar__nav" id="sidebar-nav">
+            <a href="#sec-v1-2" class="doc-nav-item doc-nav-item--active"><i class="fa-solid fa-circle-check"></i> Versão 1.2 (Atual)</a>
+            <a href="#sec-v1-0" class="doc-nav-item"><i class="fa-solid fa-flag"></i> Versão 1.0</a>
+        </nav>
+
+        <div class="doc-sidebar__footer">
+            <div class="doc-sidebar__version">
+                <i class="fa-solid fa-code-branch"></i>
+                <span>Versão 1.2</span>
+            </div>
+            <span>Histórico de Versões — Secretaria de Auditoria (TSE)</span>
+        </div>
+    </aside>
+
+    <!-- === ÁREA PRINCIPAL CENTRALIZADA DE LEITURA === -->
+    <main class="doc-main">
+        <div class="doc-container">
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;">
+                <a href="index.html" class="btn-return" style="margin-bottom: 0;">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar ao Aplicativo de Auditoria
+                </a>
+                <a href="manual.html" class="btn-return" style="margin-bottom: 0;">
+                    <i class="fa-solid fa-book-open"></i> Acessar Manual de Critérios
+                </a>
+            </div>
+
+            <header class="doc-hero">
+                <h1 class="doc-hero__title">Histórico de Versões do FAROL</h1>
+                <p class="doc-hero__desc">
+                    Registro cronológico das novas rubricas auditadas e dos aprimoramentos analíticos implementados na <strong>Ferramenta de Auditoria e Regularidade da Folha</strong>.
+                </p>
+            </header>
+
+            <!-- ==========================================================================
+                 === VERSÃO 1.2: VERSÃO VIGENTE ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-v1-2">
+                <div class="doc-section__header">
+                    <div class="doc-section__number" style="background-color: var(--color-start);"><i class="fa-solid fa-check" style="font-size: 16px;"></i></div>
+                    <h2 class="doc-section__title">Versão 1.2 <span style="font-size: 14px; color: var(--text3); font-weight: 600; margin-left: 8px;">(Outubro/2026)</span></h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Evoluções Implementadas</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        
+                        <div class="rule-step">
+                            <span class="rule-step__title" style="color: var(--color-start);"><i class="fa-solid fa-plus-circle" style="margin-right: 6px;"></i> Novidades (Novas Rubricas)</span>
+                            <div class="changelog-list">
+                                <div class="changelog-item">
+                                    <strong>AQ Titulação (462001 e 463001)</strong>
+                                    <p>A ferramenta passou a auditar os Adicionais de Qualificação por titulação de forma específica, verificando se os multiplicadores pagos estão corretos (Doutorado, Mestrado e Especializações), além de validar as regras de absorção de títulos menores e os pagamentos proporcionais.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>AQ Treinamento (23001)</strong>
+                                    <p>Foi incluída a verificação segregada dos cursos de capacitação, garantindo que o pagamento corresponda aos blocos legais de 120 horas e respeite o teto global do adicional quando somado à titulação acadêmica.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Funções Comissionadas (FC) e Cargos em Comissão (CJ)</strong>
+                                    <p>O sistema agora analisa as funções e comissões, confrontando os valores pagos com as tabelas vigentes, detectando comissões ativas sem pagamento na folha e checando se o nível de atribuição cadastrado está correto.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Benefícios Indenizatórios (Alimentação e Pré-Escolar)</strong>
+                                    <p>Passaram a ser auditados os auxílios Alimentação e Pré-Escolar, confrontando os valores recebidos com os valores fixos estipulados para o ano e validando as cotas proporcionais em casos de entrada ou saída no mês.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Segregação da GAACTA fora do Teto (Res. TSE nº 23.773/2026)</strong>
+                                    <p>A Gratificação por Atuação de Alta Complexidade passou a ser identificada e separada automaticamente pelo sistema como verba indenizatória, impedindo que ela gere alertas falsos de extrapolação do teto constitucional.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rule-step">
+                            <span class="rule-step__title" style="color: var(--primary);"><i class="fa-solid fa-arrows-rotate" style="margin-right: 6px;"></i> Melhorias na Interface e Análise</span>
+                            <div class="changelog-list">
+                                <div class="changelog-item">
+                                    <strong>Nova Nomenclatura: "Desvio Potencial"</strong>
+                                    <p>A expressão "Desvio Financeiro" foi substituída por "Desvio Potencial" em todo o sistema, adequando a linguagem para deixar claro que os apontamentos são preliminares e não representam uma glosa definitiva antes da análise da auditoria.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Exibição de Materialidade Financeira (Alertas de Atenção)</strong>
+                                    <p>Os alertas amarelos passam a informar o valor exato da fração proporcional ou transição (em vez de R$ 0,00), permitindo ordenação da tabela por materialidade no SEI.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Novo Topo do Diagnóstico (Resumo Financeiro)</strong>
+                                    <p>O painel superior foi totalmente redesenhado para contar a história da folha de forma mais clara, mostrando agora os valores financeiros totais (em reais) da folha inteira, do universo auditado e de cada categoria de alerta.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Caixas de Seleção para Filtros</strong>
+                                    <p>Os antigos botões fixos foram substituídos por caixas de seleção dinâmicas, permitindo que o usuário cruze facilmente os níveis de alerta (Divergência, Atenção) com o tipo específico de lançamento que deseja analisar (Vencimentos, Tetos, Benefícios, etc.).</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Manual de Critérios</strong>
+                                    <p>O que era uma página textual de Critérios de Avaliação se tornou uma página independente de Manual de Critérios, com navegação própria, textos mais detalhados sobre as regras auditadas e links de fontes normativas.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Histórico de Versões</strong>
+                                    <p>Foi criada uma página própria para registrar de forma transparente todas as evoluções, correções e melhorias de cada versão oficial do FAROL.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rule-step">
+                            <span class="rule-step__title" style="color: var(--color-conclusion);"><i class="fa-solid fa-wrench" style="margin-right: 6px;"></i> Correções</span>
+                            <div class="changelog-list">
+                                <div class="changelog-item">
+                                    <strong>Gráfico de Rosca</strong>
+                                    <p>O texto informativo exibido ao passar o mouse sobre o gráfico foi dividido em duas linhas, corrigindo um problema visual que cortava os números da tela.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Fontes Normativas no Manual</strong>
+                                    <p>O link que direcionava para a Resolução CNJ nº 14/2006 (Teto Constitucional) foi corrigido para apontar para a página exata da norma, e as leis de reajuste foram separadas em tópicos para facilitar a leitura.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </article>
+            </section>
+
+            <!-- ==========================================================================
+                 === VERSÃO 1.0: MARCO INICIAL ===
+                 ========================================================================== -->
+            <section class="doc-section" id="sec-v1-0">
+                <div class="doc-section__header">
+                    <div class="doc-section__number" style="background-color: var(--text3);"><i class="fa-solid fa-flag" style="font-size: 13px;"></i></div>
+                    <h2 class="doc-section__title">Versão 1.0 <span style="font-size: 14px; color: var(--text3); font-weight: 600; margin-left: 8px;">(Lançamento Inicial)</span></h2>
+                </div>
+
+                <article class="rule-card">
+                    <div class="rule-card__header">
+                        <h3 class="rule-card__title">Estrutura Inicial do Sistema</h3>
+                    </div>
+                    <div class="rule-card__body">
+                        
+                        <div class="rule-step">
+                            <span class="rule-step__title"><i class="fa-solid fa-microchip" style="margin-right: 6px;"></i> Motor e Arquitetura</span>
+                            <div class="changelog-list">
+                                <div class="changelog-item">
+                                    <strong>Processamento Local de Dados</strong>
+                                    <p>A ferramenta foi criada utilizando uma arquitetura que processa os dados da folha diretamente na memória do computador do usuário, sem enviar arquivos para a internet, garantindo privacidade total e adequação à LGPD.</p>
+                                </div>
+                                <div class="changelog-item">
+                                    <strong>Regras Base de Auditoria</strong>
+                                    <p>O motor inicial foi lançado com a capacidade de verificar a Tabela de Vencimento Básico, validar os percentuais obrigatórios da GAJ (140%) e GAS (35%), analisar o Adicional de Qualificação (de forma unificada) e identificar extrapolações no Teto Constitucional do STF e no Limite de Horas Extras.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </article>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- === SCRIPT DE INTERAÇÃO (SCROLLSPY) === -->
+    <script>
+        const docMain = document.querySelector('.doc-main');
+        const sections = document.querySelectorAll('.doc-section');
+        const navItems = document.querySelectorAll('.doc-nav-item');
+
+        function updateActiveNavOnScroll() {
+            if (!docMain) return;
+            const mainTop = docMain.getBoundingClientRect().top;
+            let activeId = "";
+
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top - mainTop <= 160) {
+                    activeId = section.getAttribute('id');
+                }
+            });
+
+            if (activeId) {
+                navItems.forEach(item => {
+                    if (item.getAttribute('href') === `#${activeId}`) {
+                        item.classList.add('doc-nav-item--active');
+                    } else {
+                        item.classList.remove('doc-nav-item--active');
+                    }
+                });
+            }
+        }
+
+        if (docMain) {
+            docMain.addEventListener('scroll', updateActiveNavOnScroll, { passive: true });
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(n => n.classList.remove('doc-nav-item--active'));
+                item.classList.add('doc-nav-item--active');
+            });
+        });
+    </script>
+</body>
+</html>
